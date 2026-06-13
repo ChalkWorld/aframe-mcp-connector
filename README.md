@@ -4,12 +4,17 @@ A Node.js MCP server that bridges Claude sessions to the [Aframe Open API](https
 
 ## Status
 
-**Proof of Concept (v0.1.0)** — validates the architecture with two tools:
+**v0.2.0** — POC validated, expanded to core transaction CRUD + custom fields.
 
-- `create_transaction` — create a new transaction in Aframe
-- `add_transaction_note` — add a note to an existing transaction
+### Tools
 
-If this works end-to-end (Claude creates a transaction → returns the ID → Claude adds a note to that transaction → both appear in the Aframe UI), the architecture is proven and the same pattern extends to participants, custom fields, tasks, and webhooks.
+| Tool | Description |
+|---|---|
+| `create_transaction` | Create a new transaction in Aframe |
+| `get_transaction` | Fetch an existing transaction by ID (full payload incl. custom fields) |
+| `update_transaction` | PATCH transaction fields (partial update via JSON Patch under the hood) |
+| `update_custom_field` | PATCH a custom/merge field by Merge Field Code (e.g. `f_EarnestMoney`) |
+| `add_transaction_note` | Add an activity note to an existing transaction |
 
 ## Architecture
 
@@ -30,45 +35,37 @@ Aframe Open API
 
 ## Deployment (Railway)
 
-1. Push this repo to a new private GitHub repository
-2. Create a new Railway project → New Service → Deploy from GitHub repo → select the repo
-3. In the Railway service → Variables, set:
-   - `AFRAME_API_KEY` = your Aframe API key (from Aframe → My Profile → API Keys → Developer Zone)
-4. Under Settings → Networking, generate a public domain (Railway will issue one like `https://aframe-mcp-connector-production.up.railway.app`)
-5. Confirm the deployment is healthy by visiting the public URL in a browser — should return `{"status":"ok","service":"aframe-mcp-connector","version":"0.1.0"}`
+Auto-deploys on push to `main`. Required environment variable:
+- `AFRAME_API_KEY` — your Aframe API key
 
-Railway auto-deploys on every push to `main`.
+Generate a public domain under Settings → Networking after the first deploy.
 
 ## Connecting to Claude.ai
 
-1. In Claude.ai → Settings → Connectors → Add custom connector
-2. Paste the Railway URL with `/mcp` appended:
-   ```
-   https://<your-railway-url>/mcp
-   ```
-3. Click Add. The two tools (`create_transaction`, `add_transaction_note`) should now be available in any new conversation.
+Settings → Connectors → Add custom connector → paste `https://<railway-url>/mcp` → Add.
 
-### POC test sequence
+Tools become available in any new conversation with the connector enabled.
 
-In a new Claude session with the connector enabled:
+## Implementation notes
 
-1. Ask: *"Create a test transaction in Aframe for 100 Main Street, Richmond, VA 23220, buyer side."*
-2. Claude calls `create_transaction`, returns the new transaction ID
-3. Ask: *"Add a note to that transaction saying 'POC test from Claude session — [timestamp]'"*
-4. Claude calls `add_transaction_note` using the ID from step 2
-5. Open Aframe → confirm the transaction exists and the note is attached
+**Aframe response envelope:** `{ payload, error }`. The `error` block can appear *alongside* `payload` on 2xx success responses (as validation warnings, e.g. "defaulted to current AppUser"). HTTP status is the authoritative success/failure signal — `error` on 2xx is surfaced as `warnings`, not thrown.
 
-If both steps land, the connector is working.
+**JSON Patch (RFC 6902):** Aframe's PATCH endpoints (`update_transaction`, `update_custom_field`) require an array of patch operations with `Content-Type: application/json-patch+json`. The MCP tools accept friendly flat-object inputs (e.g. `{ closingDate: "2026-08-15" }`) and the client internally constructs the patch array. Callers never need to write RFC 6902 syntax.
+
+**Custom fields:** Stored as a flat `xactionFieldData` map keyed by Merge Field Code (e.g. `f_EarnestMoney`). All values are strings regardless of underlying type — Aframe handles type coercion server-side.
 
 ## Auth note
 
-This POC runs **authless** — anyone who knows the Railway URL can call the MCP server. This is acceptable for short-lived POC testing because the Railway subdomain is effectively unguessable, but it is **not suitable for production**.
+This service runs **authless**. Acceptable for development since the Railway subdomain is effectively unguessable, but **not suitable for production**. Claude.ai's custom connector UI does not currently support pasted bearer tokens (per [the connector auth docs](https://claude.com/docs/connectors/building/authentication)); production use will require OAuth 2.1 with PKCE.
 
-The reason: Claude.ai's custom connector UI does not currently support user-pasted bearer tokens (per [the connector auth docs](https://claude.com/docs/connectors/building/authentication)). For production use, the connector will need to implement OAuth 2.1 with PKCE — that's a Phase 2 task.
+## Version history
+
+- **v0.2.0** — Added `get_transaction`, `update_transaction`, `update_custom_field`. Fixed response envelope parsing to treat `error` on 2xx as warnings rather than failures. JSON Patch helper for PATCH endpoints.
+- **v0.1.0** — Initial POC with `create_transaction` and `add_transaction_note`.
 
 ## Reference
 
 - Aframe Open API: https://api.aframeonline.com/api-pub/swagger-ui/index.html
 - MCP spec: https://modelcontextprotocol.io
 - Claude custom connectors: https://support.claude.com/en/articles/11175166-get-started-with-custom-connectors-using-remote-mcp
-- Claude connector auth: https://claude.com/docs/connectors/building/authentication
+- JSON Patch (RFC 6902): https://datatracker.ietf.org/doc/html/rfc6902
