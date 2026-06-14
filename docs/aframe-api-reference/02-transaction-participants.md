@@ -1,0 +1,157 @@
+---
+title: Aframe API Reference — 2. Transaction Participants
+parent_doc: AAR-TC-AFRAME-API-001
+version_date: 2026-06-14
+status: Active — Living Document (subdocument)
+project: AAR-TC Aframe Connector
+---
+
+# 2. Transaction Participants
+### Aframe API Endpoint Reference — Category File | Parent: [AAR-TC-AFRAME-API-001](README.md)
+
+*Manage participants or contacts involved in a Transaction (e.g. buyers, sellers, agents).*
+
+---
+
+#### `POST /v1/xaction-participants` — Add a participant
+**Status:** Not extracted
+
+_Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format._
+
+---
+
+#### `GET /v1/xaction-participants/{xactionParticipantId}` — Get a participant
+**Status:** Not extracted
+
+_Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format._
+
+---
+
+#### `PATCH /v1/xaction-participants/{xactionParticipantId}` — Update a participant
+**Status:** Not extracted
+
+_Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format._
+
+---
+
+#### `DELETE /v1/xaction-participants/{xactionParticipantId}` — Remove a participant
+**Status:** Not extracted
+
+_Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format._
+
+---
+
+#### `PUT /v1/xaction-participants/{xactionParticipantId}/linked-contact/{linkedContactId}` — Link a contact
+**Status:** Not extracted
+
+_Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format._
+
+---
+
+#### `PATCH /v1/xaction-participants/{xactionParticipantId}/linked-contact` — Update linked contact
+**Status:** Not extracted
+
+_Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format._
+
+---
+
+#### `DELETE /v1/xaction-participants/{xactionParticipantId}/linked-contact` — Unlink a contact
+**Status:** Not extracted
+
+_Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format._
+
+---
+
+#### `PATCH /v1/xaction-participants/{xactionParticipantId}/contact-info` — Update contact info on participant
+**Status:** Not extracted
+
+_Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format._
+
+---
+
+#### `GET /v1/xactions/{xactionId}/xaction-participants` — List Transaction Participants for a Transaction
+Status: ✅ Extracted 2026-06-14
+
+Summary: List Transaction Participants for a Transaction
+
+Description: Returns a paged list of Participants assigned to the specified Transaction. Pagination via `page` (0-based) and `pageSize` (max 100) is supported as query parameters.
+
+Request
+
+- Content-Type: application/json
+
+- Path params:
+
+  | Name | Type | Required | Description |
+  |---|---|---|---|
+  | xactionId | integer | Yes | ID of the Transaction whose Participants to fetch. |
+
+- Query params:
+
+  | Name | Type | Required | Default | Description |
+  |---|---|---|---|---|
+  | page | integer (int32) | Yes | 0 | Page number (0-based). Minimum: 0. |
+  | pageSize | integer (int32) | Yes | 50 | Page size. Minimum: 1, maximum: 100. |
+
+- Body schema: None
+
+Response (2xx payload)
+
+  | Field | Type | Description |
+  |---|---|---|
+  | xactionParticipants | array\<APIXactionParticipantDigestDto\> | List of xaction participants. |
+  | xactionParticipants[].xactionParticipantId | integer (int32) | ID of the XactionParticipant. |
+  | xactionParticipants[].xactionParticipantRole | string | Name of the Transaction Participant Role. |
+  | xactionParticipants[].linkedContactId | integer (int32) | ID of the linked Contact, or null when the participant has no linked Contact. |
+  | xactionParticipants[].contactInfo | object (APIContactDigestDto) | Contact information (digest). Sourced from the linked Contact when one exists, otherwise from the participant's snapshot. |
+  | xactionParticipants[].contactInfo.contactId | integer (int32) | ID of the Contact. |
+  | xactionParticipants[].contactInfo.name | object (NameDto) | Contact name. |
+  | xactionParticipants[].contactInfo.name.company | string | Company. |
+  | xactionParticipants[].contactInfo.name.title | string | Title (e.g. "Mr."). |
+  | xactionParticipants[].contactInfo.name.firstName | string | First Name. |
+  | xactionParticipants[].contactInfo.name.middleName | string | Middle Name. |
+  | xactionParticipants[].contactInfo.name.lastName | string | Last Name. |
+  | xactionParticipants[].contactInfo.company | string | Company name. |
+  | xactionParticipants[].contactInfo.teamName | string | Team name. |
+  | xactionParticipants[].contactInfo.jobTitle | string | Job title. |
+  | xactionParticipants[].contactInfo.primaryEmail | string (email) | Primary email used for communication. |
+  | xactionParticipants[].contactInfo.phone1 | object (PhoneDto) | Phone 1. |
+  | xactionParticipants[].contactInfo.phone2 | object (PhoneDto) | Phone 2. |
+  | xactionParticipants[].contactInfo.altContactName | object (NameDto) | Alt contact name. |
+  | xactionParticipants[].contactInfo.altContactJobTitle | string | Alt contact job title. |
+  | xactionParticipants[].contactInfo.altContactPrimaryEmail | string (email) | Alt contact primary email used for communication. |
+  | xactionParticipants[].contactInfo.altContactPhone1 | object (PhoneDto) | Alt contact phone 1. |
+  | xactionParticipants[].contactInfo.altContactPhone2 | object (PhoneDto) | Alt contact phone 2. |
+  | xactionParticipants[].contactInfo.brokerNum | string | Broker license number. |
+  | xactionParticipants[].contactInfo.licenseNum | string | Contact license number. |
+  | xactionParticipants[].contactInfo.createDateTime | string (date-time) | Date and time the Contact was created. |
+  | xactionParticipants[].contactInfo.editDateTime | string (date-time) | Date and time the Contact was last edited. |
+  | xactionParticipants[].agentVisible | boolean | Whether the participant is visible on the Agent portal. |
+  | xactionParticipants[].buyerSellerVisible | boolean | Whether the participant is visible on the Buyer/Seller portal. |
+  | pageMetadata | object (PageMetadata) | Page metadata. |
+  | pageMetadata.page | integer (int32) | The current page number, 0-based. |
+  | pageMetadata.pageSize | integer (int32) | The current page size. |
+  | pageMetadata.totalElementsOnPage | integer (int32) | Number of elements on page. |
+  | pageMetadata.totalElements | integer (int32) | Total number of elements. |
+  | pageMetadata.hasNextPage | boolean | Has next page. |
+  | pageMetadata.lastPage | integer (int32) | Last page number. |
+  | pageMetadata.groupCounts | object (map\<string, integer\>) | Optional map of group counts if grouping is applied. |
+
+Enums / constants:
+
+- phoneType (PhoneDto.phoneType): CELL, HOME, WORK, COMPANY, PAGER, ASSISTANT, FAX, OTHER
+
+Notable errors:
+
+- 403 — Forbidden - The authenticated user does not have permission to access this Transaction.
+- 404 — Not Found - Transaction with the supplied ID does not exist.
+- 429 — Too Many Requests - Rate limit exceeded.
+
+Quirks & notes:
+
+- The query parameters (`page`, `pageSize`) are passed as a single named query object `apiXactionParticipantPagedQueryDto` — both fields are marked required in the schema.
+- `linkedContactId` may be null when the participant has no linked Contact; in that case `contactInfo` is still populated from the participant's own snapshot data.
+- Authentication uses a global `X-AFrame-API-Key` header (API key security scheme).
+
+---
+
