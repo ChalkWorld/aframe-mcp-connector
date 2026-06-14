@@ -46,6 +46,7 @@ AAR-TC-AFRAME-WF-*       Workflow docs     — business processes using the tool
 |---|---|---|---|
 | 1.0 | 2026-06-14 | Andrew Rich / Claude | Initial skeleton. All 19 categories and ~55 endpoints listed as placeholders across category files. Global info populated from Swagger survey of 2026-06-14. No per-endpoint schemas extracted yet. |
 | 1.0 | 2026-06-14 | Cursor / Claude-in-Chrome | Extracted: GET /v1/xactions/{xactionId}/xaction-participants |
+| 1.0 | 2026-06-14 | Cursor / Claude-in-Chrome | Extracted: GET /v1/xactions/{xactionId}/xaction-participants (overwrite — improved schema from second extraction) |
 
 ---
 
