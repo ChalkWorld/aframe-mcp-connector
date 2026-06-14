@@ -149,31 +149,5 @@ The broader workflow (MLS data input, Transaction Desk, photos, etc.) remains go
 
 ---
 
-## Suggested Next-Session Prompt
-
-When starting the next session to build out the buyer-side contract intake workflow document, use a prompt along these lines:
-
-```
-Open a working session to build AAR-TC-AFRAME-WF-BUYER-001 — the 
-buyer-side contract intake workflow document. Load the following 
-context first:
-
-  - AAR-TC-AFRAME-WF-001 (Workflow Framework, this doc)
-  - AAR-TC-AFRAME-REF-001 (Technical Reference)
-  - AAR-TC-AFRAME-ROAD-001 (Tool Roadmap)
-  - The Aframe Connector Handover doc (for original priority operations)
-  - A sample ratified buyer contract PDF (I will upload)
-
-Goal: produce AAR-TC-AFRAME-WF-BUYER-001 as a living document that 
-follows the standard structure defined in the Framework. We'll work 
-through the contract together, extract the data points that matter, 
-map them to Aframe custom fields, identify the participants and 
-roles, and select the right task template(s). The output is the 
-workflow document — not yet an automation; the document is what 
-makes the future automation possible.
-```
-
----
-
 *AAR-TC Transaction Services | agentandrewrich@gmail.com | www.aar-tc.com*
 *This is a living document. Update version history and version date with each revision.*
