@@ -1,8 +1,8 @@
 ---
 title: Aframe MCP Connector — Tool Roadmap
-document_id: AAR-TC-AFRAME-ROAD-001
+document_id: CONNECTOR-ROAD-001
 version: 1.0
-version_date: 2026-06-13
+version_date: 2026-06-16
 status: Active — Living Document
 author: Andrew Rich, AAR-TC Transaction Services
 contributor: Claude (Anthropic) — AI-assisted scoping and documentation
@@ -11,7 +11,7 @@ project: AAR-TC Aframe Connector
 ---
 
 # Aframe MCP Connector — Tool Roadmap
-### AAR-TC Transaction Services | Document ID: AAR-TC-AFRAME-ROAD-001
+### AAR-TC Transaction Services | Document ID: CONNECTOR-ROAD-001
 
 ---
 
@@ -37,12 +37,13 @@ This document is the authoritative list of which Aframe Open API endpoints have 
 | Version | Date | Author | Notes |
 |---|---|---|---|
 | 1.0 | 2026-06-13 | Andrew Rich / Claude | Initial roadmap. v0.2.0 is the current released build (5 tools across transactions + custom fields + notes). |
+| 1.0 | 2026-06-16 | Andrew Rich / Claude | Doc ID changed from `AAR-TC-AFRAME-ROAD-001` to `CONNECTOR-ROAD-001`. File renamed from `AFRAME_CONNECTOR_TOOL_ROADMAP.md`. |
 
 ---
 
 ## Tier 1 — Built (v0.2.0)
 
-These tools are deployed and validated. Reference: `AFRAME_CONNECTOR_TECHNICAL_REFERENCE.md` § 4.
+These tools are deployed and validated. Reference: `CONNECTOR_TECHNICAL_REFERENCE.md` § 4.
 
 | Tool | Aframe endpoint | Released |
 |---|---|---|

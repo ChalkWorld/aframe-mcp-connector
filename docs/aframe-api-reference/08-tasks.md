@@ -1,13 +1,13 @@
 ---
 title: Aframe API Reference — 8. Tasks
-parent_doc: AAR-TC-AFRAME-API-001
-version_date: 2026-06-14
+parent_doc: API-REF-001
+version_date: 2026-06-16
 status: Active — Living Document (subdocument)
 project: AAR-TC Aframe Connector
 ---
 
 # 8. Tasks
-### Aframe API Endpoint Reference — Category File | Parent: [AAR-TC-AFRAME-API-001](README.md)
+### Aframe API Endpoint Reference — Category File | Parent: [API-REF-001](README.md)
 
 *Assignable to-do items owned by Team Members, optionally scoped to a Contact or Transaction.*
 

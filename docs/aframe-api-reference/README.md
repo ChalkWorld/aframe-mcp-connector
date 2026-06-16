@@ -1,8 +1,8 @@
 ---
 title: Aframe API Endpoint Reference
-document_id: AAR-TC-AFRAME-API-001
+document_id: API-REF-001
 version: 1.0
-version_date: 2026-06-14
+version_date: 2026-06-16
 status: Active — Living Document
 author: Andrew Rich, AAR-TC Transaction Services
 contributor: Claude (Anthropic) — AI-assisted document assembly
@@ -11,7 +11,7 @@ project: AAR-TC Aframe Connector
 ---
 
 # Aframe API Endpoint Reference
-### AAR-TC Transaction Services | Document ID: AAR-TC-AFRAME-API-001
+### AAR-TC Transaction Services | Document ID: API-REF-001
 
 > **This is the master index.** Endpoint detail lives in the 19 category files in this folder, one per Aframe API category. See the [Category Index](#category-index) below.
 
@@ -21,7 +21,7 @@ project: AAR-TC Aframe Connector
 
 This document set is the **canonical capture of the Aframe Open API's endpoint surface** as published in the Aframe Swagger UI. It is the working reference used when planning, scoping, or building new MCP tools on the Aframe Connector.
 
-The reference is structured to mirror Aframe's own categorization of endpoints (19 categories, ~55 endpoints as of v1.0). It is descriptive — it captures what the API *offers*. Decisions about what we *wrap and when* live in the Tool Roadmap (`AAR-TC-AFRAME-ROAD-001`).
+The reference is structured to mirror Aframe's own categorization of endpoints (19 categories, ~55 endpoints as of v1.0). It is descriptive — it captures what the API *offers*. Decisions about what we *wrap and when* live in the Tool Roadmap (`CONNECTOR-ROAD-001`).
 
 ### Why this exists as a document set, not a single doc
 
@@ -32,10 +32,10 @@ Splitting by category keeps each file small enough that Cursor can open just the
 ### Relationship to other documents
 
 ```
-AAR-TC-AFRAME-API-001    THIS DOC SET      — what the Aframe API offers
-AAR-TC-AFRAME-ROAD-001   Tool Roadmap      — what we plan to wrap and when
-AAR-TC-AFRAME-REF-001    Tech Reference    — how the connector is built and operates
-AAR-TC-AFRAME-WF-*       Workflow docs     — business processes using the tools
+API-REF-001              THIS DOC SET      — what the Aframe API offers
+CONNECTOR-ROAD-001       Tool Roadmap      — what we plan to wrap and when
+CONNECTOR-REF-001        Tech Reference    — how the connector is built and operates
+WORKFLOWS-FW-*           Workflow docs     — business processes using the tools
 ```
 
 ---
@@ -48,6 +48,7 @@ AAR-TC-AFRAME-WF-*       Workflow docs     — business processes using the tool
 | 1.0 | 2026-06-14 | Cursor / Claude-in-Chrome | Extracted: GET /v1/xactions/{xactionId}/xaction-participants |
 | 1.0 | 2026-06-14 | Cursor / Claude-in-Chrome | Extracted: GET /v1/xactions/{xactionId}/xaction-participants (overwrite — improved schema from second extraction) |
 | 1.0 | 2026-06-14 | Cursor / Claude-in-Chrome | Extracted: PATCH /v1/xaction-participants/{xactionParticipantId}/contact-info |
+| 1.0 | 2026-06-16 | Andrew Rich / Claude | Document ID changed from `AAR-TC-AFRAME-API-001` to `API-REF-001`. Removed obsolete per-endpoint drill-down prompt section (Cursor now formats raw-paste handoffs directly). Added pointer to EXTRACTION-PROC-001. |
 
 ---
 
@@ -61,15 +62,7 @@ AAR-TC-AFRAME-WF-*       Workflow docs     — business processes using the tool
 
 ## How to Add to This Reference
 
-The reference grows one endpoint at a time, separating expensive Swagger extraction from the cheap doc update:
-
-1. **Open a Claude-in-Chrome session** on the Aframe Swagger UI page:
-   `https://api.aframeonline.com/api-pub/swagger-ui/index.html`
-2. **Run the [per-endpoint drill-down prompt](#per-endpoint-drill-down-prompt) below** with the target endpoint's method and path filled in.
-3. **Save the output** as a `.md` file in `handoffs/incoming/` (any filename — Cursor uses the `<!-- TARGET -->` comment in the file to identify the endpoint).
-4. **Run Cursor against `handoffs/CURSOR_INSTRUCTIONS.md`** to apply the handoff: Cursor finds the matching placeholder in the right category file, replaces it, archives the consumed handoff, and commits + pushes.
-
-No middle Claude session is needed for schema capture — the Chrome output is already in the target shape, and Cursor handles the mechanical insert.
+The reference grows one endpoint at a time. The full human extraction procedure (Swagger → Cursor) lives in [`docs/EXTRACTION_PROCEDURE.md`](../EXTRACTION_PROCEDURE.md) (`EXTRACTION-PROC-001`). This section preserves only the lay-of-the-land prompt, which is used when surveying or re-surveying the entire API surface (e.g., after Aframe announces API changes).
 
 ### Lay-of-the-land prompt (already used for v1.0)
 
@@ -91,76 +84,11 @@ Output as a plain-text outline. Once I see what's there, I'll tell
 you which specific endpoints to drill into.
 ```
 
-### Per-endpoint drill-down prompt
-
-Run this against one endpoint at a time in a Claude-in-Chrome session on the Swagger UI page. **Fill in the bracketed METHOD and PATH** before pasting. Output is the drop-in markdown section, ready to save to `handoffs/incoming/`.
-
-````
-You are populating an endpoint section in the Aframe API Endpoint
-Reference. Drill into the [METHOD] [PATH] endpoint in this Swagger
-UI page and produce a single markdown block in EXACTLY the format
-below. Do not add explanatory prose before or after. Do not deviate
-from the heading hierarchy or table column structure. Today's date
-is [YYYY-MM-DD].
-
-If a section's data is not present in the Swagger (e.g. no query
-params), omit the entire section rather than write "None" — except
-"Path params" and "Body schema," which should say "None" when empty
-so the absence is explicit.
-
-#### `[METHOD] [PATH]` — [Summary from Swagger]
-**Status:** ✅ Extracted [YYYY-MM-DD]
-
-**Summary:** [Verbatim summary from Swagger]
-
-**Description:** [Verbatim description, if distinct from summary; omit this line entirely if same as summary]
-
-**Request**
-- Content-Type: `[content-type, e.g. application/json or application/json-patch+json]`
-- Path params:
-
-  | Name | Type | Required | Description |
-  |---|---|---|---|
-  | … | … | … | … |
-
-- Query params:
-
-  | Name | Type | Required | Default | Description |
-  |---|---|---|---|---|
-  | … | … | … | … | … |
-
-- Body schema:
-
-  | Field | Type | Required | Description / Notes |
-  |---|---|---|---|
-  | … | … | … | … |
-
-**Response (2xx payload)**
-
-  | Field | Type | Description |
-  |---|---|---|
-  | … | … | … |
-
-**Enums / constants:**
-- `fieldName`: VALUE_A, VALUE_B, VALUE_C
-
-**Notable errors:**
-- 400 — …
-- 404 — …
-
-**Quirks & notes:**
-- …
-
-<!-- TARGET: [METHOD] [PATH] -->
-````
-
-The final `<!-- TARGET: ... -->` comment is required — Cursor uses it to identify which placeholder to replace. Do not omit.
-
 ---
 
 ## Endpoint Schema Template
 
-The format every endpoint section follows once extracted. See the drill-down prompt above for the canonical version; this is the same shape, shown here for reference:
+The format every endpoint section follows once extracted. Shown here for reference; the full prompt-ready version lives in `EXTRACTION-PROC-001`:
 
 ```markdown
 #### `POST /v1/example` — Example Endpoint
@@ -215,7 +143,7 @@ All endpoints return:
 
 - `payload` — single object, paged list, or simple string like `"success"`
 - `error` — carries `messages`, `details`, and `validationErrors` on failures
-- **`error` can be present on 2xx responses** as warnings (validation notices, defaulted fields). HTTP status is the authoritative success signal; see `AAR-TC-AFRAME-REF-001` § 5.1 for the client's handling.
+- **`error` can be present on 2xx responses** as warnings (validation notices, defaulted fields). HTTP status is the authoritative success signal; see `CONNECTOR-REF-001` § 5.1 for the client's handling.
 
 ### Rate limits
 

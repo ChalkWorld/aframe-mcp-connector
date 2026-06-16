@@ -1,13 +1,13 @@
 ---
 title: Aframe API Reference — 11. Files
-parent_doc: AAR-TC-AFRAME-API-001
-version_date: 2026-06-14
+parent_doc: API-REF-001
+version_date: 2026-06-16
 status: Active — Living Document (subdocument)
 project: AAR-TC Aframe Connector
 ---
 
 # 11. Files
-### Aframe API Endpoint Reference — Category File | Parent: [AAR-TC-AFRAME-API-001](README.md)
+### Aframe API Endpoint Reference — Category File | Parent: [API-REF-001](README.md)
 
 *Binary downloads for file attachments referenced by Transactions, Contact Notes, and Emails.*
 

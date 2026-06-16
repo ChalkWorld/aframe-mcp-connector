@@ -1,13 +1,13 @@
 ---
 title: Aframe API Reference — 13. Admin :: Task Templates
-parent_doc: AAR-TC-AFRAME-API-001
-version_date: 2026-06-14
+parent_doc: API-REF-001
+version_date: 2026-06-16
 status: Active — Living Document (subdocument)
 project: AAR-TC Aframe Connector
 ---
 
 # 13. Admin :: Task Templates
-### Aframe API Endpoint Reference — Category File | Parent: [AAR-TC-AFRAME-API-001](README.md)
+### Aframe API Endpoint Reference — Category File | Parent: [API-REF-001](README.md)
 
 *Reusable Task definitions used to generate consistent to-do items on Contacts and Transactions.*
 

@@ -1,8 +1,8 @@
 ---
 title: Aframe Transaction Workflows — Framework
-document_id: AAR-TC-AFRAME-WF-001
+document_id: WORKFLOWS-FW-001
 version: 1.0
-version_date: 2026-06-13
+version_date: 2026-06-16
 status: Active — Living Document
 author: Andrew Rich, AAR-TC Transaction Services
 contributor: Claude (Anthropic) — AI-assisted framework design
@@ -11,7 +11,7 @@ project: AAR-TC Aframe Connector
 ---
 
 # Aframe Transaction Workflows — Framework
-### AAR-TC Transaction Services | Document ID: AAR-TC-AFRAME-WF-001
+### AAR-TC Transaction Services | Document ID: WORKFLOWS-FW-001
 
 ---
 
@@ -33,6 +33,7 @@ This document is the **index and structural framework** for the business-layer w
 | Version | Date | Author | Notes |
 |---|---|---|---|
 | 1.0 | 2026-06-13 | Andrew Rich / Claude | Initial framework. Establishes three planned workflows; structural scaffolding only — content to follow in subsequent sessions. |
+| 1.0 | 2026-06-16 | Andrew Rich / Claude | Doc ID changed from `AAR-TC-AFRAME-WF-001` to `WORKFLOWS-FW-001`. File renamed from `AFRAME_TRANSACTION_WORKFLOWS_FRAMEWORK.md`. |
 
 ---
 
@@ -40,14 +41,14 @@ This document is the **index and structural framework** for the business-layer w
 
 ```
 Technical layer:
-  AAR-TC-AFRAME-REF-001    Technical Reference  (what the connector is)
-  AAR-TC-AFRAME-ROAD-001   Tool Roadmap         (what tools exist / are next)
+  CONNECTOR-REF-001        Technical Reference  (what the connector is)
+  CONNECTOR-ROAD-001       Tool Roadmap         (what tools exist / are next)
 
 Business layer:
-  AAR-TC-AFRAME-WF-001     Workflow Framework   (this doc — the index)
-  AAR-TC-AFRAME-WF-BUYER-001    Buyer-side contract intake   (planned)
-  AAR-TC-AFRAME-WF-SELLER-001   Seller-side contract intake  (placeholder)
-  AAR-TC-AFRAME-WF-LENNAR-001   Lennar listing input         (placeholder)
+  WORKFLOWS-FW-001         Workflow Framework   (this doc — the index)
+  WORKFLOWS-BUYER-001      Buyer-side contract intake   (planned)
+  WORKFLOWS-SELLER-001     Seller-side contract intake  (placeholder)
+  WORKFLOWS-LENNAR-001     Lennar listing input         (placeholder)
 
 Adjacent (existing):
   AAR-TC-LENNAR-DB-001     Lennar Community Reference Database
@@ -86,7 +87,7 @@ Every workflow document under this framework follows this section structure. Sec
 Patterns that apply to every workflow under this framework:
 
 ### Aframe connector is the single write surface
-All Aframe-side work flows through the connector tools defined in `AAR-TC-AFRAME-REF-001`. No direct API calls; no UI-side writes during Claude-handled intake (UI is reserved for final review by Andrew).
+All Aframe-side work flows through the connector tools defined in `CONNECTOR-REF-001`. No direct API calls; no UI-side writes during Claude-handled intake (UI is reserved for final review by Andrew).
 
 ### Duplicate detection always comes first
 Before creating any new transaction, the workflow must check for an existing transaction at the same address. Once `search_transactions` is wrapped (Tool Roadmap Tier 3), this becomes a connector call. Until then, duplicate checks happen in the Aframe UI or by referencing the relevant tracking spreadsheet.
@@ -112,7 +113,7 @@ CVR MLS rules prohibit phone numbers in public remarks. This applies to listing 
 
 ### Workflow 1 — Buyer-Side Contract Intake
 
-**Document:** `AAR-TC-AFRAME-WF-BUYER-001` *(to be created)*
+**Document:** `WORKFLOWS-BUYER-001` *(to be created)*
 **Status:** Framework only — full content scheduled for the next session.
 
 A buyer-side contract arrives (ratified contract PDF, typically forwarded via Gmail). The workflow extracts contract data — price, dates, parties, terms, contingencies, deal type (financed vs. cash, AS-IS vs. standard, referral vs. not) — and uses the Aframe connector to:
@@ -127,7 +128,7 @@ This is the workflow with the highest expected leverage from the current connect
 
 ### Workflow 2 — Seller-Side Contract Intake
 
-**Document:** `AAR-TC-AFRAME-WF-SELLER-001` *(placeholder)*
+**Document:** `WORKFLOWS-SELLER-001` *(placeholder)*
 **Status:** Not started.
 
 A seller-side situation — typically one of Andrew's existing listings has gone under contract and the ratified contract arrives. The workflow updates the existing Aframe transaction (status, contract price, dates, contingencies) and populates buyer-side participant info that was unknown at listing time.
@@ -136,7 +137,7 @@ Key difference from buyer-side: this is usually an `update_transaction` flow rat
 
 ### Workflow 3 — Lennar Listing Input
 
-**Document:** `AAR-TC-AFRAME-WF-LENNAR-001` *(placeholder)*
+**Document:** `WORKFLOWS-LENNAR-001` *(placeholder)*
 **Status:** Not started. Will integrate with existing Lennar documents (`AAR-TC-LENNAR-*`).
 
 The Aframe-specific portion of the broader Lennar New Listing workflow (`AAR-TC-LENNAR-PROTO-001`). When Carly Evans forwards a new Lennar listing, the connector handles:

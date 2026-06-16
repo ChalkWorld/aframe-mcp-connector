@@ -1,13 +1,13 @@
 ---
 title: Aframe API Reference — 10. Contact Notes
-parent_doc: AAR-TC-AFRAME-API-001
-version_date: 2026-06-14
+parent_doc: API-REF-001
+version_date: 2026-06-16
 status: Active — Living Document (subdocument)
 project: AAR-TC Aframe Connector
 ---
 
 # 10. Contact Notes
-### Aframe API Endpoint Reference — Category File | Parent: [AAR-TC-AFRAME-API-001](README.md)
+### Aframe API Endpoint Reference — Category File | Parent: [API-REF-001](README.md)
 
 *Free-form notes recorded against a Contact (e.g. conversation summaries, preferences, reminders).*
 

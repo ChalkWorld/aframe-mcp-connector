@@ -1,8 +1,8 @@
 ---
 title: Aframe MCP Connector — Technical Reference
-document_id: AAR-TC-AFRAME-REF-001
+document_id: CONNECTOR-REF-001
 version: 1.0
-version_date: 2026-06-13
+version_date: 2026-06-16
 status: Active — Living Document
 author: Andrew Rich, AAR-TC Transaction Services
 contributor: Claude (Anthropic) — AI-assisted design, build, and documentation
@@ -11,7 +11,7 @@ project: AAR-TC Aframe Connector
 ---
 
 # Aframe MCP Connector — Technical Reference
-### AAR-TC Transaction Services | Document ID: AAR-TC-AFRAME-REF-001
+### AAR-TC Transaction Services | Document ID: CONNECTOR-REF-001
 
 ---
 
@@ -28,6 +28,7 @@ This document is written primarily for future Claude sessions to load as context
 | Version | Date | Author | Notes |
 |---|---|---|---|
 | 1.0 | 2026-06-13 | Andrew Rich / Claude | Initial document. Captures connector v0.2.0 — five tools, Railway deployment, authless POC posture. |
+| 1.0 | 2026-06-16 | Andrew Rich / Claude | Doc ID changed from `AAR-TC-AFRAME-REF-001` to `CONNECTOR-REF-001`. File renamed from `AFRAME_CONNECTOR_TECHNICAL_REFERENCE.md`. |
 
 ---
 

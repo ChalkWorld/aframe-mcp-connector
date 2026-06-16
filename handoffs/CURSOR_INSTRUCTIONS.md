@@ -1,8 +1,8 @@
 ---
 title: Cursor Instructions — Apply API Endpoint Handoffs
-document_id: AAR-TC-AFRAME-CURSOR-001
-version: 1.1
-version_date: 2026-06-14
+document_id: CURSOR-INST-001
+version: 1.3
+version_date: 2026-06-16
 status: Active — Living Document
 author: Andrew Rich, AAR-TC Transaction Services
 contributor: Claude (Anthropic) — AI-assisted document assembly
@@ -11,7 +11,7 @@ project: AAR-TC Aframe Connector
 ---
 
 # Cursor Instructions — Apply API Endpoint Handoffs
-### AAR-TC Transaction Services | Document ID: AAR-TC-AFRAME-CURSOR-001
+### AAR-TC Transaction Services | Document ID: CURSOR-INST-001
 
 ---
 
@@ -29,6 +29,8 @@ This document is the **standing instruction set for Cursor** when applying incom
 |---|---|---|---|
 | 1.0 | 2026-06-14 | Andrew Rich / Claude | Initial instructions. Pre-formatted handoff path only. |
 | 1.1 | 2026-06-14 | Andrew Rich / Claude | Added Path B: raw-paste handoff support. Cursor (Sonnet 4.6) now formats raw Swagger content into the template before applying. Eliminates the need for a Claude.ai session to format extracted content. |
+| 1.2 | 2026-06-16 | Andrew Rich / Claude | Doc ID changed from `AAR-TC-AFRAME-CURSOR-001` to `CURSOR-INST-001`. |
+| 1.3 | 2026-06-16 | Andrew Rich / Claude | Removed User Procedure sections (Path A and Path B). Human procedure now lives in `docs/EXTRACTION_PROCEDURE.md` (EXTRACTION-PROC-001). This doc is now Cursor-side only. |
 
 ---
 
@@ -50,7 +52,7 @@ Cursor detects which path by inspecting the handoff:
 
 ```
 Aframe Swagger UI (in your normal browser)
-  ↓  (you copy raw schema text following the User Procedure below)
+  ↓  (you copy raw schema text following EXTRACTION-PROC-001)
 handoffs/incoming/[any-filename].md
   ↓  (Cursor, prompted with these instructions)
 docs/aframe-api-reference/[NN-category].md   ← placeholder replaced with formatted schema
@@ -60,66 +62,11 @@ git commit + push
 
 ---
 
-## User Procedure — Path B (raw-paste handoff)
+## User procedure
 
-**Use this for routine endpoint extraction.** No Claude.ai session required.
+The human extraction procedure (how you, the operator, pull endpoint schemas from Swagger and prepare them for Cursor to apply) lives in its own document: see [`docs/EXTRACTION_PROCEDURE.md`](../docs/EXTRACTION_PROCEDURE.md) (`EXTRACTION-PROC-001`).
 
-### Step 1 — Open the endpoint in Swagger
-
-In your normal browser, open the Aframe Swagger UI:
-`https://api.aframeonline.com/api-pub/swagger-ui/index.html`
-
-Click the endpoint to expand it. Toggle the **Parameters** view to "Schema" (not "Example Value"). Toggle each **Response** code's view to "Schema" too. Expand any nested objects in the schema tree by clicking the collapse arrows until everything you can see is fully expanded.
-
-### Step 2 — Create the handoff file
-
-In Cursor, create a new file under `handoffs/incoming/`. Any filename. Use `.md` extension. Paste this template:
-
-```
-<!-- TARGET: METHOD PATH -->
-<!-- FORMAT: RAW_PASTE -->
-
-<!-- SUMMARY -->
-
-<!-- DESCRIPTION -->
-
-<!-- PARAMETERS (Schema view) -->
-
-<!-- RESPONSES (Schema view) -->
-```
-
-Fill in `METHOD` and `PATH` on the first line. Example: `<!-- TARGET: POST /v1/contacts/search -->`.
-
-### Step 3 — Fill in each section, top to bottom
-
-In the order they appear in Swagger UI:
-
-| Section in the template | What to copy from Swagger |
-|---|---|
-| `<!-- SUMMARY -->` | The short title that appears next to the URL in the endpoint header bar. For `GET /v1/xactions/{xactionId}/xaction-participants`, this is "List Transaction Participants for a Transaction." |
-| `<!-- DESCRIPTION -->` | The paragraph between the URL bar and the "Parameters" section heading. If the endpoint has no description paragraph, leave this section empty (Cursor will skip it). |
-| `<!-- PARAMETERS (Schema view) -->` | With Parameters in **Schema** view and all nested objects expanded, select and copy the entire Parameters region. Paste below this marker. |
-| `<!-- RESPONSES (Schema view) -->` | With each Response code in **Schema** view and all nested objects expanded, select and copy the entire Responses region (all status codes together). Paste below this marker. |
-
-Save the file.
-
-### Step 4 — Trigger Cursor to process
-
-In Cursor, prompt: *"Process all files in `handoffs/incoming/` following the instructions in `handoffs/CURSOR_INSTRUCTIONS.md`."*
-
-Cursor will format each raw paste using the template in `docs/aframe-api-reference/README.md`, replace the matching placeholder in the right category file, archive the handoff, commit, and push.
-
----
-
-## User Procedure — Path A (pre-formatted handoff)
-
-Use this when a Claude.ai session produces the markdown for you (e.g., for design discussions, complex endpoints, or any reason you want Claude in the loop).
-
-1. Claude.ai session outputs a fully-formatted markdown block ending with `<!-- TARGET: METHOD PATH -->`.
-2. Copy the block, save it as a `.md` file in `handoffs/incoming/`. Any filename.
-3. Trigger Cursor as in Path B Step 4.
-
-Cursor detects it as Path A (heading present, TARGET at bottom) and applies as-is.
+This document covers only what Cursor does once handoff files are present in `handoffs/incoming/`.
 
 ---
 
@@ -255,7 +202,7 @@ After all handoffs are processed and committed, push to `origin/main` once.
 ## What this workflow does NOT do
 
 - **Does not validate schema correctness against Swagger.** Cursor trusts the extracted/pasted content is faithful. Validation is on the human (you) and on review.
-- **Does not decide whether to wrap an endpoint as a connector tool.** That decision lives in `AAR-TC-AFRAME-ROAD-001` and is made in a build-planning Claude session.
+- **Does not decide whether to wrap an endpoint as a connector tool.** That decision lives in `CONNECTOR-ROAD-001` and is made in a build-planning Claude session.
 - **Does not modify the Tool Roadmap or Technical Reference.** Those move on different cycles with their own commits.
 - **Does not access the Swagger UI itself.** Extraction (Path A or B) is performed by humans; Cursor only installs the result.
 

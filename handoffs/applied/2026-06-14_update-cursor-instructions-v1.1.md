@@ -56,7 +56,7 @@ Move this file to `handoffs/applied/` with today's date prefixed (e.g., `2026-06
 === BEGIN ===
 ---
 title: Cursor Instructions — Apply API Endpoint Handoffs
-document_id: AAR-TC-AFRAME-CURSOR-001
+document_id: CURSOR-INST-001
 version: 1.1
 version_date: 2026-06-14
 status: Active — Living Document
@@ -67,7 +67,7 @@ project: AAR-TC Aframe Connector
 ---
 
 # Cursor Instructions — Apply API Endpoint Handoffs
-### AAR-TC Transaction Services | Document ID: AAR-TC-AFRAME-CURSOR-001
+### AAR-TC Transaction Services | Document ID: CURSOR-INST-001
 
 ---
 
@@ -311,7 +311,7 @@ After all handoffs are processed and committed, push to `origin/main` once.
 ## What this workflow does NOT do
 
 - **Does not validate schema correctness against Swagger.** Cursor trusts the extracted/pasted content is faithful. Validation is on the human (you) and on review.
-- **Does not decide whether to wrap an endpoint as a connector tool.** That decision lives in `AAR-TC-AFRAME-ROAD-001` and is made in a build-planning Claude session.
+- **Does not decide whether to wrap an endpoint as a connector tool.** That decision lives in `CONNECTOR-ROAD-001` and is made in a build-planning Claude session.
 - **Does not modify the Tool Roadmap or Technical Reference.** Those move on different cycles with their own commits.
 - **Does not access the Swagger UI itself.** Extraction (Path A or B) is performed by humans; Cursor only installs the result.
 
