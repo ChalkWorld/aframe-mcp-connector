@@ -20,10 +20,105 @@ _Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format
 
 ---
 
-#### `POST /v1/contacts/search` — Search contacts
-**Status:** Not extracted
+#### `POST /v1/contacts/search` — Search Contacts
+**Status:** ✅ Extracted 2026-06-17
 
-_Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format._
+**Summary:** Search for Contacts using the supplied criteria. Pagination via `page` (0-based) and `pageSize` (max 100) is supported.
+
+**Request**
+- Content-Type: `application/json`
+- Path params: None
+- Query params: None
+- Body schema (`APIContactPagedQueryDto`):
+
+  | Field | Type | Required | Description / Notes |
+  |---|---|---|---|
+  | `contactSearchCriteriaDto` | object | no | Search criteria wrapper |
+  | `contactSearchCriteriaDto.company` | string | no | Filter by company ('starts with' matching) |
+  | `contactSearchCriteriaDto.teamName` | string | no | Filter by team name ('starts with' matching) |
+  | `contactSearchCriteriaDto.firstName` | string | no | Filter by contact first name or alt contact first name ('starts with' matching) |
+  | `contactSearchCriteriaDto.lastName` | string | no | Filter by contact last name or alt contact last name ('starts with' matching) |
+  | `contactSearchCriteriaDto.altContactFirstName` | string | no | Filter by alt contact first name ('starts with' matching) |
+  | `contactSearchCriteriaDto.altContactLastName` | string | no | Filter by alt contact last name ('starts with' matching) |
+  | `contactSearchCriteriaDto.email` | string (email) | no | Filter by contact email (exact matching) |
+  | `contactSearchCriteriaDto.categories` | string | no | Comma-separated category filters; a leading `-` on a token is a negative filter ('starts with' matching). Example: `"Builder, COI, -Investor"` |
+  | `contactSearchCriteriaDto.contactEditDateTime.from` | string (date-time) | no | Edit date range start, ISO-8601 (inclusive) |
+  | `contactSearchCriteriaDto.contactEditDateTime.to` | string (date-time) | no | Edit date range end, ISO-8601 (inclusive) |
+  | `contactSearchCriteriaDto.contactCreateDateTime.from` | string (date-time) | no | Create date range start, ISO-8601 (inclusive) |
+  | `contactSearchCriteriaDto.contactCreateDateTime.to` | string (date-time) | no | Create date range end, ISO-8601 (inclusive) |
+  | `page` | integer (≥ 0) | no | Page number, 0-based. Default: `0` |
+  | `pageSize` | integer ([1, 100]) | no | Page size, max 100. Default: `20` |
+
+**Response (2xx payload)**
+
+  `APIContactPagedResultDto`:
+
+  | Field | Type | Description |
+  |---|---|---|
+  | `items` | array\<object\> | List of contact digest results |
+  | `items[].contactId` | integer | ID of the Contact |
+  | `items[].name.company` | string | Company (in name object) |
+  | `items[].name.title` | string | Title (e.g. `"Mr."`) |
+  | `items[].name.firstName` | string | First Name |
+  | `items[].name.middleName` | string | Middle Name |
+  | `items[].name.lastName` | string | Last Name |
+  | `items[].company` | string | Company name |
+  | `items[].teamName` | string | Team name |
+  | `items[].jobTitle` | string | Job title |
+  | `items[].primaryEmail` | string | Primary email used for communication |
+  | `items[].phone1.phone` | string | Phone Number |
+  | `items[].phone1.formattedPhoneString` | string | Phone formatted as (xxx) xxx-xxxx if possible |
+  | `items[].phone1.phoneType` | string (enum) | See `phoneType` enum |
+  | `items[].phone1.phoneDesc` | string | Phone Description or Extension |
+  | `items[].phone2.phone` | string | Phone Number (second phone) |
+  | `items[].phone2.formattedPhoneString` | string | Formatted second phone |
+  | `items[].phone2.phoneType` | string (enum) | See `phoneType` enum |
+  | `items[].phone2.phoneDesc` | string | Phone Description or Extension |
+  | `items[].altContactName.company` | string | Alt contact company |
+  | `items[].altContactName.title` | string | Alt contact title |
+  | `items[].altContactName.firstName` | string | Alt contact first name |
+  | `items[].altContactName.middleName` | string | Alt contact middle name |
+  | `items[].altContactName.lastName` | string | Alt contact last name |
+  | `items[].altContactJobTitle` | string | Alt contact job title |
+  | `items[].altContactPrimaryEmail` | string | Alt contact primary email |
+  | `items[].altContactPhone1.phone` | string | Alt contact phone 1 number |
+  | `items[].altContactPhone1.formattedPhoneString` | string | Alt contact phone 1 formatted |
+  | `items[].altContactPhone1.phoneType` | string (enum) | See `phoneType` enum |
+  | `items[].altContactPhone1.phoneDesc` | string | Alt contact phone 1 description |
+  | `items[].altContactPhone2.phone` | string | Alt contact phone 2 number |
+  | `items[].altContactPhone2.formattedPhoneString` | string | Alt contact phone 2 formatted |
+  | `items[].altContactPhone2.phoneType` | string (enum) | See `phoneType` enum |
+  | `items[].altContactPhone2.phoneDesc` | string | Alt contact phone 2 description |
+  | `items[].brokerNum` | string | Broker license number |
+  | `items[].licenseNum` | string | Contact license number |
+  | `items[].createDateTime` | string (date-time) | Date and time the Contact was created |
+  | `items[].editDateTime` | string (date-time) | Date and time the Contact was last edited |
+  | `pageMetadata.page` | integer | Current page number (0-based) |
+  | `pageMetadata.pageSize` | integer | Current page size |
+  | `pageMetadata.totalElementsOnPage` | integer | Number of elements on this page |
+  | `pageMetadata.totalElements` | integer | Total number of matching elements |
+  | `pageMetadata.hasNextPage` | boolean | Whether there is a next page |
+  | `pageMetadata.lastPage` | integer | Last page number |
+  | `groupCounts` | object | Optional map of group counts (key → integer count) if grouping applied |
+
+**Enums / constants:**
+- `phoneType` (applies to `phone1`, `phone2`, `altContactPhone1`, `altContactPhone2`): `"CELL"`, `"HOME"`, `"WORK"`, `"COMPANY"`, `"PAGER"`, `"ASSISTANT"`, `"FAX"`, `"OTHER"`
+
+**Notable errors:**
+
+Error responses use the `APIResponse` envelope: `{ payload: any, error: { requestId, messages[], details[], validationErrors[{ fieldName, message }] } }`
+
+- `400 Bad Request` — Malformed JSON or unreadable payload
+- `422 Unprocessable Content` — Invalid search criteria (e.g. `pageSize` out of range)
+- `429 Too Many Requests` — Rate limit exceeded
+
+**Quirks & notes:**
+- Request body is wrapped in `APIContactPagedQueryDto`; search criteria are nested inside `contactSearchCriteriaDto`.
+- `categories` filter is comma-separated; a leading `-` on any token is a negative filter.
+- `page` is 0-based (default `0`); `pageSize` max is 100 (default `20`).
+- Response payload is `APIContactPagedResultDto` directly (not the standard `APIResponse` envelope).
+- Each `items[]` entry is a mid-level contact summary (digest), not a full contact record.
+- Authentication: global `X-AFrame-API-Key` header.
 
 ---
 

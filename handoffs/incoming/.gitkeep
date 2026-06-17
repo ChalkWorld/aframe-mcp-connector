@@ -1,0 +1,4 @@
+# This file exists so handoffs/incoming/ is committed to git even when empty.
+# Drop endpoint extraction outputs (from Claude-in-Chrome) into this folder
+# as .md files, then run Cursor against handoffs/CURSOR_INSTRUCTIONS.md to
+# apply them.
