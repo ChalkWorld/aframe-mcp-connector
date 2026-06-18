@@ -443,10 +443,211 @@ Error responses use the `APIResponse` envelope: `{ payload: any, error: { reques
 
 ---
 
-#### `PATCH /v1/contacts/{contactId}` — Update a contact
-**Status:** Not extracted
+#### `PATCH /v1/contacts/{contactId}` — Update a Contact
+**Status:** ✅ Extracted 2026-06-18
 
-_Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format._
+**Summary:** Update a Contact
+
+**Description:** Updates the specified Contact using JSON Patch (RFC 6902) operations. The authenticated user must have permission to edit the Contact.
+
+**Request**
+- Content-Type: `application/json-patch+json`
+- Path params:
+
+  | Param | Type | Required | Description |
+  |---|---|---|---|
+  | `contactId` | integer (int32) | yes | ID of the Contact to update |
+
+- Body schema: JSON Patch operations array (RFC 6902). Each element:
+
+  | Field | Type | Required | Description / Notes |
+  |---|---|---|---|
+  | `op` | string | yes | Patch operation (e.g. `"replace"`) |
+  | `path` | string | yes | JSON Pointer to the target field (e.g. `"/firstName"`) — see `APIContactPatchDto` paths below |
+  | `value` | any | yes (for `replace`) | New value for the field |
+
+  **Patchable field paths (`APIContactPatchDto`):**
+
+  | Path | Type | Description |
+  |---|---|---|
+  | `/company` | string | Company name |
+  | `/teamName` | string | Team name |
+  | `/title` | string | Name title (e.g. `"Mr."`) |
+  | `/firstName` | string | First name |
+  | `/middleName` | string | Middle name |
+  | `/lastName` | string | Last name |
+  | `/jobTitle` | string | Job title |
+  | `/email1` | string (email) | Email 1 (primary) |
+  | `/email2` | string (email) | Email 2 |
+  | `/email3` | string (email) | Email 3 |
+  | `/phone1` | string | Phone 1 |
+  | `/phone1Type` | string (enum) | Phone 1 type — see Enums |
+  | `/phone1Desc` | string | Phone 1 description / extension |
+  | `/phone2` | string | Phone 2 |
+  | `/phone2Type` | string (enum) | Phone 2 type — see Enums |
+  | `/phone2Desc` | string | Phone 2 description / extension |
+  | `/phone3` | string | Phone 3 |
+  | `/phone3Type` | string (enum) | Phone 3 type — see Enums |
+  | `/phone3Desc` | string | Phone 3 description / extension |
+  | `/phone4` | string | Phone 4 |
+  | `/phone4Type` | string (enum) | Phone 4 type — see Enums |
+  | `/phone4Desc` | string | Phone 4 description / extension |
+  | `/fax` | string | Fax number |
+  | `/faxDesc` | string | Fax description / extension |
+  | `/altContactTitle` | string | Alt contact name title |
+  | `/altContactFirstName` | string | Alt contact first name |
+  | `/altContactMiddleName` | string | Alt contact middle name |
+  | `/altContactLastName` | string | Alt contact last name |
+  | `/altContactJobTitle` | string | Alt contact job title |
+  | `/altContactEmail1` | string (email) | Alt contact email 1 (primary) |
+  | `/altContactEmail2` | string (email) | Alt contact email 2 |
+  | `/altContactEmail3` | string (email) | Alt contact email 3 |
+  | `/altContactPhone1` | string | Alt contact phone 1 |
+  | `/altContactPhone1Type` | string (enum) | Alt contact phone 1 type — see Enums |
+  | `/altContactPhone1Desc` | string | Alt contact phone 1 description / extension |
+  | `/altContactPhone2` | string | Alt contact phone 2 |
+  | `/altContactPhone2Type` | string (enum) | Alt contact phone 2 type — see Enums |
+  | `/altContactPhone2Desc` | string | Alt contact phone 2 description / extension |
+  | `/altContactPhone3` | string | Alt contact phone 3 |
+  | `/altContactPhone3Type` | string (enum) | Alt contact phone 3 type — see Enums |
+  | `/altContactPhone3Desc` | string | Alt contact phone 3 description / extension |
+  | `/homeAddressLine1` | string | Home address line 1 |
+  | `/homeAddressLine2` | string | Home address line 2 |
+  | `/homeAddressCity` | string | Home address city |
+  | `/homeAddressState` | string | Home address state |
+  | `/homeAddressZip` | string | Home address zip or postal code |
+  | `/homeAddressCountry` | string | Home address country |
+  | `/workAddressLine1` | string | Work address line 1 |
+  | `/workAddressLine2` | string | Work address line 2 |
+  | `/workAddressCity` | string | Work address city |
+  | `/workAddressState` | string | Work address state |
+  | `/workAddressZip` | string | Work address zip or postal code |
+  | `/workAddressCountry` | string | Work address country |
+  | `/primaryAddress` | string (enum) | Primary address used for communication — see Enums |
+  | `/website` | string (uri) | Website URL |
+  | `/brokerNum` | string | Broker license number |
+  | `/licenseNum` | string | Contact license number |
+  | `/relationshipRating` | string (enum) | Relationship rating — see Enums |
+  | `/salutationLtr` | string | Letter salutation |
+  | `/salutationEnv` | string | Envelope salutation |
+
+**Response (2xx payload)**
+
+  Returns `APIContactDto` (200 OK) — the full updated Contact record:
+
+  | Field | Type | Description |
+  |---|---|---|
+  | `contactId` | integer | ID of the Contact |
+  | `teamId` | integer | ID of the Team |
+  | `associatedAppUserId` | integer | ID of the associated AppUser; populated when Contact is a team member |
+  | `company` | string | Company name |
+  | `teamName` | string | Team name |
+  | `name.company` | string | Company (in name object) |
+  | `name.title` | string | Title (e.g. `"Mr."`) |
+  | `name.firstName` | string | First Name |
+  | `name.middleName` | string | Middle Name |
+  | `name.lastName` | string | Last Name |
+  | `name.jobTitle` | string | Job title |
+  | `email1` | string (email) | Email 1 |
+  | `email2` | string (email) | Email 2 |
+  | `email3` | string (email) | Email 3 |
+  | `primaryEmail` | string (email) | Primary email used for communication |
+  | `phone1.phone` | string | Phone Number |
+  | `phone1.formattedPhoneString` | string | Phone formatted as (xxx) xxx-xxxx if possible |
+  | `phone1.phoneType` | string (enum) | See `phoneType` enum |
+  | `phone1.phoneDesc` | string | Phone Description or Extension |
+  | `phone2.phone` | string | Phone 2 number |
+  | `phone2.formattedPhoneString` | string | Phone 2 formatted |
+  | `phone2.phoneType` | string (enum) | See `phoneType` enum |
+  | `phone2.phoneDesc` | string | Phone 2 description |
+  | `phone3.phone` | string | Phone 3 number |
+  | `phone3.formattedPhoneString` | string | Phone 3 formatted |
+  | `phone3.phoneType` | string (enum) | See `phoneType` enum |
+  | `phone3.phoneDesc` | string | Phone 3 description |
+  | `phone4.phone` | string | Phone 4 number |
+  | `phone4.formattedPhoneString` | string | Phone 4 formatted |
+  | `phone4.phoneType` | string (enum) | See `phoneType` enum |
+  | `phone4.phoneDesc` | string | Phone 4 description |
+  | `fax.phone` | string | Fax number |
+  | `fax.formattedPhoneString` | string | Fax formatted |
+  | `fax.phoneType` | string (enum) | See `phoneType` enum |
+  | `fax.phoneDesc` | string | Fax description |
+  | `altContactName.company` | string | Alt contact company |
+  | `altContactName.title` | string | Alt contact title |
+  | `altContactName.firstName` | string | Alt contact first name |
+  | `altContactName.middleName` | string | Alt contact middle name |
+  | `altContactName.lastName` | string | Alt contact last name |
+  | `altContactJobTitle` | string | Alt contact job title |
+  | `altContactEmail1` | string (email) | Alt contact email 1 |
+  | `altContactEmail2` | string (email) | Alt contact email 2 |
+  | `altContactEmail3` | string (email) | Alt contact email 3 |
+  | `altContactPrimaryEmail` | string (email) | Alt contact primary email |
+  | `altContactPhone1.phone` | string | Alt contact phone 1 number |
+  | `altContactPhone1.formattedPhoneString` | string | Alt contact phone 1 formatted |
+  | `altContactPhone1.phoneType` | string (enum) | See `phoneType` enum |
+  | `altContactPhone1.phoneDesc` | string | Alt contact phone 1 description |
+  | `altContactPhone2.phone` | string | Alt contact phone 2 number |
+  | `altContactPhone2.formattedPhoneString` | string | Alt contact phone 2 formatted |
+  | `altContactPhone2.phoneType` | string (enum) | See `phoneType` enum |
+  | `altContactPhone2.phoneDesc` | string | Alt contact phone 2 description |
+  | `altContactPhone3.phone` | string | Alt contact phone 3 number |
+  | `altContactPhone3.formattedPhoneString` | string | Alt contact phone 3 formatted |
+  | `altContactPhone3.phoneType` | string (enum) | See `phoneType` enum |
+  | `altContactPhone3.phoneDesc` | string | Alt contact phone 3 description |
+  | `homeAddress.address1` | string | Home address line 1 |
+  | `homeAddress.address2` | string | Home address line 2 |
+  | `homeAddress.city` | string | Home city |
+  | `homeAddress.state` | string | Home state |
+  | `homeAddress.zip` | string | Home zip / postal code |
+  | `homeAddress.country` | string | Home country |
+  | `homeAddress.county` | string | Home county |
+  | `homeAddress.latitude` | number (double) | Home latitude |
+  | `homeAddress.longitude` | number (double) | Home longitude |
+  | `workAddress.address1` | string | Work address line 1 |
+  | `workAddress.address2` | string | Work address line 2 |
+  | `workAddress.city` | string | Work city |
+  | `workAddress.state` | string | Work state |
+  | `workAddress.zip` | string | Work zip / postal code |
+  | `workAddress.country` | string | Work country |
+  | `workAddress.county` | string | Work county |
+  | `workAddress.latitude` | number (double) | Work latitude |
+  | `workAddress.longitude` | number (double) | Work longitude |
+  | `primaryAddress` | string (enum) | Primary address used for communication |
+  | `website` | string (uri) | Website URL |
+  | `brokerNum` | string | Broker license number |
+  | `licenseNum` | string | Contact license number |
+  | `salutationLtr` | string | Letter salutation |
+  | `salutationEnv` | string | Envelope salutation |
+  | `relationshipRating` | string (enum) | Relationship rating |
+  | `createDateTime` | string (date-time) | Date and time the Contact was created |
+  | `editDateTime` | string (date-time) | Date and time the Contact was last edited |
+  | `appUserIdOwners` | array\<integer\> | AppUser IDs that own the Contact (unique) |
+  | `categories[].categoryId` | integer | Category ID |
+  | `categories[].teamId` | integer | Team ID |
+  | `categories[].name` | string | Category name |
+
+**Enums / constants:**
+- `phoneType` (applies to `phone1Type`–`phone4Type`, `altContactPhone1Type`–`altContactPhone3Type`): `"CELL"`, `"HOME"`, `"WORK"`, `"COMPANY"`, `"PAGER"`, `"ASSISTANT"`, `"FAX"`, `"OTHER"`
+- `primaryAddress`: `"HOME"`, `"WORK"`
+- `relationshipRating`: `"A"`, `"B"`, `"C"`, `"D"`, `"E"`
+
+**Notable errors:**
+
+Error responses use the `APIResponse` envelope: `{ payload: any, error: { requestId, messages[], details[], validationErrors[{ fieldName, message }] } }`
+
+- `400 Bad Request` — Invalid JSON Patch format or operation
+- `403 Forbidden` — The authenticated user does not have permission to update this Contact
+- `404 Not Found` — Contact with the supplied ID does not exist
+- `422 Unprocessable Content` — Validation errors occurred while updating the Contact
+- `429 Too Many Requests` — Rate limit exceeded
+
+**Quirks & notes:**
+- Uses JSON Patch (RFC 6902) — request body is an array of patch operations (each with `op`, `path`, `value`), not a partial JSON object.
+- Content-Type must be `application/json-patch+json`.
+- `contactId` path param inferred from the endpoint path; the raw Swagger paste parameters section showed only the request body schema.
+- `APIContactPatchDto` field set is a superset of the contact-info patch DTO used on participants — adds address fields (home/work split), `primaryAddress`, `website`, `brokerNum`, `licenseNum`, `relationshipRating`, `salutationLtr`, `salutationEnv`, and all three alt-contact email fields.
+- Response DTO `APIContactDto` is identical to the one returned by `GET /v1/contacts/{contactId}` and `POST /v1/contacts`.
+- Authentication: global `X-AFrame-API-Key` header.
 
 ---
 
