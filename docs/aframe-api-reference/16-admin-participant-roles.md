@@ -13,10 +13,39 @@ project: AAR-TC Aframe Connector
 
 ---
 
-#### `GET /v1/xaction-participant-roles` — List participant roles
-**Status:** Not extracted
+#### `GET /v1/xaction-participant-roles` — List Transaction Participant Roles
+**Status:** ✅ Extracted 2026-06-18
 
-_Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format._
+**Summary:** List Transaction Participant Roles
+
+**Description:** Returns every Transaction Participant Role defined for the authenticated user's Team. Roles identify the part each Participant plays in a Transaction (e.g. Buyer, Listing Agent, Lender).
+
+**Request**
+- Content-Type: N/A
+- Path params: None
+- Query params: None
+- Body schema: None
+
+**Response (2xx payload)**
+
+Returns an array of role objects.
+
+  | Field | Type | Description |
+  |---|---|---|
+  | `[].xactionParticipantRoleId` | integer | ID of the Transaction Participant Role |
+  | `[].name` | string | Name of the role (e.g., `"Buyer"`, `"Listing Agent"`) |
+  | `[].sort` | integer | Sort order for display |
+  | `[].mergeFieldCodePrefix` | string | Merge field code prefix used in templates |
+
+**Notable errors:**
+
+| Code | Description |
+|---|---|
+| 429 | Too Many Requests — rate limit exceeded |
+
+**Quirks & notes:**
+- Returns all roles for the authenticated user's Team — no filtering parameters.
+- Authentication: global `X-AFrame-API-Key` header.
 
 ---
 
