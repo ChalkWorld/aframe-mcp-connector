@@ -269,10 +269,104 @@ All error responses use the `APIResponse` envelope (`payload: any`, `error.reque
 
 ---
 
-#### `PATCH /v1/xaction-participants/{xactionParticipantId}` — Update a participant
-**Status:** Not extracted
+#### `PATCH /v1/xaction-participants/{xactionParticipantId}` — Update Participant-Level Fields on a Transaction Participant
+**Status:** ✅ Extracted 2026-06-18
 
-_Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format._
+**Summary:** Update Participant-Level Fields on a Transaction Participant
+
+**Description:** Updates participant-level fields (role, visibility) on the specified Transaction Participant. Contact-info fields (name, phones, address, etc.) are NOT patchable here. Use `PATCH /xaction-participants/{id}/linked-contact` when the participant has a linked Contact (updates the Contact entity and re-syncs the snapshot), or `PATCH /xaction-participants/{id}/contact-info` when the participant has no linked Contact (updates the snapshot only). Discover linkage state via the `linkedContactId` field on the response of `GET /xaction-participants/{id}`.
+
+**Request**
+- Content-Type: `application/json-patch+json`
+- Path params:
+
+  | Name | Type | Required | Description |
+  |---|---|---|---|
+  | xactionParticipantId | integer | yes | ID of the Transaction Participant to update |
+
+- Body schema (`APIXactionParticipantPatchDto` — patch model for participant-level fields):
+
+  | Field | Type | Required | Description / Notes |
+  |---|---|---|---|
+  | xactionParticipantRoleId | integer (int32) | no | ID of the XactionParticipantRole to assign |
+  | agentVisible | boolean | no | Whether the participant is visible on the Agent portal |
+  | buyerSellerVisible | boolean | no | Whether the participant is visible on the Buyer/Seller portal |
+
+**Response (2xx payload)** — wrapper: `APIXactionParticipantDto`
+
+  | Field | Type | Description |
+  |---|---|---|
+  | xactionParticipantId | integer (int32) | ID of the XactionParticipant |
+  | xactionId | integer (int32) | ID of the Xaction |
+  | xactionParticipantRoleId | integer (int32) | ID of the XactionParticipantRole |
+  | xactionParticipantRole | string | Name of the Transaction Participant Role |
+  | linkedContactId | integer (int32) | ID of the linked Contact, or null when no linked Contact |
+  | contactInfo | object | Contact information (digest). Sourced from linked Contact or participant snapshot |
+  | contactInfo.contactId | integer (int32) | ID of the Contact |
+  | contactInfo.name | object | Contact name (NameDto) |
+  | contactInfo.name.company | string | Company |
+  | contactInfo.name.title | string | Title (e.g. `"Mr."`) |
+  | contactInfo.name.firstName | string | First Name |
+  | contactInfo.name.middleName | string | Middle Name |
+  | contactInfo.name.lastName | string | Last Name |
+  | contactInfo.company | string | Company name |
+  | contactInfo.teamName | string | Team name |
+  | contactInfo.jobTitle | string | Job title |
+  | contactInfo.primaryEmail | string (email) | Primary email used for communication |
+  | contactInfo.phone1 | object | Phone 1 (PhoneDto) |
+  | contactInfo.phone1.phone | string | Phone Number |
+  | contactInfo.phone1.formattedPhoneString | string | Phone Number with (xxx) xxx-xxxx format, if possible |
+  | contactInfo.phone1.phoneType | string (enum) | Phone Type — see Enums |
+  | contactInfo.phone1.phoneDesc | string | Phone Description or Extension |
+  | contactInfo.phone2 | object | Phone 2 (PhoneDto — same shape as phone1) |
+  | contactInfo.phone2.phone | string | Phone Number |
+  | contactInfo.phone2.formattedPhoneString | string | Phone Number with (xxx) xxx-xxxx format, if possible |
+  | contactInfo.phone2.phoneType | string (enum) | Phone Type — see Enums |
+  | contactInfo.phone2.phoneDesc | string | Phone Description or Extension |
+  | contactInfo.altContactName | object | Alt contact name (NameDto) |
+  | contactInfo.altContactName.company | string | Company |
+  | contactInfo.altContactName.title | string | Title |
+  | contactInfo.altContactName.firstName | string | First Name |
+  | contactInfo.altContactName.middleName | string | Middle Name |
+  | contactInfo.altContactName.lastName | string | Last Name |
+  | contactInfo.altContactJobTitle | string | Alt contact job title |
+  | contactInfo.altContactPrimaryEmail | string (email) | Alt contact primary email |
+  | contactInfo.altContactPhone1 | object | Alt contact phone 1 (PhoneDto) |
+  | contactInfo.altContactPhone1.phone | string | Phone Number |
+  | contactInfo.altContactPhone1.formattedPhoneString | string | Formatted phone string |
+  | contactInfo.altContactPhone1.phoneType | string (enum) | Phone Type — see Enums |
+  | contactInfo.altContactPhone1.phoneDesc | string | Phone Description or Extension |
+  | contactInfo.altContactPhone2 | object | Alt contact phone 2 (PhoneDto — same shape as altContactPhone1) |
+  | contactInfo.altContactPhone2.phone | string | Phone Number |
+  | contactInfo.altContactPhone2.formattedPhoneString | string | Formatted phone string |
+  | contactInfo.altContactPhone2.phoneType | string (enum) | Phone Type — see Enums |
+  | contactInfo.altContactPhone2.phoneDesc | string | Phone Description or Extension |
+  | contactInfo.brokerNum | string | Broker license number |
+  | contactInfo.licenseNum | string | Contact license number |
+  | contactInfo.createDateTime | string (date-time) | Date and time the Contact was created |
+  | contactInfo.editDateTime | string (date-time) | Date and time the Contact was last edited |
+  | sort | integer (int32) | Sort order for display |
+  | agentVisible | boolean | Whether the participant is visible to agents on the transaction |
+  | buyerSellerVisible | boolean | Whether the participant is visible to buyers/sellers on the portal |
+
+**Enums / constants:**
+- `phoneType` (all PhoneDto instances in response): `CELL`, `HOME`, `WORK`, `COMPANY`, `PAGER`, `ASSISTANT`, `FAX`, `OTHER`
+
+**Notable errors:**
+
+All non-2xx responses use the `APIResponse` envelope: `payload` (any), `error.requestId` (correlation ID), `error.messages[]` (friendly), `error.details[]` (detailed), `error.validationErrors[]` (per-field: `fieldName`, `message`).
+
+- 400 — Bad Request: Invalid JSON Patch format or operation
+- 403 — Forbidden: The authenticated user does not have permission to update this Transaction Participant
+- 404 — Not Found: Transaction Participant with the supplied ID does not exist
+- 422 — Unprocessable Content: Validation errors occurred while updating the Transaction Participant (per-field `validationErrors` populated)
+- 429 — Too Many Requests: Rate limit exceeded
+
+**Quirks & notes:**
+- This endpoint patches **participant-level fields only** (`xactionParticipantRoleId`, `agentVisible`, `buyerSellerVisible`). Contact-info fields (name, phones, address, etc.) are not patchable here.
+- To update contact-info, use `PATCH /xaction-participants/{id}/linked-contact` (when `linkedContactId` is not null) or `PATCH /xaction-participants/{id}/contact-info` (when no linked Contact).
+- Despite the `application/json-patch+json` content-type, the body schema (`APIXactionParticipantPatchDto`) is a plain object with named fields — not an RFC 6902 array.
+- Authentication: global `X-AFrame-API-Key` header.
 
 ---
 
