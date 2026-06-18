@@ -13,10 +13,164 @@ project: AAR-TC Aframe Connector
 
 ---
 
-#### `POST /v1/xaction-participants` — Add a participant
-**Status:** Not extracted
+#### `POST /v1/xaction-participants` — Create a Transaction Participant
+**Status:** ✅ Extracted 2026-06-18
 
-_Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format._
+**Summary:** Create a Transaction Participant
+
+**Description:** Creates a new Transaction Participant assigned to a Transaction with a specified role. You may either provide `linkedContactId` to link an existing Contact, or provide `contactInfo` to create a brand-new Contact and link it at the same time. If both are supplied, `linkedContactId` wins and `contactInfo` is ignored.
+
+**Request**
+- Content-Type: `application/json`
+- Path params: None
+- Body schema (`APIXactionParticipantCreateDto`):
+
+  | Field | Type | Required | Description / Notes |
+  |---|---|---|---|
+  | `xactionId` | integer (int32) | yes | ID of the Xaction |
+  | `xactionParticipantRoleId` | integer (int32) | yes | ID of the XactionParticipantRole |
+  | `linkedContactId` | integer (int32) | no | ID of an existing Contact to link; if provided, `contactInfo` is ignored |
+  | `contactInfo` | object | no | Inline contact data; required if `linkedContactId` is not provided |
+  | `contactInfo.company` | string ≤100 | no | Company name |
+  | `contactInfo.teamName` | string ≤100 | no | Team name |
+  | `contactInfo.title` | string ≤20 | no | Name title |
+  | `contactInfo.firstName` | string ≤75 | no | First name |
+  | `contactInfo.middleName` | string ≤25 | no | Middle name |
+  | `contactInfo.lastName` | string ≤75 | no | Last name |
+  | `contactInfo.jobTitle` | string ≤75 | no | Job title |
+  | `contactInfo.email1` | string (email) ≤255 | no | Email 1 (primary) |
+  | `contactInfo.email2` | string (email) ≤255 | no | Email 2 |
+  | `contactInfo.email3` | string (email) ≤255 | no | Email 3 |
+  | `contactInfo.phone1` | string ≤30 | no | Phone 1 |
+  | `contactInfo.phone1Type` | string ≤20 | no | Phone 1 type (enum) |
+  | `contactInfo.phone1Desc` | string ≤20 | no | Phone 1 description / extension |
+  | `contactInfo.phone2` | string ≤30 | no | Phone 2 |
+  | `contactInfo.phone2Type` | string ≤20 | no | Phone 2 type (enum) |
+  | `contactInfo.phone2Desc` | string ≤20 | no | Phone 2 description / extension |
+  | `contactInfo.phone3` | string ≤30 | no | Phone 3 |
+  | `contactInfo.phone3Type` | string ≤20 | no | Phone 3 type (enum) |
+  | `contactInfo.phone3Desc` | string ≤20 | no | Phone 3 description / extension |
+  | `contactInfo.phone4` | string ≤30 | no | Phone 4 |
+  | `contactInfo.phone4Type` | string ≤20 | no | Phone 4 type (enum) |
+  | `contactInfo.phone4Desc` | string ≤20 | no | Phone 4 description / extension |
+  | `contactInfo.fax` | string ≤30 | no | Fax number |
+  | `contactInfo.faxDesc` | string ≤20 | no | Fax description / extension |
+  | `contactInfo.altContactTitle` | string ≤20 | no | Alt contact name title |
+  | `contactInfo.altContactFirstName` | string ≤75 | no | Alt contact first name |
+  | `contactInfo.altContactMiddleName` | string ≤25 | no | Alt contact middle name |
+  | `contactInfo.altContactLastName` | string ≤75 | no | Alt contact last name |
+  | `contactInfo.altContactJobTitle` | string ≤75 | no | Alt contact job title |
+  | `contactInfo.altContactEmail1` | string (email) ≤255 | no | Alt contact email 1 (primary) |
+  | `contactInfo.altContactEmail2` | string (email) ≤255 | no | Alt contact email 2 |
+  | `contactInfo.altContactEmail3` | string (email) ≤255 | no | Alt contact email 3 |
+  | `contactInfo.altContactPhone1` | string ≤30 | no | Alt contact phone 1 |
+  | `contactInfo.altContactPhone1Type` | string ≤20 | no | Alt contact phone 1 type (enum) |
+  | `contactInfo.altContactPhone1Desc` | string ≤20 | no | Alt contact phone 1 description / extension |
+  | `contactInfo.altContactPhone2` | string ≤30 | no | Alt contact phone 2 |
+  | `contactInfo.altContactPhone2Type` | string ≤20 | no | Alt contact phone 2 type (enum) |
+  | `contactInfo.altContactPhone2Desc` | string ≤20 | no | Alt contact phone 2 description / extension |
+  | `contactInfo.altContactPhone3` | string ≤30 | no | Alt contact phone 3 |
+  | `contactInfo.altContactPhone3Type` | string ≤20 | no | Alt contact phone 3 type (enum) |
+  | `contactInfo.altContactPhone3Desc` | string ≤20 | no | Alt contact phone 3 description / extension |
+  | `contactInfo.homeAddressLine1` | string ≤100 | no | Home address line 1 |
+  | `contactInfo.homeAddressLine2` | string ≤100 | no | Home address line 2 |
+  | `contactInfo.homeAddressCity` | string ≤75 | no | Home address city |
+  | `contactInfo.homeAddressState` | string ≤4 | no | Home address state |
+  | `contactInfo.homeAddressZip` | string ≤10 | no | Home address zip or postal code |
+  | `contactInfo.homeAddressCountry` | string ≤50 | no | Home address country |
+  | `contactInfo.workAddressLine1` | string ≤100 | no | Work address line 1 |
+  | `contactInfo.workAddressLine2` | string ≤100 | no | Work address line 2 |
+  | `contactInfo.workAddressCity` | string ≤75 | no | Work address city |
+  | `contactInfo.workAddressState` | string ≤4 | no | Work address state |
+  | `contactInfo.workAddressZip` | string ≤10 | no | Work address zip or postal code |
+  | `contactInfo.workAddressCountry` | string ≤50 | no | Work address country |
+  | `contactInfo.primaryAddress` | string | no | Primary address used for communication (enum: `HOME`, `WORK`) |
+  | `contactInfo.website` | string (uri) ≤255 | no | Website URL |
+  | `contactInfo.brokerNum` | string ≤20 | no | Broker license number |
+  | `contactInfo.licenseNum` | string ≤20 | no | Contact license number |
+  | `contactInfo.relationshipRating` | string | no | Relationship rating (enum: `A`–`E`) |
+  | `contactInfo.salutationLtr` | string ≤255 | no | Letter salutation; auto-completed if not provided |
+  | `contactInfo.salutationEnv` | string ≤255 | no | Envelope salutation; auto-completed if not provided |
+  | `contactInfo.categories` | array\<string ≤100\> | no | Category names to associate with the Contact |
+  | `onlySaveContactInTransaction` | boolean | no | If `true`, contact info stored only on participant snapshot — no Contact entity created |
+  | `agentVisible` | boolean | no | Visible on Agent portal. Defaults to `true` |
+  | `buyerSellerVisible` | boolean | no | Visible on Buyer/Seller portal. Defaults to `true` |
+
+**Response (2xx payload)**
+
+HTTP 201. Returns `APIXactionParticipantDto`:
+
+  | Field | Type | Description |
+  |---|---|---|
+  | `xactionParticipantId` | integer | ID of the XactionParticipant |
+  | `xactionId` | integer | ID of the Xaction |
+  | `xactionParticipantRoleId` | integer | ID of the XactionParticipantRole |
+  | `xactionParticipantRole` | string | Name of the Transaction Participant Role |
+  | `linkedContactId` | integer \| null | ID of the linked Contact, or `null` when no linked Contact |
+  | `contactInfo.contactId` | integer | ID of the Contact |
+  | `contactInfo.name.company` | string | Company (from name object) |
+  | `contactInfo.name.title` | string | Title |
+  | `contactInfo.name.firstName` | string | First Name |
+  | `contactInfo.name.middleName` | string | Middle Name |
+  | `contactInfo.name.lastName` | string | Last Name |
+  | `contactInfo.company` | string | Company name |
+  | `contactInfo.teamName` | string | Team name |
+  | `contactInfo.jobTitle` | string | Job title |
+  | `contactInfo.primaryEmail` | string (email) | Primary email used for communication |
+  | `contactInfo.phone1.phone` | string | Phone Number |
+  | `contactInfo.phone1.formattedPhoneString` | string | Phone Number in (xxx) xxx-xxxx format if possible |
+  | `contactInfo.phone1.phoneType` | string | Phone Type (enum) |
+  | `contactInfo.phone1.phoneDesc` | string | Phone Description or Extension |
+  | `contactInfo.phone2.phone` | string | Phone Number |
+  | `contactInfo.phone2.formattedPhoneString` | string | Phone Number formatted |
+  | `contactInfo.phone2.phoneType` | string | Phone Type (enum) |
+  | `contactInfo.phone2.phoneDesc` | string | Phone Description or Extension |
+  | `contactInfo.altContactName.company` | string | Company |
+  | `contactInfo.altContactName.title` | string | Title |
+  | `contactInfo.altContactName.firstName` | string | First Name |
+  | `contactInfo.altContactName.middleName` | string | Middle Name |
+  | `contactInfo.altContactName.lastName` | string | Last Name |
+  | `contactInfo.altContactJobTitle` | string | Alt contact job title |
+  | `contactInfo.altContactPrimaryEmail` | string (email) | Alt contact primary email |
+  | `contactInfo.altContactPhone1.phone` | string | Phone Number |
+  | `contactInfo.altContactPhone1.formattedPhoneString` | string | Phone Number formatted |
+  | `contactInfo.altContactPhone1.phoneType` | string | Phone Type (enum) |
+  | `contactInfo.altContactPhone1.phoneDesc` | string | Phone Description or Extension |
+  | `contactInfo.altContactPhone2.phone` | string | Phone Number |
+  | `contactInfo.altContactPhone2.formattedPhoneString` | string | Phone Number formatted |
+  | `contactInfo.altContactPhone2.phoneType` | string | Phone Type (enum) |
+  | `contactInfo.altContactPhone2.phoneDesc` | string | Phone Description or Extension |
+  | `contactInfo.brokerNum` | string | Broker license number |
+  | `contactInfo.licenseNum` | string | Contact license number |
+  | `contactInfo.createDateTime` | string (date-time) | Date and time the Contact was created |
+  | `contactInfo.editDateTime` | string (date-time) | Date and time the Contact was last edited |
+  | `sort` | integer | Sort order for display |
+  | `agentVisible` | boolean | Whether the participant is visible to agents on the transaction |
+  | `buyerSellerVisible` | boolean | Whether the participant is visible to buyers/sellers on the portal |
+
+**Enums / constants:**
+- `phone1Type` / `phone2Type` / `phone3Type` / `phone4Type` / `altContactPhone1Type` / `altContactPhone2Type` / `altContactPhone3Type` (request) and `phoneType` (response phone objects): `"CELL"`, `"HOME"`, `"WORK"`, `"COMPANY"`, `"PAGER"`, `"ASSISTANT"`, `"FAX"`, `"OTHER"`
+- `primaryAddress`: `"HOME"`, `"WORK"`
+- `relationshipRating`: `"A"`, `"B"`, `"C"`, `"D"`, `"E"`
+
+**Notable errors:**
+
+All error responses use the `APIResponse` envelope (`payload: any`, `error.requestId`, `error.messages[]`, `error.details[]`, `error.validationErrors[].fieldName`, `error.validationErrors[].message`).
+
+| Code | Description |
+|---|---|
+| 400 | Bad Request — Malformed JSON or unreadable payload |
+| 403 | Forbidden — Authenticated user does not have permission to access the Transaction |
+| 404 | Not Found — Transaction, Role, or Contact does not exist |
+| 422 | Unprocessable Content — Validation errors occurred while creating the Transaction Participant |
+| 429 | Too Many Requests — Rate limit exceeded |
+
+**Quirks & notes:**
+- `linkedContactId` vs `contactInfo`: supply one or the other; if both are present, `linkedContactId` wins and `contactInfo` is silently ignored.
+- `onlySaveContactInTransaction = true`: contact data stored only on the participant's snapshot — no standalone Contact entity is created and `linkedContactId` on the response will be `null`. Useful for one-time participants.
+- Response `contactInfo` is sourced from the linked Contact when one exists; otherwise from the participant's snapshot (digest, not the full writable payload).
+- Returns HTTP 201 (not 200) on success.
+- Authentication: global `X-AFrame-API-Key` header.
 
 ---
 
