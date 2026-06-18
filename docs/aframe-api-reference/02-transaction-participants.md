@@ -383,13 +383,27 @@ All non-2xx responses use the `APIResponse` envelope: `payload` (any), `error.re
 
   | Name | Type | Required | Description |
   |---|---|---|---|
-  | xactionParticipantId | integer | yes | ID of the Transaction Participant to delete |
+  | `xactionParticipantId` | integer | yes | ID of the Transaction Participant to delete |
 
 - Body schema: None
 
 **Response (2xx payload)**
 
-Response schema not available — RESPONSES section was empty in the raw paste.
+The 200 response payload is a plain `string` (e.g., `"success"`).
+
+  | Field | Type | Description |
+  |---|---|---|
+  | `payload` | string | Confirmation string (e.g., `"success"`) |
+
+**Notable errors:**
+
+All error responses use the `APIResponse` envelope with fields: `payload` (any), `error.requestId` (string), `error.messages[]` (string), `error.details[]` (string), `error.validationErrors[]` (`fieldName`, `message`).
+
+| Code | Description |
+|---|---|
+| 403 | Forbidden — authenticated user does not have permission to delete this Transaction Participant |
+| 404 | Not Found — Transaction Participant with the supplied ID does not exist |
+| 429 | Too Many Requests — rate limit exceeded |
 
 **Quirks & notes:**
 - Deleting a participant does not delete the linked Contact (if any).
