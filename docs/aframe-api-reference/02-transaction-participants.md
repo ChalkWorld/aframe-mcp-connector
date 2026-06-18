@@ -174,10 +174,98 @@ All error responses use the `APIResponse` envelope (`payload: any`, `error.reque
 
 ---
 
-#### `GET /v1/xaction-participants/{xactionParticipantId}` — Get a participant
-**Status:** Not extracted
+#### `GET /v1/xaction-participants/{xactionParticipantId}` — Get a Transaction Participant
+**Status:** ✅ Extracted 2026-06-18
 
-_Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format._
+**Summary:** Get a Transaction Participant
+
+**Description:** Returns the Transaction Participant with the supplied ID.
+
+**Request**
+- Content-Type: `application/json`
+- Path params:
+
+  | Name | Type | Required | Description |
+  |---|---|---|---|
+  | `xactionParticipantId` | integer (int32) | yes | ID of the Transaction Participant |
+
+- Query params: None
+- Body schema: None
+
+**Response (2xx payload)** — wrapper: `APIXactionParticipantDto`
+
+  | Field | Type | Description |
+  |---|---|---|
+  | `xactionParticipantId` | integer (int32) | ID of the XactionParticipant |
+  | `xactionId` | integer (int32) | ID of the Xaction |
+  | `xactionParticipantRoleId` | integer (int32) | ID of the XactionParticipantRole |
+  | `xactionParticipantRole` | string | Name of the Transaction Participant Role |
+  | `linkedContactId` | integer (int32) \| null | ID of the linked Contact, or `null` when the participant has no linked Contact |
+  | `contactInfo` | object | Contact information (digest). Sourced from the linked Contact when one exists, otherwise from the participant's snapshot. |
+  | `contactInfo.contactId` | integer (int32) | ID of the Contact |
+  | `contactInfo.name` | object | Contact name (NameDto) |
+  | `contactInfo.name.company` | string | Company |
+  | `contactInfo.name.title` | string | Title (e.g. `"Mr."`) |
+  | `contactInfo.name.firstName` | string | First Name |
+  | `contactInfo.name.middleName` | string | Middle Name |
+  | `contactInfo.name.lastName` | string | Last Name |
+  | `contactInfo.company` | string | Company name |
+  | `contactInfo.teamName` | string | Team name |
+  | `contactInfo.jobTitle` | string | Job title |
+  | `contactInfo.primaryEmail` | string (email) | Primary email used for communication |
+  | `contactInfo.phone1` | object | Phone 1 (PhoneDto) |
+  | `contactInfo.phone1.phone` | string | Phone Number |
+  | `contactInfo.phone1.formattedPhoneString` | string | Phone Number with (xxx) xxx-xxxx format, if possible |
+  | `contactInfo.phone1.phoneType` | string (enum) | Phone Type — see Enums |
+  | `contactInfo.phone1.phoneDesc` | string | Phone Description or Extension |
+  | `contactInfo.phone2` | object | Phone 2 (PhoneDto — same shape as phone1) |
+  | `contactInfo.phone2.phone` | string | Phone Number |
+  | `contactInfo.phone2.formattedPhoneString` | string | Phone Number with (xxx) xxx-xxxx format, if possible |
+  | `contactInfo.phone2.phoneType` | string (enum) | Phone Type — see Enums |
+  | `contactInfo.phone2.phoneDesc` | string | Phone Description or Extension |
+  | `contactInfo.altContactName` | object | Alt contact name (NameDto — same shape as name) |
+  | `contactInfo.altContactName.company` | string | Company |
+  | `contactInfo.altContactName.title` | string | Title |
+  | `contactInfo.altContactName.firstName` | string | First Name |
+  | `contactInfo.altContactName.middleName` | string | Middle Name |
+  | `contactInfo.altContactName.lastName` | string | Last Name |
+  | `contactInfo.altContactJobTitle` | string | Alt contact job title |
+  | `contactInfo.altContactPrimaryEmail` | string (email) | Alt contact primary email used for communication |
+  | `contactInfo.altContactPhone1` | object | Alt contact phone 1 (PhoneDto) |
+  | `contactInfo.altContactPhone1.phone` | string | Phone Number |
+  | `contactInfo.altContactPhone1.formattedPhoneString` | string | Phone Number with (xxx) xxx-xxxx format, if possible |
+  | `contactInfo.altContactPhone1.phoneType` | string (enum) | Phone Type — see Enums |
+  | `contactInfo.altContactPhone1.phoneDesc` | string | Phone Description or Extension |
+  | `contactInfo.altContactPhone2` | object | Alt contact phone 2 (PhoneDto — same shape as altContactPhone1) |
+  | `contactInfo.altContactPhone2.phone` | string | Phone Number |
+  | `contactInfo.altContactPhone2.formattedPhoneString` | string | Phone Number with (xxx) xxx-xxxx format, if possible |
+  | `contactInfo.altContactPhone2.phoneType` | string (enum) | Phone Type — see Enums |
+  | `contactInfo.altContactPhone2.phoneDesc` | string | Phone Description or Extension |
+  | `contactInfo.brokerNum` | string | Broker license number |
+  | `contactInfo.licenseNum` | string | Contact license number |
+  | `contactInfo.createDateTime` | string (date-time) | Date and time the Contact was created |
+  | `contactInfo.editDateTime` | string (date-time) | Date and time the Contact was last edited |
+  | `sort` | integer (int32) | Sort order for display |
+  | `agentVisible` | boolean | Whether the participant is visible to agents on the transaction |
+  | `buyerSellerVisible` | boolean | Whether the participant is visible to buyers/sellers on the portal |
+
+**Enums / constants:**
+- `phoneType` (all PhoneDto instances — `contactInfo.phone1`, `contactInfo.phone2`, `contactInfo.altContactPhone1`, `contactInfo.altContactPhone2`): `"CELL"`, `"HOME"`, `"WORK"`, `"COMPANY"`, `"PAGER"`, `"ASSISTANT"`, `"FAX"`, `"OTHER"`
+
+**Notable errors:**
+
+All error responses use the `APIResponse` envelope (`payload: any`, `error.requestId`, `error.messages[]`, `error.details[]`, `error.validationErrors[].fieldName`, `error.validationErrors[].message`).
+
+| Code | Description |
+|---|---|
+| 403 | Forbidden — The authenticated user does not have permission to access this Transaction Participant |
+| 404 | Not Found — Transaction Participant with the supplied ID does not exist |
+| 429 | Too Many Requests — Rate limit exceeded |
+
+**Quirks & notes:**
+- `linkedContactId` may be `null` when the participant has no linked Contact; `contactInfo` is still populated from the participant's snapshot data.
+- `contactInfo` is a digest (not the full writable payload) sourced from the linked Contact when one exists, otherwise from the participant's snapshot.
+- Authentication: global `X-AFrame-API-Key` header.
 
 ---
 
