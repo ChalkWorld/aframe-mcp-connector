@@ -62,6 +62,7 @@ WORKFLOWS-FW-*           Workflow docs     — business processes using the tool
 | 1.0 | 2026-06-18 | Cursor / Claude-in-Chrome | Extracted: PUT /v1/xaction-participants/{xactionParticipantId}/linked-contact/{linkedContactId} |
 | 1.0 | 2026-06-18 | Cursor / Claude-in-Chrome | Extracted: DELETE /v1/xaction-participants/{xactionParticipantId}/linked-contact |
 | 1.0 | 2026-06-18 | Cursor / Claude-in-Chrome | Extracted: GET /v1/xaction-participant-roles |
+| 1.0 | 2026-06-18 | Cursor / Claude-in-Chrome | Extracted: PATCH /v1/tasks/{taskId} |
 
 ---
 
