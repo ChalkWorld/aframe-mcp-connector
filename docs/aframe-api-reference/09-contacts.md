@@ -13,10 +13,198 @@ project: AAR-TC Aframe Connector
 
 ---
 
-#### `POST /v1/contacts` — Create a contact
-**Status:** Not extracted
+#### `POST /v1/contacts` — Create a Contact
+**Status:** ✅ Extracted 2026-06-18
 
-_Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format._
+**Summary:** Create a Contact
+
+**Description:** Creates a new Contact on the authenticated user's Team. A Contact must have either a first & last name, or a company name, to be valid. See `APIContactCreateDto` for the full list of accepted fields.
+
+**Request**
+- Content-Type: `application/json`
+- Path params: None
+- Query params: None
+- Body schema (`APIContactCreateDto`):
+
+  | Field | Type | Required | Description / Notes |
+  |---|---|---|---|
+  | `company` | string (≤ 100 chars) | conditional | Company name. Required if `firstName`/`lastName` not provided. |
+  | `teamName` | string (≤ 100 chars) | no | Team name |
+  | `title` | string (≤ 20 chars) | no | Name title (e.g. `"Mr."`) |
+  | `firstName` | string (≤ 75 chars) | conditional | First name. Required with `lastName` if `company` not provided. |
+  | `middleName` | string (≤ 25 chars) | no | Middle name |
+  | `lastName` | string (≤ 75 chars) | conditional | Last name. Required with `firstName` if `company` not provided. |
+  | `jobTitle` | string (≤ 75 chars) | no | Job title |
+  | `email1` | string (email, ≤ 255 chars) | no | Email 1 (primary) |
+  | `email2` | string (email, ≤ 255 chars) | no | Email 2 |
+  | `email3` | string (email, ≤ 255 chars) | no | Email 3 |
+  | `phone1` | string (≤ 30 chars) | no | Phone 1 number |
+  | `phone1Type` | string (enum) | no | Phone 1 type. See `phoneType` enum. |
+  | `phone1Desc` | string (≤ 20 chars) | no | Phone 1 description / extension |
+  | `phone2` | string (≤ 30 chars) | no | Phone 2 number |
+  | `phone2Type` | string (enum) | no | Phone 2 type. See `phoneType` enum. |
+  | `phone2Desc` | string (≤ 20 chars) | no | Phone 2 description / extension |
+  | `phone3` | string (≤ 30 chars) | no | Phone 3 number |
+  | `phone3Type` | string (enum) | no | Phone 3 type. See `phoneType` enum. |
+  | `phone3Desc` | string (≤ 20 chars) | no | Phone 3 description / extension |
+  | `phone4` | string (≤ 30 chars) | no | Phone 4 number |
+  | `phone4Type` | string (enum) | no | Phone 4 type. See `phoneType` enum. |
+  | `phone4Desc` | string (≤ 20 chars) | no | Phone 4 description / extension |
+  | `fax` | string (≤ 30 chars) | no | Fax number |
+  | `faxDesc` | string (≤ 20 chars) | no | Fax description / extension |
+  | `altContactTitle` | string (≤ 20 chars) | no | Alt contact name title |
+  | `altContactFirstName` | string (≤ 75 chars) | no | Alt contact first name |
+  | `altContactMiddleName` | string (≤ 25 chars) | no | Alt contact middle name |
+  | `altContactLastName` | string (≤ 75 chars) | no | Alt contact last name |
+  | `altContactJobTitle` | string (≤ 75 chars) | no | Alt contact job title |
+  | `altContactEmail1` | string (email, ≤ 255 chars) | no | Alt contact email 1 (primary) |
+  | `altContactEmail2` | string (email, ≤ 255 chars) | no | Alt contact email 2 |
+  | `altContactEmail3` | string (email, ≤ 255 chars) | no | Alt contact email 3 |
+  | `altContactPhone1` | string (≤ 30 chars) | no | Alt contact phone 1 |
+  | `altContactPhone1Type` | string (enum) | no | Alt contact phone 1 type. See `phoneType` enum. |
+  | `altContactPhone1Desc` | string (≤ 20 chars) | no | Alt contact phone 1 description / extension |
+  | `altContactPhone2` | string (≤ 30 chars) | no | Alt contact phone 2 |
+  | `altContactPhone2Type` | string (enum) | no | Alt contact phone 2 type. See `phoneType` enum. |
+  | `altContactPhone2Desc` | string (≤ 20 chars) | no | Alt contact phone 2 description / extension |
+  | `altContactPhone3` | string (≤ 30 chars) | no | Alt contact phone 3 |
+  | `altContactPhone3Type` | string (enum) | no | Alt contact phone 3 type. See `phoneType` enum. |
+  | `altContactPhone3Desc` | string (≤ 20 chars) | no | Alt contact phone 3 description / extension |
+  | `homeAddressLine1` | string (≤ 100 chars) | no | Home address line 1 |
+  | `homeAddressLine2` | string (≤ 100 chars) | no | Home address line 2 |
+  | `homeAddressCity` | string (≤ 75 chars) | no | Home address city |
+  | `homeAddressState` | string (≤ 4 chars) | no | Home address state |
+  | `homeAddressZip` | string (≤ 10 chars) | no | Home address zip or postal code |
+  | `homeAddressCountry` | string (≤ 50 chars) | no | Home address country |
+  | `workAddressLine1` | string (≤ 100 chars) | no | Work address line 1 |
+  | `workAddressLine2` | string (≤ 100 chars) | no | Work address line 2 |
+  | `workAddressCity` | string (≤ 75 chars) | no | Work address city |
+  | `workAddressState` | string (≤ 4 chars) | no | Work address state |
+  | `workAddressZip` | string (≤ 10 chars) | no | Work address zip or postal code |
+  | `workAddressCountry` | string (≤ 50 chars) | no | Work address country |
+  | `primaryAddress` | string (enum) | no | Primary address used for communication. See `primaryAddress` enum. |
+  | `website` | string (uri, ≤ 255 chars) | no | Website URL |
+  | `brokerNum` | string (≤ 20 chars) | no | Broker license number |
+  | `licenseNum` | string (≤ 20 chars) | no | Contact license number |
+  | `relationshipRating` | string (enum) | no | Relationship rating. See `relationshipRating` enum. |
+  | `salutationLtr` | string (≤ 255 chars) | no | Letter salutation; auto-completed if not provided |
+  | `salutationEnv` | string (≤ 255 chars) | no | Envelope salutation; auto-completed if not provided |
+  | `categories` | array\<string\> | no | Category names to associate with the Contact (each name ≤ 100 chars) |
+
+**Response (2xx payload)**
+
+  Returns `APIContactDto` (201 Created):
+
+  | Field | Type | Description |
+  |---|---|---|
+  | `contactId` | integer | ID of the Contact |
+  | `teamId` | integer | ID of the Team |
+  | `associatedAppUserId` | integer | ID of the associated AppUser; populated when Contact is a team member |
+  | `company` | string | Company name |
+  | `teamName` | string | Team name |
+  | `name.company` | string | Company (in name object) |
+  | `name.title` | string | Title (e.g. `"Mr."`) |
+  | `name.firstName` | string | First Name |
+  | `name.middleName` | string | Middle Name |
+  | `name.lastName` | string | Last Name |
+  | `name.jobTitle` | string | Job title |
+  | `email1` | string (email) | Email 1 |
+  | `email2` | string (email) | Email 2 |
+  | `email3` | string (email) | Email 3 |
+  | `primaryEmail` | string (email) | Primary email used for communication |
+  | `phone1.phone` | string | Phone Number |
+  | `phone1.formattedPhoneString` | string | Phone formatted as (xxx) xxx-xxxx if possible |
+  | `phone1.phoneType` | string (enum) | See `phoneType` enum |
+  | `phone1.phoneDesc` | string | Phone Description or Extension |
+  | `phone2.phone` | string | Phone 2 number |
+  | `phone2.formattedPhoneString` | string | Phone 2 formatted |
+  | `phone2.phoneType` | string (enum) | See `phoneType` enum |
+  | `phone2.phoneDesc` | string | Phone 2 description |
+  | `phone3.phone` | string | Phone 3 number |
+  | `phone3.formattedPhoneString` | string | Phone 3 formatted |
+  | `phone3.phoneType` | string (enum) | See `phoneType` enum |
+  | `phone3.phoneDesc` | string | Phone 3 description |
+  | `phone4.phone` | string | Phone 4 number |
+  | `phone4.formattedPhoneString` | string | Phone 4 formatted |
+  | `phone4.phoneType` | string (enum) | See `phoneType` enum |
+  | `phone4.phoneDesc` | string | Phone 4 description |
+  | `fax.phone` | string | Fax number |
+  | `fax.formattedPhoneString` | string | Fax formatted |
+  | `fax.phoneType` | string (enum) | See `phoneType` enum |
+  | `fax.phoneDesc` | string | Fax description |
+  | `altContactName.company` | string | Alt contact company |
+  | `altContactName.title` | string | Alt contact title |
+  | `altContactName.firstName` | string | Alt contact first name |
+  | `altContactName.middleName` | string | Alt contact middle name |
+  | `altContactName.lastName` | string | Alt contact last name |
+  | `altContactJobTitle` | string | Alt contact job title |
+  | `altContactEmail1` | string (email) | Alt contact email 1 |
+  | `altContactEmail2` | string (email) | Alt contact email 2 |
+  | `altContactEmail3` | string (email) | Alt contact email 3 |
+  | `altContactPrimaryEmail` | string (email) | Alt contact primary email |
+  | `altContactPhone1.phone` | string | Alt contact phone 1 number |
+  | `altContactPhone1.formattedPhoneString` | string | Alt contact phone 1 formatted |
+  | `altContactPhone1.phoneType` | string (enum) | See `phoneType` enum |
+  | `altContactPhone1.phoneDesc` | string | Alt contact phone 1 description |
+  | `altContactPhone2.phone` | string | Alt contact phone 2 number |
+  | `altContactPhone2.formattedPhoneString` | string | Alt contact phone 2 formatted |
+  | `altContactPhone2.phoneType` | string (enum) | See `phoneType` enum |
+  | `altContactPhone2.phoneDesc` | string | Alt contact phone 2 description |
+  | `altContactPhone3.phone` | string | Alt contact phone 3 number |
+  | `altContactPhone3.formattedPhoneString` | string | Alt contact phone 3 formatted |
+  | `altContactPhone3.phoneType` | string (enum) | See `phoneType` enum |
+  | `altContactPhone3.phoneDesc` | string | Alt contact phone 3 description |
+  | `homeAddress.address1` | string | Home address line 1 |
+  | `homeAddress.address2` | string | Home address line 2 |
+  | `homeAddress.city` | string | Home city |
+  | `homeAddress.state` | string | Home state |
+  | `homeAddress.zip` | string | Home zip / postal code |
+  | `homeAddress.country` | string | Home country |
+  | `homeAddress.county` | string | Home county |
+  | `homeAddress.latitude` | number (double) | Home latitude |
+  | `homeAddress.longitude` | number (double) | Home longitude |
+  | `workAddress.address1` | string | Work address line 1 |
+  | `workAddress.address2` | string | Work address line 2 |
+  | `workAddress.city` | string | Work city |
+  | `workAddress.state` | string | Work state |
+  | `workAddress.zip` | string | Work zip / postal code |
+  | `workAddress.country` | string | Work country |
+  | `workAddress.county` | string | Work county |
+  | `workAddress.latitude` | number (double) | Work latitude |
+  | `workAddress.longitude` | number (double) | Work longitude |
+  | `primaryAddress` | string (enum) | Primary address used for communication |
+  | `website` | string (uri) | Website URL |
+  | `brokerNum` | string | Broker license number |
+  | `licenseNum` | string | Contact license number |
+  | `salutationLtr` | string | Letter salutation |
+  | `salutationEnv` | string | Envelope salutation |
+  | `relationshipRating` | string (enum) | Relationship rating |
+  | `createDateTime` | string (date-time) | Date and time the Contact was created |
+  | `editDateTime` | string (date-time) | Date and time the Contact was last edited |
+  | `appUserIdOwners` | array\<integer\> | AppUser IDs that own the Contact (unique) |
+  | `categories[].categoryId` | integer | Category ID |
+  | `categories[].teamId` | integer | Team ID |
+  | `categories[].name` | string | Category name |
+
+**Enums / constants:**
+- `phoneType` (applies to `phone1Type`–`phone4Type`, `altContactPhone1Type`–`altContactPhone3Type`): `"CELL"`, `"HOME"`, `"WORK"`, `"COMPANY"`, `"PAGER"`, `"ASSISTANT"`, `"FAX"`, `"OTHER"`
+- `primaryAddress`: `"HOME"`, `"WORK"`
+- `relationshipRating`: `"A"`, `"B"`, `"C"`, `"D"`, `"E"`
+
+**Notable errors:**
+
+Error responses use the `APIResponse` envelope: `{ payload: any, error: { requestId, messages[], details[], validationErrors[{ fieldName, message }] } }`
+
+- `400 Bad Request` — Malformed JSON or unreadable payload
+- `404 Not Found` — A referenced resource (such as a Category) could not be found
+- `422 Unprocessable Content` — The Contact data is invalid or missing required fields
+- `429 Too Many Requests` — Rate limit exceeded
+
+**Quirks & notes:**
+- A Contact must have either (`firstName` + `lastName`) OR `company` to be valid; the API enforces this via 422.
+- `salutationLtr` and `salutationEnv` are auto-completed by Aframe if not supplied.
+- `categories` accepts an array of **category name strings** (not IDs); a 404 is returned if a named category is not found on the team.
+- Response DTO (`APIContactDto`) includes `latitude`/`longitude` on address objects (geocoded by Aframe).
+- Authentication: global `X-AFrame-API-Key` header.
 
 ---
 

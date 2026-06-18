@@ -2,7 +2,7 @@
 title: Aframe API Endpoint Reference
 document_id: API-REF-001
 version: 1.0
-version_date: 2026-06-17
+version_date: 2026-06-18
 status: Active — Living Document
 author: Andrew Rich, AAR-TC Transaction Services
 contributor: Claude (Anthropic) — AI-assisted document assembly
@@ -51,6 +51,7 @@ WORKFLOWS-FW-*           Workflow docs     — business processes using the tool
 | 1.0 | 2026-06-16 | Andrew Rich / Claude | Document ID changed from `AAR-TC-AFRAME-API-001` to `API-REF-001`. Removed obsolete per-endpoint drill-down prompt section (Cursor now formats raw-paste handoffs directly). Added pointer to EXTRACTION-PROC-001. |
 | 1.0 | 2026-06-17 | Cursor / Claude-in-Chrome | Extracted: PATCH /v1/xaction-participants/{xactionParticipantId}/linked-contact |
 | 1.0 | 2026-06-17 | Cursor / Claude-in-Chrome | Extracted: POST /v1/contacts/search |
+| 1.0 | 2026-06-18 | Cursor / Claude-in-Chrome | Extracted: POST /v1/contacts |
 
 ---
 
