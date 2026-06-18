@@ -370,10 +370,30 @@ All non-2xx responses use the `APIResponse` envelope: `payload` (any), `error.re
 
 ---
 
-#### `DELETE /v1/xaction-participants/{xactionParticipantId}` — Remove a participant
-**Status:** Not extracted
+#### `DELETE /v1/xaction-participants/{xactionParticipantId}` — Delete a Transaction Participant
+**Status:** ✅ Extracted 2026-06-18
 
-_Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format._
+**Summary:** Delete a Transaction Participant
+
+**Description:** Deletes the Transaction Participant with the supplied ID. If the Participant is linked to a Contact, the Contact is not deleted.
+
+**Request**
+- Content-Type: N/A (no request body)
+- Path params:
+
+  | Name | Type | Required | Description |
+  |---|---|---|---|
+  | xactionParticipantId | integer | yes | ID of the Transaction Participant to delete |
+
+- Body schema: None
+
+**Response (2xx payload)**
+
+Response schema not available — RESPONSES section was empty in the raw paste.
+
+**Quirks & notes:**
+- Deleting a participant does not delete the linked Contact (if any).
+- Authentication: global `X-AFrame-API-Key` header.
 
 ---
 
