@@ -411,10 +411,96 @@ All error responses use the `APIResponse` envelope with fields: `payload` (any),
 
 ---
 
-#### `PUT /v1/xaction-participants/{xactionParticipantId}/linked-contact/{linkedContactId}` — Link a contact
-**Status:** Not extracted
+#### `PUT /v1/xaction-participants/{xactionParticipantId}/linked-contact/{linkedContactId}` — Set or Replace the Linked Contact of a Transaction Participant
+**Status:** ✅ Extracted 2026-06-18
 
-_Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format._
+**Summary:** Set or Replace the Linked Contact of a Transaction Participant
+
+**Description:** Sets the participant's linked Contact to the Contact identified by `linkedContactId`. The contact-info snapshot is re-synced from the resolved Contact. If the participant was previously linked to a different Contact, the prior link is replaced. No request body. The caller must have access to both the participant's Transaction and the target Contact.
+
+**Request**
+- Content-Type: N/A (no request body)
+- Path params:
+
+  | Name | Type | Required | Description |
+  |---|---|---|---|
+  | `xactionParticipantId` | integer | yes | ID of the Transaction Participant to update |
+  | `linkedContactId` | integer | yes | ID of the Contact to link |
+
+- Body schema: None
+
+**Response (2xx payload)**
+
+Returns the updated `APIXactionParticipantDto` object.
+
+  | Field | Type | Description |
+  |---|---|---|
+  | `xactionParticipantId` | integer | ID of the Transaction Participant |
+  | `xactionId` | integer | ID of the Transaction |
+  | `xactionParticipantRoleId` | integer | ID of the participant role |
+  | `xactionParticipantRole` | string | Name of the Transaction Participant Role |
+  | `linkedContactId` | integer | ID of the linked Contact; null if no linked Contact |
+  | `contactInfo.contactId` | integer | ID of the Contact |
+  | `contactInfo.name.company` | string | Company (within name object) |
+  | `contactInfo.name.title` | string | Title (e.g., `"Mr."`) |
+  | `contactInfo.name.firstName` | string | First Name |
+  | `contactInfo.name.middleName` | string | Middle Name |
+  | `contactInfo.name.lastName` | string | Last Name |
+  | `contactInfo.company` | string | Company name |
+  | `contactInfo.teamName` | string | Team name |
+  | `contactInfo.jobTitle` | string | Job title |
+  | `contactInfo.primaryEmail` | string (email) | Primary email used for communication |
+  | `contactInfo.phone1.phone` | string | Phone number |
+  | `contactInfo.phone1.formattedPhoneString` | string | Formatted phone `(xxx) xxx-xxxx` if possible |
+  | `contactInfo.phone1.phoneType` | string (enum) | Phone type — see Enums |
+  | `contactInfo.phone1.phoneDesc` | string | Phone description or extension |
+  | `contactInfo.phone2.phone` | string | Phone number |
+  | `contactInfo.phone2.formattedPhoneString` | string | Formatted phone `(xxx) xxx-xxxx` if possible |
+  | `contactInfo.phone2.phoneType` | string (enum) | Phone type — see Enums |
+  | `contactInfo.phone2.phoneDesc` | string | Phone description or extension |
+  | `contactInfo.altContactName.company` | string | Alt contact company |
+  | `contactInfo.altContactName.title` | string | Alt contact title |
+  | `contactInfo.altContactName.firstName` | string | Alt contact first name |
+  | `contactInfo.altContactName.middleName` | string | Alt contact middle name |
+  | `contactInfo.altContactName.lastName` | string | Alt contact last name |
+  | `contactInfo.altContactJobTitle` | string | Alt contact job title |
+  | `contactInfo.altContactPrimaryEmail` | string (email) | Alt contact primary email |
+  | `contactInfo.altContactPhone1.phone` | string | Alt contact phone 1 number |
+  | `contactInfo.altContactPhone1.formattedPhoneString` | string | Formatted alt phone 1 |
+  | `contactInfo.altContactPhone1.phoneType` | string (enum) | Alt phone 1 type — see Enums |
+  | `contactInfo.altContactPhone1.phoneDesc` | string | Alt phone 1 description or extension |
+  | `contactInfo.altContactPhone2.phone` | string | Alt contact phone 2 number |
+  | `contactInfo.altContactPhone2.formattedPhoneString` | string | Formatted alt phone 2 |
+  | `contactInfo.altContactPhone2.phoneType` | string (enum) | Alt phone 2 type — see Enums |
+  | `contactInfo.altContactPhone2.phoneDesc` | string | Alt phone 2 description or extension |
+  | `contactInfo.brokerNum` | string | Broker license number |
+  | `contactInfo.licenseNum` | string | Contact license number |
+  | `contactInfo.createDateTime` | string (date-time) | Date and time the Contact was created |
+  | `contactInfo.editDateTime` | string (date-time) | Date and time the Contact was last edited |
+  | `sort` | integer | Sort order for display |
+  | `agentVisible` | boolean | Whether the participant is visible to agents on the transaction |
+  | `buyerSellerVisible` | boolean | Whether the participant is visible to buyers/sellers on the portal |
+
+**Enums / constants:**
+
+`contactInfo.phone1.phoneType`, `contactInfo.phone2.phoneType`, `contactInfo.altContactPhone1.phoneType`, `contactInfo.altContactPhone2.phoneType`:
+`"CELL"`, `"HOME"`, `"WORK"`, `"COMPANY"`, `"PAGER"`, `"ASSISTANT"`, `"FAX"`, `"OTHER"`
+
+**Notable errors:**
+
+All error responses use the `APIResponse` envelope with fields: `payload` (any), `error.requestId` (string), `error.messages[]` (string), `error.details[]` (string), `error.validationErrors[]` (`fieldName`, `message`).
+
+| Code | Description |
+|---|---|
+| 403 | Forbidden — authenticated user does not have access to the Transaction Participant's Transaction, or does not have access to the Contact identified by `linkedContactId` |
+| 404 | Not Found — the Transaction Participant or the Contact identified by `linkedContactId` does not exist |
+| 429 | Too Many Requests — rate limit exceeded |
+
+**Quirks & notes:**
+- No request body — both IDs are supplied as path parameters only.
+- Contact-info snapshot is re-synced from the resolved Contact when the link is set.
+- If a prior linked Contact exists, it is replaced (not merged).
+- Authentication: global `X-AFrame-API-Key` header.
 
 ---
 
