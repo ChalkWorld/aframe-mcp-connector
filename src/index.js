@@ -58,7 +58,7 @@ function formatResult(header, { payload, warnings }) {
 
 const server = new McpServer({
   name: "aframe-connector",
-  version: "0.4.0",
+  version: "0.4.1",
 });
 
 // Tool 1: create_transaction
@@ -871,7 +871,7 @@ server.tool(
       ...(zip !== undefined && { zip }),
     };
     const body = {
-      searchCriteria,
+      searchCriteriaXactionDto: searchCriteria,
       ...(includes !== undefined && { includes }),
       page: page ?? 0,
       pageSize: pageSize ?? 20,
@@ -973,7 +973,7 @@ app.get("/", (_req, res) => {
   res.json({
     status: "ok",
     service: "aframe-mcp-connector",
-    version: "0.4.0",
+    version: "0.4.1",
   });
 });
 
@@ -1001,7 +1001,7 @@ app.post("/mcp", async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Aframe MCP connector v0.4.0 listening on port ${PORT}`);
+  console.log(`Aframe MCP connector v0.4.1 listening on port ${PORT}`);
   console.log(`  Health check: GET  /`);
   console.log(`  MCP endpoint: POST /mcp`);
   console.log(`  Tools: create_transaction, get_transaction, update_transaction,`);
