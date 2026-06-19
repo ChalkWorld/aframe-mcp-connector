@@ -20,10 +20,73 @@ _Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format
 
 ---
 
-#### `POST /v1/xactions/{xactionId}/apply-task-templates` — Apply task templates to a Transaction
-**Status:** Not extracted
+#### `POST /v1/xactions/{xactionId}/apply-task-templates` — Apply TaskTemplates to a Transaction
+**Status:** ✅ Extracted 2026-06-18
 
-_Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format._
+**Summary:** Apply TaskTemplates to a Transaction
+
+**Description:** Applies one or more TaskTemplates to the specified Transaction. Each TaskTemplate's entries are converted into individual Tasks attached to the Transaction. Invalid TaskTemplate IDs are skipped and reported as warnings in the response; if all IDs are invalid the request fails with a validation error.
+
+**Request**
+- Content-Type: `application/json`
+- Path params:
+
+  | Param | Type | Required | Description |
+  |---|---|---|---|
+  | `xactionId` | integer (int32) | yes | ID of the Transaction to apply the TaskTemplates to |
+
+- Query params: None
+- Body schema (`APIXactionApplyTaskTemplatesRequestDto`):
+
+  | Field | Type | Required | Description / Notes |
+  |---|---|---|---|
+  | `taskTemplateIds` | array\<integer (int32)\> | yes | IDs of the TaskTemplates to apply; invalid IDs are skipped with a warning, and if all IDs are invalid the request fails with a validation error |
+  | `startDate` | string (date) | no | Start date used when computing due dates for generated Tasks; if omitted, defaults to today in the authenticated user's time zone |
+
+**Response (2xx payload)**
+
+Returns an array of `APITaskBriefDto` objects — one per Task created.
+
+  | Field | Type | Description |
+  |---|---|---|
+  | `taskId` | integer (int32) | ID of the Task |
+  | `contactId` | integer (int32) | ID of the associated Contact |
+  | `xactionId` | integer (int32) | ID of the associated Xaction |
+  | `appUserId` | integer (int32) | ID of the AppUser assigned to the task |
+  | `folderId` | integer (int32) | ID of the associated Folder |
+  | `taskType` | string (enum) | Task type — see enums |
+  | `status` | string (enum) | Task status — see enums |
+  | `subject` | string | Task subject/title |
+  | `color` | string (enum) | Color — default `"NONE"` — see enums |
+  | `dueDate` | string (date) | Due date |
+  | `dueTime` | string | Due time (converted from `dueTimeMinutes`) |
+  | `timeZone.zoneId` | string | Time zone ID |
+  | `timeZone.fullName` | string | Time zone full name |
+  | `timeZone.shortName` | string | Time zone short name |
+  | `completeDate` | string (date) | Completion date |
+  | `appUserIdCompletedBy` | integer (int32) | ID of the AppUser who completed the task |
+  | `editDateTime` | string (date-time) | Last edit date/time |
+  | `createDateTime` | string (date-time) | Creation date/time |
+
+**Enums / constants:**
+- `taskType`: `"TODO"`, `"PHONE"`, `"LETTER"`, `"EMAIL"`
+- `status`: `"OPEN"`, `"IN_PROGRESS"`, `"COMPLETE"`
+- `color`: `"NONE"`, `"RED"`, `"TANGERINE"`, `"TAUPE"`, `"YELLOW"`, `"LIME"`, `"GREEN"`, `"CYAN"`, `"TEAL"`, `"COBALT"`, `"PURPLE"`, `"MAGENTA"` — default `"NONE"`
+
+**Notable errors:**
+
+All error responses use the `APIResponse` envelope (`payload`, `error.requestId`, `error.messages`, `error.details`, `error.validationErrors[].fieldName`, `error.validationErrors[].message`).
+
+- `400` — Bad Request: Malformed JSON or unreadable payload
+- `403` — Forbidden: The authenticated user does not have permission to access this Transaction
+- `404` — Not Found: Transaction with the supplied ID does not exist
+- `422` — Unprocessable Content: No valid TaskTemplate IDs were supplied
+- `429` — Too Many Requests: Rate limit exceeded
+
+**Quirks & notes:**
+- Invalid `taskTemplateIds` entries are silently skipped with warnings in the response; the request only fails (422) when *all* provided IDs are invalid.
+- `startDate` controls due date calculation for generated Tasks; omitting it defaults to today in the user's time zone.
+- Authentication: global `X-AFrame-API-Key` header.
 
 ---
 
