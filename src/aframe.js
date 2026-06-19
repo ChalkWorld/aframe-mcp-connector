@@ -195,14 +195,16 @@ export async function getTransactionParticipant(xactionParticipantId) {
   );
 }
 
-// PATCH /v1/xaction-participants/{xactionParticipantId} — plain object body (not RFC 6902)
-// Note: Content-Type is application/json-patch+json per Aframe spec, but body is NOT
-// an RFC 6902 array — it is a plain APIXactionParticipantPatchDto object.
+// PATCH /v1/xaction-participants/{xactionParticipantId} — JSON Patch RFC 6902
 export async function updateTransactionParticipant(xactionParticipantId, changes) {
+  const ops = toJsonPatch(changes);
+  if (ops.length === 0) {
+    throw new Error("updateTransactionParticipant called with no fields to update");
+  }
   return aframeRequest(
     "PATCH",
     `/v1/xaction-participants/${encodeURIComponent(xactionParticipantId)}`,
-    changes,
+    ops,
     "application/json-patch+json"
   );
 }
@@ -261,4 +263,72 @@ export async function updateParticipantContactInfo(xactionParticipantId, changes
     ops,
     "application/json-patch+json"
   );
+}
+
+// ---------------------------------------------------------------------------
+// Custom Field Admin
+// ---------------------------------------------------------------------------
+
+// GET /v1/fields
+export async function listCustomFields() {
+  return aframeRequest("GET", "/v1/fields");
+}
+
+// GET /v1/fields/tree
+export async function listCustomFieldsTree() {
+  return aframeRequest("GET", "/v1/fields/tree");
+}
+
+// GET /v1/xactions/{xactionId}/field-tree
+export async function getTransactionFieldTree(xactionId) {
+  return aframeRequest("GET", `/v1/xactions/${encodeURIComponent(xactionId)}/field-tree`);
+}
+
+// ---------------------------------------------------------------------------
+// Transaction Search & Task Templates
+// ---------------------------------------------------------------------------
+
+// POST /v1/xactions/search
+export async function searchTransactions(body) {
+  return aframeRequest("POST", "/v1/xactions/search", body);
+}
+
+// GET /v1/task-templates
+export async function listTaskTemplates({ taskTemplateType } = {}) {
+  const qs = taskTemplateType
+    ? `?taskTemplateType=${encodeURIComponent(taskTemplateType)}`
+    : "";
+  return aframeRequest("GET", `/v1/task-templates${qs}`);
+}
+
+// POST /v1/xactions/{xactionId}/apply-task-templates
+export async function applyTaskTemplates(xactionId, { taskTemplateIds, startDate } = {}) {
+  const body = { taskTemplateIds };
+  if (startDate !== undefined) body.startDate = startDate;
+  return aframeRequest(
+    "POST",
+    `/v1/xactions/${encodeURIComponent(xactionId)}/apply-task-templates`,
+    body
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Contact Categories & Transaction Statuses
+// ---------------------------------------------------------------------------
+
+// GET /v1/categories
+export async function listContactCategories() {
+  return aframeRequest("GET", "/v1/categories");
+}
+
+// GET /v1/xaction-statuses
+export async function listTransactionStatuses({ xactionStages } = {}) {
+  let path = "/v1/xaction-statuses";
+  if (xactionStages && xactionStages.length > 0) {
+    const qs = xactionStages
+      .map((s) => `xactionStages=${encodeURIComponent(s)}`)
+      .join("&");
+    path += `?${qs}`;
+  }
+  return aframeRequest("GET", path);
 }
