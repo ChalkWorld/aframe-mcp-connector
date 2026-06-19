@@ -65,6 +65,7 @@ WORKFLOWS-FW-*           Workflow docs     — business processes using the tool
 | 1.0 | 2026-06-18 | Cursor / Claude-in-Chrome | Extracted: PATCH /v1/tasks/{taskId} |
 | 1.0 | 2026-06-18 | Cursor / Claude-in-Chrome | Extracted: GET /v1/fields |
 | 1.0 | 2026-06-18 | Cursor / Claude-in-Chrome | Extracted: GET /v1/fields/tree |
+| 1.0 | 2026-06-18 | Cursor / Claude-in-Chrome | Extracted: GET /v1/xactions/{xactionId}/field-tree |
 
 ---
 
