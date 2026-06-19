@@ -13,10 +13,36 @@ project: AAR-TC Aframe Connector
 
 ---
 
-#### `GET /v1/categories` — List contact categories
-**Status:** Not extracted
+#### `GET /v1/categories` — List Contact Categories
+**Status:** ✅ Extracted 2026-06-18
 
-_Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format._
+**Summary:** List Contact Categories
+
+**Description:** Returns every Contact Category defined on the authenticated user's Team. Contact Categories are the tags used throughout the app to classify Contacts for easier searching.
+
+**Request**
+- Content-Type: `application/json`
+- Path params: None
+- Query params: None
+- Body schema: None
+
+**Response (2xx payload)**
+
+Returns an array of category objects.
+
+  | Field | Type | Description |
+  |---|---|---|
+  | `categoryId` | integer (int32) | Category ID |
+  | `teamId` | integer (int32) | Team ID |
+  | `name` | string | Category name (e.g. `"Sphere of Influence"`) |
+
+**Notable errors:**
+
+- `429` — Too Many Requests: Rate limit exceeded (`APIResponse` envelope)
+
+**Quirks & notes:**
+- No parameters — returns all categories for the authenticated user's Team.
+- Authentication: global `X-AFrame-API-Key` header.
 
 ---
 
