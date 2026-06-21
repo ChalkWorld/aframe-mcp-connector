@@ -1,6 +1,6 @@
 # Lennar MLS Bookmarklet Build
 **Document ID:** AAR-TC-LENNAR-BM-001
-**Version:** 1.1 | *Last Updated: June 21, 2026*
+**Version:** 1.2 | *Last Updated: June 21, 2026*
 *Living document — update as field mapping and build work progresses*
 
 ---
@@ -262,6 +262,138 @@ Fully static — no clipboard payload needed. All four fields always Yes.
 
 ---
 
+### Owner Info — ✅ Field Map Complete (June 21, 2026)
+
+Fully static for Lennar — no clipboard payload needed.
+
+**Important — Tax ID path:** `Input_118` (Owner Name) will be pre-filled with tax record data on the Tax ID entry path. The bookmarklet must force-overwrite this field with `Lennar` regardless of what is already there. This is an exception to the general Tax ID path rule of skipping pre-populated fields.
+
+| Field | Input ID | Type | Static/Dynamic/Skip | Lennar Value | Non-Lennar Value |
+|---|---|---|---|---|---|
+| Owner Name | `Input_118` | text | STATIC | `Lennar` — always; overwrite even if pre-filled | Seller name from contract |
+| Owner Phone | `Input_122` | text | SKIP | blank | Seller phone if available |
+| Owner Name 2 | `Input_857` | text | SKIP | blank | Second seller if applicable |
+| Occupant Name | `Input_119` | text | STATIC | `None` | Seller / Tenant name if occupied |
+| Occupant Phone | `Input_123` | text | STATIC | blank | Occupant phone if applicable |
+| Occupied By | `Input_606` | select | STATIC | `V` (Vacant) | Varies |
+| Owner Agent | `Input_124` | select | STATIC | `0` (No) | Varies |
+| Agent Related to Seller | `Input_707` | select | STATIC | `0` (No) — required field; Matrix flags if blank | Varies |
+| Possession | checkbox group | checkbox | STATIC | `Input_121_01` (At Closing) checked — all others unchecked | Varies |
+
+**Owned By checkbox group — Lennar always Corporate:**
+
+| Element ID | Value | Display Label | Lennar |
+|---|---|---|---|
+| `Input_120_02` | `02` | Corporate | ✅ Checked |
+| `Input_120_03` | `03` | Estate | ⬜ Unchecked |
+| `Input_120_04` | `04` | Individuals | ⬜ Unchecked |
+| `Input_120_06` | `06` | Other | ⬜ Unchecked |
+| `Input_120_07` | `07` | Partnership | ⬜ Unchecked |
+| `Input_120_08` | `08` | Relocation | ⬜ Unchecked |
+| `Input_120_01` | `01` | REO | ⬜ Unchecked |
+
+**Possession checkbox group — Lennar always At Closing:**
+
+| Element ID | Value | Display Label | Lennar |
+|---|---|---|---|
+| `Input_121_01` | `01` | At Closing | ✅ Checked |
+| `Input_121_02` | `02` | Immediate | ⬜ Unchecked |
+| `Input_121_06` | `06` | Leasehold Rights | ⬜ Unchecked |
+| `Input_121_03` | `03` | Negotiable | ⬜ Unchecked |
+| `Input_121_04` | `04` | Other | ⬜ Unchecked |
+| `Input_121_05` | `05` | Tenant Rights | ⬜ Unchecked |
+
+---
+
+### Fee Info — ✅ Field Map Complete (June 21, 2026)
+
+Most fields are community-variable and driven entirely from the Community Reference Database. The bookmarklet reads the community key from the payload and applies the correct values per community record.
+
+**Note on Fee Includes:** The bookmarklet uses element IDs and value attributes to check the correct boxes. The full semantic label list is preserved in this document for non-Lennar use — when building a non-Lennar payload, reference display labels here to identify which checkboxes to include.
+
+**Note on Capital Contribution:** The Initial Working Capital Contribution or Capital Contribution Fee (varies by community) goes into `Input_117` (Add'l Fee Dsc) as a text string — e.g. `Initial Working Capital Contribution: $350`.
+
+| Field | Input ID | Type | Static/Dynamic/Skip | Lennar Value / Notes |
+|---|---|---|---|---|
+| HOA/Condo | `Input_109` | select | STATIC | `1` (Yes) — always |
+| Add'l HOA Y/N | `Input_719` | select | DYNAMIC | `1` (Yes) for Harpers Mill TH only / `0` (No) for all others |
+| Membership Reqd | `Input_112` | select | STATIC | `1` (Yes) — always |
+| Fee $ | `Input_110` | text | DYNAMIC | From DB per community |
+| Fee Period | `Input_113` | select | DYNAMIC | From DB per community — `MO`, `QU`, or `YR` |
+| Management Firm | `Input_705` | text | DYNAMIC | From DB per community — blank if none |
+| Management Phone | `Input_706` | text | SKIP | Leave blank |
+| Fee Desc | checkbox group | checkbox | STATIC | `Input_111_01` (Community Association) — always for Lennar |
+| Fee Includes | checkbox group | checkbox | DYNAMIC | From DB per community — see table below |
+| Allow Onsite | checkbox group | checkbox | STATIC | All unchecked — always for Lennar |
+| Add'l Fee $ | `Input_115` | text | DYNAMIC | Harpers Mill TH only: `70.00` / blank for all others |
+| Add'l Fee Dsc | `Input_117` | text | DYNAMIC | Capital Contribution info from DB per community — e.g. `Initial Working Capital Contribution: $350` |
+| HOA Website | `Input_860` | text | SKIP | Leave blank |
+
+**Fee Desc checkbox group — full semantic list:**
+
+| Element ID | Value | Display Label | Lennar |
+|---|---|---|---|
+| `Input_111_01` | `01` | Community Association | ✅ Always checked |
+| `Input_111_02` | `02` | Condo Association | ⬜ Non-Lennar use |
+| `Input_111_03` | `03` | Cooperative | ⬜ Non-Lennar use |
+| `Input_111_04` | `04` | Owners Association | ⬜ Non-Lennar use |
+| `Input_111_05` | `05` | Road Maintenance | ⬜ Non-Lennar use |
+
+**Fee Includes checkbox group — full semantic list:**
+
+| Element ID | Value | Display Label |
+|---|---|---|
+| `Input_576_26` | `26` | Building Insurance |
+| `Input_576_19` | `19` | Clubhouse |
+| `Input_576_01` | `01` | Comm Ar Mnt |
+| `Input_576_25` | `25` | Common Area |
+| `Input_576_18` | `18` | Community Utilities |
+| `Input_576_03` | `03` | Exterior Maintenance |
+| `Input_576_04` | `04` | Gas |
+| `Input_576_05` | `05` | Heat |
+| `Input_576_06` | `06` | Hot Water |
+| `Input_576_07` | `07` | Insurance |
+| `Input_576_08` | `08` | Janitorial |
+| `Input_576_27` | `27` | Limited Exterior Maintenance |
+| `Input_576_28` | `28` | Limited Yard Maintenance |
+| `Input_576_09` | `09` | Management Fees |
+| `Input_576_10` | `10` | Pool |
+| `Input_576_11` | `11` | Recreational Facilities |
+| `Input_576_29` | `29` | Recycling |
+| `Input_576_12` | `12` | Reserves |
+| `Input_576_22` | `22` | Road Maintenance |
+| `Input_576_20` | `20` | Security |
+| `Input_576_13` | `13` | Sewer |
+| `Input_576_14` | `14` | Snow Removal |
+| `Input_576_15` | `15` | Trash Removal |
+| `Input_576_23` | `23` | Water |
+| `Input_576_21` | `21` | Water Access |
+| `Input_576_17` | `17` | Yard Maintenance |
+
+**Fee Includes per Lennar community — checkboxes to set:**
+
+| Community | Fee Includes values to check |
+|---|---|
+| Harpers Mill TH | `19` (Clubhouse), `01` (Comm Ar Mnt), `25` (Common Area), `10` (Pool), `14` (Snow Removal), `15` (Trash Removal) |
+| Harpers Mill SF | *(confirm exact MLS wording — no SF example sheet yet)* |
+| Creekside Run TH | *(blank on MLS sheet — confirm)* |
+| Everstone SF | `01` (Comm Ar Mnt), `25` (Common Area) |
+| Watermark SF | `19` (Clubhouse), `25` (Common Area), `10` (Pool), `11` (Recreational Facilities) |
+| Wynwood at Fox Creek SF | *(pending)* |
+
+**Allow Onsite checkbox group — full semantic list (all unchecked for Lennar):**
+
+| Element ID | Value | Display Label |
+|---|---|---|
+| `Input_116_1` | `1` | Boats |
+| `Input_116_4` | `4` | Pets |
+| `Input_116_5` | `5` | Pets w/ Restriction |
+| `Input_116_6` | `6` | Recreational Vehicles |
+| `Input_116_7` | `7` | Rentals |
+| `Input_116_8` | `8` | Trucks/Trailer |
+
+---
+
 ## Payload Schema
 
 The session outputs a single JSON object covering all tabs. Each bookmarklet reads only its own key. Static fields are hardcoded in the bookmarklet and never appear in the payload.
@@ -309,7 +441,16 @@ The session outputs a single JSON object covering all tabs. Each bookmarklet rea
   "general": { ... },
   "remarks": { ... },
   "fee": { ... },
-  "owner": { ... },
+  "owner": { },
+  "fee": {
+    "addl_hoa": "",
+    "fee_amount": "",
+    "fee_period": "",
+    "management_firm": "",
+    "fee_includes": [],
+    "addl_fee_amount": "",
+    "addl_fee_desc": ""
+  },
   "showing": {
     "additional_instructions": ""
   },
@@ -336,8 +477,8 @@ Schema for pending tab sections to be filled in as field mapping is completed.
 | Features | ✅ | ⬜ Pending | ⬜ Pending | 40+ fields; most are Lennar constants — static layer + small dynamic layer |
 | General Info | ✅ | ⬜ Pending | ⬜ Pending | |
 | Remarks | ✅ | ⬜ Pending | ⬜ Pending | Public remarks + agent comments — long text fields |
-| Fee Info | ✅ | ⬜ Pending | ⬜ Pending | HOA data — largely static per community |
-| Owner Info | ✅ | ⬜ Pending | ⬜ Pending | |
+| Fee Info | ✅ | ✅ Complete | ⬜ Pending | Community-variable HOA data — driven entirely from DB per community |
+| Owner Info | ✅ | ✅ Complete | ⬜ Pending | Fully static for Lennar — bookmarklet overwrites Input_118 even on Tax ID path |
 | Agent/Office Info | ✅ | ✅ Complete | ⬜ Pending | Fully static for Lennar — no clipboard payload needed |
 | Showing Instructions | ✅ | ✅ Complete | ⬜ Pending | Static for Lennar except Additional Showing Instructions textarea |
 | Virtual Tour Info | ✅ | ✅ Complete | ⬜ Pending | 2 text fields — URL from email into Input_610; Input_611 blank unless second link provided |
@@ -404,6 +545,7 @@ The Bath Info launcher (`bath_info_bookmarklet_clipboard.html`) serves as the te
 |---|---|---|---|
 | 1.0 | 2026-06-20 | Andrew Rich / Claude | Initial document. Bath Info POC complete. Architecture decisions locked. |
 | 1.1 | 2026-06-21 | Andrew Rich / Claude | Listing Info, Agent/Office Info, Showing Instructions, Virtual Tour Info, and Internet Display Info field maps complete. Three-path entry architecture added. Dynamic cascade sequencing documented. Payload schema updated. Community dropdown value confirmation table added. |
+| 1.2 | 2026-06-21 | Andrew Rich / Claude | Owner Info and Fee Info field maps complete. Full semantic label lists captured for all checkbox groups for non-Lennar use. Fee Includes per-community values added. Standing rule established: always capture full semantic labels during extraction regardless of Lennar static usage. |
 
 ---
 
