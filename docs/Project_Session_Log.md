@@ -181,3 +181,65 @@ Lennar listing workflow design — building the Lennar Listing Session Protocol,
 
 ---
 *Next session: Complete two live listings, populate Session Data tab, add Lennar protocol to /docs, integrate Reverse Prospecting*
+
+---
+
+## Session 003 — June 21, 2026
+
+### Focus
+Lennar listing protocol continuation — completing the two live listings from Session 002, and designing the MLS input automation system (bookmarklet POC).
+
+### Files Worked
+- **15912 Greenhart Dr** — Harpers Mill SF | List Price: $579,990 | Emails read, data parsed, data sheet pending
+- **6035 Blue Iris Dr** — Creekside Run TH | List Price: $359,990 | Emails read, data parsed, data sheet pending
+
+### What Was Done
+
+#### Protocol Work
+- Read both live listing emails (thread IDs from Session 002 handoff) — full data parsed for both listings
+- Confirmed list prices from email: 15912 Greenhart Dr = $579,990 (not $387,490 placeholder); 6035 Blue Iris Dr = $359,990 (not $349,990 placeholder)
+- Identified phone number violations in public remarks on both listings — flagged for removal
+- Confirmed 6035 Blue Iris Dr photos still pending from Stefanie Nayder
+- Data sheets not yet generated — session pivoted to protocol design work
+
+#### MLS Input Automation — Bookmarklet System
+- Designed and proven a bookmarklet-based system for automating CVRMLS Matrix data entry
+- Discovered Matrix uses ASP.NET server-side tab rendering — each tab is a separate page load; fields for other tabs do not exist in DOM until navigated to
+- Determined one-bookmarklet-per-tab architecture is correct approach
+- Proven clipboard-reader pattern: session generates full JSON payload → user copies once → clicks bookmarklet on each tab → fields populate
+- Identified static vs dynamic field split: Lennar constants (Frame, Vinyl, Dimensional, etc.) hardcoded in bookmarklet; listing-specific values pulled from clipboard
+- Identified Chrome security restriction on pasting `javascript:` URLs — resolved with HTML launcher file (drag-to-bookmarks-bar method)
+- Explored Claude in Chrome extension for field ID extraction — confirmed viable; extension can read DOM field IDs from any Matrix tab
+- Explored custom Chrome extension as future target state — confirmed viable, no App Store approval needed, Cursor project
+- **POC complete:** Bath Info tab proven end-to-end — field IDs extracted, bookmarklet built, clipboard reader confirmed working, drag-install method confirmed working
+
+#### Documents Created
+- `Lennar_MLS_Bookmarklet_Build.md` (`AAR-TC-LENNAR-BM-001`) — full build doc covering architecture decisions, POC results, Bath Info field map, payload schema, tab inventory, build roadmap, open questions
+- `bath_info_bookmarklet_clipboard.html` — HTML launcher for Bath Info clipboard-reader bookmarklet (serves as template for all future tab launchers)
+
+### Decisions Made
+- Status tab is never automated — Andrew controls MLS activation manually, hard rule
+- Bookmarklet install method: HTML launcher drag-to-bar — not clipboard paste (Chrome blocks javascript: URLs pasted into bookmark fields)
+- Custom Chrome extension is the correct long-term target — one toolbar button, auto-detects tab, no clipboard management; build in Cursor once all tab field maps are complete
+- Session output will include full JSON payload alongside data sheet as standard Lennar listing output
+- Data sheets for 15912 Greenhart Dr and 6035 Blue Iris Dr deferred to Session 004
+
+### Carry Forward — Session 004 Priorities
+- [ ] Generate MLS data sheets for both listings (15912 Greenhart Dr and 6035 Blue Iris Dr)
+- [ ] Apply Gmail labels for both listings
+- [ ] Create Drive property folders for both listings
+- [ ] Create Aframe transactions for both listings
+- [ ] Add both listings to Session Data tab
+- [ ] Continue bookmarklet field mapping — next tab: Listing Info (use Claude in Chrome extension)
+
+### Gaps Identified
+- [ ] List prices in Google Sheet need to be confirmed/corrected from email values
+- [ ] 6035 Blue Iris Dr photos blocked pending Stefanie Nayder email — watch inbox
+- [ ] Bookmarklet field maps needed for 11 remaining tabs
+
+### Documents Created This Session
+
+| Document | Version | File Name |
+|---|---|---|
+| Lennar MLS Bookmarklet Build | 1.0 | Lennar_MLS_Bookmarklet_Build.md |
+| Bath Info Bookmarklet HTML Launcher | — | bath_info_bookmarklet_clipboard.html |
