@@ -1,6 +1,6 @@
 # Lennar MLS Bookmarklet Build
 **Document ID:** AAR-TC-LENNAR-BM-001
-**Version:** 1.0 | *Last Updated: June 20, 2026*
+**Version:** 1.1 | *Last Updated: June 21, 2026*
 *Living document — update as field mapping and build work progresses*
 
 ---
@@ -24,6 +24,17 @@ The goal is to eliminate the cognitive load of careful field-by-field reading du
 **Status tab — never automated** — The Status tab controls MLS activation (Coming Soon, Active, etc.). This tab is never touched by the bookmarklet system. Andrew controls activation manually. Hard rule.
 
 **Bookmarklet installation method** — Chrome blocks pasting `javascript:` URLs directly into bookmark fields. The correct installation method is a local HTML launcher file with the bookmarklet as an `href` on an anchor element. Dragging that anchor to the bookmarks bar installs it without triggering Chrome's security restriction. A launcher file should be generated for each new bookmarklet.
+
+**Three entry paths — three bookmarklet folders** — Prior to the tabbed input view, Matrix offers three listing creation paths. Each path pre-populates a different set of fields, so the bookmarklet behavior differs by path. Three Chrome bookmark folders are used:
+- `Matrix — New` — clean slate; bookmarklet fills all fields
+- `Matrix — Tax ID` — location fields pre-populated from tax record; bookmarklet skips those, fills the rest
+- `Matrix — Copy` — most fields pre-populated from an existing listing; bookmarklet fills listing-specific fields only (price, address, sq ft, bed/bath, remarks)
+
+The session generates one payload per listing. The correct folder is selected based on which entry path was used. The `Matrix — Copy` path is the preferred long-term approach for Lennar once a clean template listing exists per community — the bookmarklet becomes a very light touch at that point.
+
+**Dynamic dropdown sequencing** — Several fields on the Listing Info tab are dynamically populated based on upstream selections. County/City must be set and a `change` event fired before Area, ZIP Code, Subdivision, and the school dropdowns will populate. The Listing Info bookmarklet handles this with async sequencing: set County/City → fire `change` → await DOM repopulation → set Area → fire `change` → await → then set Subdivision and schools. This confirms that Matrix requires `change` events to be fired on dropdowns, not just value setting.
+
+**Map fields — always manual** — Latitude, Longitude, and Directions are never touched by the bookmarklet. Map verification requires human judgment, especially for new construction addresses. The Directions field has a 215-character limit and is address-specific.
 
 **Custom Chrome extension — future state** — A custom Chrome extension is a cleaner long-term solution. It could detect the current Matrix tab automatically, hold the payload internally (no clipboard needed), and provide a single toolbar button. No App Store approval required — extensions load via `chrome://extensions` in developer mode. This is a Cursor project and the right target state once the field mapping is complete and the workflow is proven.
 
@@ -70,13 +81,222 @@ The goal is to eliminate the cognitive load of careful field-by-field reading du
 
 ---
 
+## Field Maps
+
+---
+
+### Bath Info — ✅ Complete (POC — June 20, 2026)
+
+| Field | Input ID | Type | Notes |
+|---|---|---|---|
+| Basement — Bath Description | `Input_57` | select | Values: blank, `S`, `T`, `TS` |
+| Basement — Full Baths | `Input_61` | text | |
+| Basement — Half Baths | `Input_65` | text | |
+| Level 1 — Bath Description | `Input_58` | select | Values: blank, `S`, `T`, `TS` |
+| Level 1 — Full Baths | `Input_62` | text | |
+| Level 1 — Half Baths | `Input_66` | text | |
+| Level 2 — Bath Description | `Input_59` | select | Values: blank, `S`, `T`, `TS` |
+| Level 2 — Full Baths | `Input_63` | text | |
+| Level 2 — Half Baths | `Input_67` | text | |
+| Level 3 — Bath Description | `Input_60` | select | Values: blank, `S`, `T`, `TS` |
+| Level 3 — Full Baths | `Input_64` | text | |
+| Level 3 — Half Baths | `Input_68` | text | |
+| Level 4 — Bath Description | `Input_737` | select | Values: blank, `S`, `T`, `TS` |
+| Level 4 — Full Baths | `Input_738` | text | |
+| Level 4 — Half Baths | `Input_739` | text | |
+
+**Bath Info rules:**
+- Bath Description dropdown only needs a value when Full Baths > 0 — leave blank for half-bath-only levels
+- All numeric fields require explicit `0` — Matrix flags empty fields on save
+- Typical Lennar TH: Level 1 = 0 full / 1 half, Level 2 = 2 full / 0 half (TS), others = 0/0
+- Typical Lennar SF: Level 1 = 0 full / 1 half, Level 2 = 2 full / 0 half (TS), others = 0/0 (varies)
+
+---
+
+### Listing Info — ✅ Field Map Complete (June 21, 2026)
+
+43 fields total. Fields marked **STATIC** are hardcoded Lennar constants. Fields marked **DYNAMIC** vary per listing and come from the clipboard. Fields marked **SKIP** are never written by the bookmarklet.
+
+#### Listing Information Section
+
+| Field | Input ID | Type | Static/Dynamic/Skip | Lennar Value / Notes |
+|---|---|---|---|---|
+| County/City | `Input_29` | select (186 options) | DYNAMIC | Varies by community — set first; triggers downstream cascade |
+| Delayed Show | `Input_32` | select | STATIC | `0` (No) — always |
+| List Price | `Input_31` | text | DYNAMIC | From email |
+| List Date | `Input_160` | text (date picker) | DYNAMIC | Today's date — always; never email date |
+| Type | `Input_849` | select | DYNAMIC | `SFR` = Single Family / `TOWN` = Townhouse |
+| Attached YN | `Input_850` | select | DYNAMIC | Derived from Type — `1` (Yes) for TH / `0` (No) for SF |
+| No Show Until | `Input_33` | text (date picker) | SKIP | Leave blank |
+| Expected OnMkt Dte | `Input_782` | text (date picker) | SKIP | Leave blank |
+| PID | `Input_99` | text | DYNAMIC | Tax ID if available / `Pending Assignment` if not |
+| Area | `Input_30` | select (dynamic) | DYNAMIC | Populated after County/City — varies by community |
+| Expire Date | `Input_162` | text (date picker) | STATIC | `12/31/2026` — current Master Listing Agreement expiry; update when agreement renews |
+| 1st Rt of Refusal | `Input_781` | select | STATIC | blank — always |
+
+#### Location Information Section
+
+| Field | Input ID | Type | Static/Dynamic/Skip | Lennar Value / Notes |
+|---|---|---|---|---|
+| Street # | `Input_34` | text | DYNAMIC | From email |
+| Street Direction | `Input_35` | select (9 options) | DYNAMIC | From address — most Lennar addresses blank |
+| Street Name | `Input_36` | text | DYNAMIC | From email |
+| Street Suffix | `Input_37` | select (95 options) | DYNAMIC | From address — e.g. `DR`, `WAY`, `RD` |
+| Unit # | `Input_515` | text | SKIP | Lennar listings do not use unit numbers |
+| Unit/Level | `Input_771` | select | SKIP | Leave blank |
+| ZIP Code | `Input_635` | select (dynamic) | DYNAMIC | Populated after County/City — varies by community |
+| ZIP Code 4 | `Input_39` | text | SKIP | Leave blank |
+| State | `Input_40` | text | SKIP | Pre-filled `VA` — never touch |
+| New/Resale | `Input_42` | select | STATIC | `NVROC` (New, never occupied) — always |
+| Post Office | `Input_41` | select (740 options) | DYNAMIC | Varies by community |
+| PUD | `Input_43` | select | SKIP | Leave blank — Lennar communities are not PUDs |
+| Subdivision | `Input_259` | select (dynamic) | DYNAMIC | Populated after County/City — Everstone exception: use `None` (see Neighborhood) |
+| Neighborhood | `Input_236` | text | DYNAMIC | Blank for all communities except Everstone — use `Everstone` here since it does not appear in Subdivision list |
+| Year Built | `Input_44` | text | DYNAMIC | From email (typically current year) |
+| Year Built Description | `Input_45` | select | STATIC | `UNDCON` (Under Construction) — always |
+| Rooms | `Input_48` | text | DYNAMIC | From email |
+| Levels | `Input_49` | text | DYNAMIC | From email |
+| Lot | `Input_622` | text | DYNAMIC | From email (homesite/lot number) |
+| Bedrooms | `Input_47` | text | DYNAMIC | From email |
+| Elementary School | `Input_51` | select (dynamic) | DYNAMIC | Populated after County/City — varies by community |
+| Middle School | `Input_53` | select (dynamic) | DYNAMIC | Populated after County/City — varies by community |
+| High School | `Input_52` | select (dynamic) | DYNAMIC | Populated after County/City — varies by community |
+| Other School | `Input_54` | text | SKIP | Leave blank |
+| Directions | `Input_55` | textarea (215 char) | SKIP | Manual — address-specific, human judgment required |
+
+#### Square Feet Section
+
+| Field | Input ID | Type | Static/Dynamic/Skip | Lennar Value / Notes |
+|---|---|---|---|---|
+| Above Grade Finished Area | `Input_879` | text | DYNAMIC | From email |
+| Below Grade Finished Area | `Input_882` | text | DYNAMIC | From email (0 if no basement) |
+| Above Grade Unfinished Area | `Input_880` | text | DYNAMIC | From email (0 if none) |
+| Below Grade Unfinished Area | `Input_883` | text | DYNAMIC | From email (0 if none) |
+| Total Finished Area | *(none)* | display only | SKIP | Calculated — no input ID |
+| SqFt Total [Public Rec] | *(none)* | display only | SKIP | Calculated — no input ID |
+| Total Unfinished Area | *(none)* | display only | SKIP | Calculated — no input ID |
+| SqFt Source | `Input_97` | select | STATIC | `04` (Per Builder) — always for Lennar |
+| Fin SqFt Source Desc | `Input_98` | text | SKIP | Leave blank |
+
+#### Listing Info — Bookmarklet Sequencing
+
+Must execute in this order due to dynamic dropdown dependencies:
+
+1. Set `Input_29` (County/City) → fire `change` event → await DOM repopulation
+2. Set `Input_30` (Area) → fire `change` event → await DOM repopulation
+3. Set `Input_635` (ZIP Code)
+4. Set `Input_259` (Subdivision)
+5. Set `Input_51`, `Input_53`, `Input_52` (Elementary, Middle, High School)
+6. Set all remaining fields (order does not matter)
+
+#### Listing Info — Open Questions
+
+- [ ] Confirm exact `Input_29` County/City stored option values for each Lennar community (display label may differ from stored value)
+- [ ] Confirm Area, ZIP, Subdivision, and school option values per community — requires second extraction pass with County/City pre-selected in a live Matrix session
+- [ ] Confirm whether `change` event alone triggers cascade or whether Matrix requires additional events (`input`, `blur`)
+- [ ] Confirm Post Office (`Input_41`) stored values for each community
+- [ ] Confirm Street Suffix (`Input_37`) stored values for Lennar street types (DR, WAY, RD, TER, LOOP, etc.)
+
+#### Listing Info — Community Dropdown Values (Pending Confirmation)
+
+| Community | County/City | Area | ZIP | Subdivision | Elementary | Middle | High |
+|---|---|---|---|---|---|---|---|
+| Harpers Mill TH | *(confirm)* | *(confirm)* | *(confirm)* | *(confirm)* | *(confirm)* | *(confirm)* | *(confirm)* |
+| Harpers Mill SF | *(confirm)* | *(confirm)* | *(confirm)* | *(confirm)* | *(confirm)* | *(confirm)* | *(confirm)* |
+| Creekside Run TH | *(confirm)* | *(confirm)* | *(confirm)* | *(confirm)* | *(confirm)* | *(confirm)* | *(confirm)* |
+| Everstone SF | *(confirm)* | *(confirm)* | *(confirm)* | `None` + Neighborhood: `Everstone` | *(confirm)* | *(confirm)* | *(confirm)* |
+| Watermark SF | *(confirm)* | *(confirm)* | *(confirm)* | *(confirm)* | *(confirm)* | *(confirm)* | *(confirm)* |
+| Wynwood at Fox Creek SF | *(pending)* | *(pending)* | *(pending)* | *(pending)* | *(pending)* | *(pending)* | *(pending)* |
+
+---
+
+### Agent/Office Info — ✅ Field Map Complete (June 21, 2026)
+
+Fully static for Lennar — no clipboard payload needed.
+
+| Field | Input ID | Type | Static/Dynamic/Skip | Lennar Value | Non-Lennar Value |
+|---|---|---|---|---|---|
+| List Agent Code | `Input_159` | text | SKIP | Pre-filled — never touch | Pre-filled — never touch |
+| Co-List Agent Code | `Input_170` | text | STATIC | blank | blank |
+| Type | `Input_163` | select | STATIC | `MO` (MLS Only) | `ER` (Exclusive Right) |
+| Limited Rep | `Input_164` | select | STATIC | `1` (Yes) | `0` (No) |
+| Listing Override (Office Email) | `Input_853` | text | SKIP | Leave blank | Leave blank |
+
+---
+
+### Showing Instructions — ✅ Field Map Complete (June 21, 2026)
+
+| Field | Input ID | Type | Static/Dynamic/Skip | Lennar Value / Notes |
+|---|---|---|---|---|
+| Accompany Show | `Input_722_AS` | checkbox | STATIC | Unchecked — always |
+| Appt Required | `Input_722_AR` | checkbox | STATIC | Checked — always |
+| Showing Instr 2 | `Input_136` | select (15 options) | STATIC | `NLCS` (No LB Call Showing Service) — always |
+| LockBox Type | `Input_333` | select | STATIC | blank — no LB selection made so Matrix does not flag |
+| Supra Serial LB # | `Input_137` | text (8 char) | SKIP | Not applicable for Lennar |
+| Sentrilock Serial LB # | `Input_732` | text (8 char) | SKIP | Not applicable for Lennar |
+| Additional Showing Instructions | `Input_138` | textarea (750 char) | DYNAMIC | Verbatim from email |
+
+**Non-Lennar quirk — Sentrilock serial number:** Sentrilock numbers are 7 digits but Matrix requires 8 characters. Prepend a leading `0` before writing to `Input_732`. Example: `1404928` → `01404928`. The bookmarklet should zero-pad this value automatically from the payload.
+
+---
+
+### Virtual Tour Info — ✅ Field Map Complete (June 21, 2026)
+
+| Field | Input ID | Type | Static/Dynamic/Skip | Lennar Value / Notes |
+|---|---|---|---|---|
+| Virtual Tour | `Input_610` | text (255 char) | DYNAMIC | URL from email — skip tab entirely if no link provided |
+| Additional Virtual Tour | `Input_611` | text (255 char) | DYNAMIC | blank — omit unless second link provided |
+
+---
+
+### Internet Display Info — ✅ Field Map Complete (June 21, 2026)
+
+Fully static — no clipboard payload needed. All four fields always Yes.
+
+| Field | Input ID | Type | Static/Dynamic/Skip | Lennar Value |
+|---|---|---|---|---|
+| Internet Display | `Input_227` | select | STATIC | `1` (Yes) |
+| Address Display | `Input_228` | select | STATIC | `1` (Yes) |
+| Comments/Reviews | `Input_229` | select | STATIC | `1` (Yes) |
+| AVM | `Input_230` | select | STATIC | `1` (Yes) |
+
+---
+
 ## Payload Schema
 
-The session outputs a single JSON object covering all tabs. Each bookmarklet reads only its own key.
+The session outputs a single JSON object covering all tabs. Each bookmarklet reads only its own key. Static fields are hardcoded in the bookmarklet and never appear in the payload.
 
 ```json
 {
-  "listing": { ... },
+  "listing": {
+    "county_city": "",
+    "list_price": "",
+    "list_date": "",
+    "type": "",
+    "attached_yn": "",
+    "pid": "",
+    "area": "",
+    "street_num": "",
+    "street_dir": "",
+    "street_name": "",
+    "street_suffix": "",
+    "zip": "",
+    "post_office": "",
+    "subdivision": "",
+    "neighborhood": "",
+    "year_built": "",
+    "rooms": "",
+    "levels": "",
+    "lot": "",
+    "bedrooms": "",
+    "elementary": "",
+    "middle": "",
+    "high": "",
+    "sqft_above_finished": "",
+    "sqft_below_finished": "",
+    "sqft_above_unfinished": "",
+    "sqft_below_unfinished": ""
+  },
   "room": { ... },
   "bath": {
     "basement": { "desc": "", "full": "0", "half": "0" },
@@ -90,14 +310,18 @@ The session outputs a single JSON object covering all tabs. Each bookmarklet rea
   "remarks": { ... },
   "fee": { ... },
   "owner": { ... },
-  "agent": { ... },
-  "showing": { ... },
-  "tour": { ... },
-  "internet": { ... }
+  "showing": {
+    "additional_instructions": ""
+  },
+  "tour": {
+    "virtual_tour": "",
+    "additional_virtual_tour": ""
+  },
+  "internet": { }
 }
 ```
 
-Schema for each tab section to be filled in as field mapping is completed.
+Schema for pending tab sections to be filled in as field mapping is completed.
 
 ---
 
@@ -106,7 +330,7 @@ Schema for each tab section to be filled in as field mapping is completed.
 | Tab | Automate | Field Map | Bookmarklet | Notes |
 |---|---|---|---|---|
 | Status | ❌ Never | — | — | Controls MLS activation — Andrew only |
-| Listing Info | ✅ | ⬜ Pending | ⬜ Pending | |
+| Listing Info | ✅ | ✅ Complete | ⬜ Pending | Dynamic cascade; second extraction pass needed for dependent dropdown values |
 | Room Info | ✅ | ⬜ Pending | ⬜ Pending | |
 | Bath Info | ✅ | ✅ Complete | ✅ Complete | POC tab — proven June 20, 2026 |
 | Features | ✅ | ⬜ Pending | ⬜ Pending | 40+ fields; most are Lennar constants — static layer + small dynamic layer |
@@ -114,10 +338,10 @@ Schema for each tab section to be filled in as field mapping is completed.
 | Remarks | ✅ | ⬜ Pending | ⬜ Pending | Public remarks + agent comments — long text fields |
 | Fee Info | ✅ | ⬜ Pending | ⬜ Pending | HOA data — largely static per community |
 | Owner Info | ✅ | ⬜ Pending | ⬜ Pending | |
-| Agent/Office Info | ✅ | ⬜ Pending | ⬜ Pending | Likely mostly static — Gary Martin info never changes |
-| Showing Instructions | ✅ | ⬜ Pending | ⬜ Pending | Long text field |
-| Virtual Tour Info | ✅ | ⬜ Pending | ⬜ Pending | Single URL field |
-| Internet Display Info | ✅ | ⬜ Pending | ⬜ Pending | |
+| Agent/Office Info | ✅ | ✅ Complete | ⬜ Pending | Fully static for Lennar — no clipboard payload needed |
+| Showing Instructions | ✅ | ✅ Complete | ⬜ Pending | Static for Lennar except Additional Showing Instructions textarea |
+| Virtual Tour Info | ✅ | ✅ Complete | ⬜ Pending | 2 text fields — URL from email into Input_610; Input_611 blank unless second link provided |
+| Internet Display Info | ✅ | ✅ Complete | ⬜ Pending | Fully static — all 4 fields always Yes; no clipboard payload needed |
 
 ---
 
@@ -165,11 +389,21 @@ The Bath Info launcher (`bath_info_bookmarklet_clipboard.html`) serves as the te
 
 ## Open Questions
 
-- [ ] Does Matrix require any `change` or `input` events to be triggered after setting field values, or does it read raw field values on save? (Bath Info worked without firing events — confirm this holds for dropdowns and checkboxes on other tabs)
-- [ ] How does Matrix handle checkbox fields in the DOM — are they `input[type=checkbox]` with a `checked` property, or something else? (Relevant for Features tab)
-- [ ] Agent/Office Info — confirm Gary Martin's field values once mapped; if fully static, this bookmarklet needs no clipboard payload at all
-- [ ] Owner Info — confirm what fields are here and whether Lennar as seller has a standard entry
+- [ ] Matrix requires `change` events on dropdowns to trigger cascade — confirm whether `change` event alone is sufficient or whether additional events (`input`, `blur`) are needed
+- [ ] Confirm that text fields do not require `change` events — Bath Info worked without firing events on text fields; confirm this holds across all tabs
+- [ ] How does Matrix handle checkbox fields in the DOM — `input[type=checkbox]` with `checked` property, or something else? (Relevant for Features tab)
+- [ ] Owner Info — confirm what fields exist and whether Lennar as seller has a standard entry
 - [ ] Features tab — identify which fields are Lennar constants vs listing-specific before building the bookmarklet
+- [ ] Listing Info dependent dropdown values — see open questions under Listing Info field map above
+
+---
+
+## Version History
+
+| Version | Date | Author | Notes |
+|---|---|---|---|
+| 1.0 | 2026-06-20 | Andrew Rich / Claude | Initial document. Bath Info POC complete. Architecture decisions locked. |
+| 1.1 | 2026-06-21 | Andrew Rich / Claude | Listing Info, Agent/Office Info, Showing Instructions, Virtual Tour Info, and Internet Display Info field maps complete. Three-path entry architecture added. Dynamic cascade sequencing documented. Payload schema updated. Community dropdown value confirmation table added. |
 
 ---
 
