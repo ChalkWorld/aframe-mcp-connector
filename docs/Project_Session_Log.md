@@ -100,3 +100,84 @@ New contract intake workflow — building and testing the buyer-side session pro
 
 ---
 *Next session: Complete Session Handoff Checklist and Agent Profiles docs*
+
+---
+
+## Session 002 — June 20, 2026
+
+### Focus
+Lennar listing workflow design — building the Lennar Listing Session Protocol, restructuring the Google Sheet, establishing Google Drive folder structure, and working two live Lennar listings as test cases.
+
+### Files Worked
+- **15912 Greenhart Dr, Chesterfield VA 23832** | Lennar Listing | Harpers Mill SF
+  - Status: Input in Progress — MLS data sheet not yet generated
+  - Gmail thread: `19ee0f5f7f909ecd`
+- **6035 Blue Iris Dr, Chesterfield VA 23832** | Lennar Listing | Creekside Run TH
+  - Status: Input in Progress — MLS data sheet not yet generated; photos pending from Stefanie Nayder
+  - Gmail thread: `19ee12982e889ccc`
+
+### What Was Done
+- Read New Buyer Side Session Protocol (v1.0) as the structural baseline
+- Discussed Lennar workflow end-to-end: email source, Zap chain, Aframe role, Google Sheet as source of truth, lifecycle stages (new listing → under contract → closed)
+- Established that Google Sheet is source of truth; Aframe is secondary/optional tracking
+- Restructured Google Sheet (Lennar Listings):
+  - Removed Tax/PID column from main tab
+  - Created Session Data tab with 16 columns (Address, MLS#, Community, Model Name, List Price, Status, Intake Date, Addendum Status, Gmail Thread ID, Aframe Transaction ID, Photo Status, Photo Source, MLS Input Stage, POC, Tax/PID, Session Notes)
+  - Added 15912 Greenhart Dr and 6035 Blue Iris Dr in correct community/type/descending-numeric positions, status = Input in Progress
+- Created Properties folder in Google Drive inside Lennar folder (Folder ID: `1EypC5Ep7VRMqwWcoMvUb5juVvJKAEi7B`)
+- Captured Megan Cook (megan.cook@lennar.com) as Carly Evans replacement effective June 30, 2026; from Gary Martin intro email (thread `19edd38e2489160d`)
+- Activated Google Sheets connector via Zapier
+- Wrote New Lennar Listing Session Protocol v1.0 from scratch
+- Wrote Session Handoff Checklist v1.0 (standalone reusable doc by file type)
+
+### Decisions Made
+- **Google Sheet is source of truth** — Aframe is not load-bearing for Lennar files
+- **Sessions replace the Zap chain** for Aframe transaction creation going forward
+- **Properties folder** in Google Drive is the doc home for new listings (tax record, signed addendum, MLS listing sheet); local folder migration deferred — Andrew migrates as needed
+- **Sales rep roster** stubbed in protocol; to be documented once Megan Cook is onboarded (expect shuffle)
+- **DocuSign** flagged as future connector for sending listing addenda in-session; not yet implemented
+- **Session Data tab** covers active files only; same community/SF-TH/descending-numeric-order convention as main sheet
+- **Cognito form ID for Lennar** not yet confirmed — carry forward to next session
+- **Reverse Prospecting** (existing Cursor Python script) to be pulled into this project in a future session
+
+### Protocol Rules Established
+- No listing goes Active in MLS until signed addendum is on file — hard compliance rule
+- List date is always today's date, never the email date or form date
+- Street number formatting: Cognito form data sometimes includes erroneous commas in street numbers (e.g. `15,912`) — correct before writing anywhere
+- Phone numbers in public remarks must be removed before MLS input (CVR MLS compliance)
+- Appliance formatting: alphabetical; Microwave Over Range → Microwave; Washer & Dryer → separate Dryer and Washer entries
+- Duplicate check against Google Sheet and Aframe before creating any transaction
+- Address format for Gmail labels and Drive folders: street number + street name only, no city/state/zip
+
+### Gaps Identified
+- [ ] **Session Data tab** not yet populated — all current active listings need rows added
+- [ ] **Gmail labels** not yet applied to the two new listing threads
+- [ ] **Drive property folders** not yet created for the two new listings
+- [ ] **Aframe transactions** not yet created for the two new listings
+- [ ] **MLS data sheets** not generated this session — carry forward
+- [ ] **Aframe contact IDs** for Gary Martin and Lennar not yet hardcoded in protocol Section 9
+- [ ] **Cognito form ID** for Lennar MLS entry form not yet confirmed
+- [ ] **Sales rep roster by community** — stub only; document once Megan onboarded
+- [ ] **Reverse Prospecting script** not yet integrated into this project
+
+### Documents Created This Session
+
+| Document | Version | File Name |
+|---|---|---|
+| New Lennar Listing Session Protocol | 1.0 | New_Lennar_Listing_Session_Protocol.md |
+| Session Handoff Checklist | 1.0 | Session_Handoff_Checklist.md |
+| Session 002 Handoff | — | Session_002_Handoff.md |
+
+### Key IDs Captured This Session
+
+| Item | Value |
+|---|---|
+| Google Sheet ID | `1fTapWU64r78Fyd8J-RM1Xh0z-fKo2y-wF9o6rtNJ5ME` |
+| Google Drive — Lennar folder | `1hIN1WhrARVrQ7Y4KCh3hlCrI0Q-JS8az` |
+| Google Drive — Properties folder | `1EypC5Ep7VRMqwWcoMvUb5juVvJKAEi7B` |
+| Gmail thread — 15912 Greenhart Dr | `19ee0f5f7f909ecd` |
+| Gmail thread — 6035 Blue Iris Dr | `19ee12982e889ccc` |
+| Gmail thread — Megan Cook intro | `19edd38e2489160d` |
+
+---
+*Next session: Complete two live listings, populate Session Data tab, add Lennar protocol to /docs, integrate Reverse Prospecting*
