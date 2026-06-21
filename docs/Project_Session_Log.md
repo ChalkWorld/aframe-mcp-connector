@@ -243,3 +243,48 @@ Lennar listing protocol continuation — completing the two live listings from S
 |---|---|---|
 | Lennar MLS Bookmarklet Build | 1.0 | Lennar_MLS_Bookmarklet_Build.md |
 | Bath Info Bookmarklet HTML Launcher | — | bath_info_bookmarklet_clipboard.html |
+
+---
+*Next session: Continue bookmarklet field mapping. Features tab next. Complete two live listings. Populate Session Data tab.*
+
+---
+
+## Session 004 — June 21, 2026
+
+**Focus:** Bookmarklet field mapping — Listing Info through Fee Info
+
+**Accomplished:**
+- Listing Info tab fully mapped (43 fields) — dynamic cascade sequencing documented; Everstone subdivision exception identified (Subdivision = None, Neighborhood = Everstone); Expire Date confirmed as 12/31/2026 static tied to Master Listing Agreement
+- Agent/Office Info tab fully mapped — fully static for Lennar; Type = MLS Only, Limited Rep = Yes
+- Showing Instructions tab fully mapped — Appt Required always checked, No LB Call Showing Service, Sentrilock zero-pad rule captured for non-Lennar use
+- Virtual Tour Info tab fully mapped — 2 text fields, skip tab if no link in email
+- Internet Display Info tab fully mapped — all 4 fields always Yes, fully static
+- Owner Info tab fully mapped — fully static for Lennar; Owner Name force-overwrites to Lennar even on Tax ID path
+- Fee Info tab fully mapped — community-variable; full 26-item Fee Includes semantic label list captured for non-Lennar use; Capital Contribution goes into Add'l Fee Dsc field
+- Three-entry-path architecture established — New / Tax ID / Copy bookmark folders; Copy path is preferred long-term for Lennar
+- Standing rule established: always capture full semantic labels for all checkbox groups during extraction regardless of Lennar static usage — critical for non-Lennar applicability
+- Community Reference Database rewrite deferred — correctly identified that DB must be written against confirmed Matrix field IDs and dropdown option values, not ahead of them; second extraction pass needed for dynamic Listing Info dropdowns (Area, ZIP, Subdivision, schools) with County/City pre-selected
+- Old Lennar New Listing Protocol doc reviewed for salvageable content before deletion — Community Quick Reference table and critical rules identified for migration into DB rewrite; step-by-step workflow confirmed stale and not worth preserving
+
+**Tabs remaining:**
+- Room Info, Features (dedicated session — 40+ fields), General Info, Remarks
+
+**Cursor handoffs produced this session:**
+- `HANDOFF-2026-06-21-bookmarklet-build.md` — bookmarklet build doc v1.1 (Listing Info, Agent/Office, Showing, Virtual Tour, Internet Display)
+- `HANDOFF-2026-06-21b-bookmarklet-build.md` — bookmarklet build doc v1.2 (Owner Info, Fee Info)
+- `HANDOFF-2026-06-21-session-log.md` — this entry
+
+**Key references:**
+
+| Item | Value |
+|---|---|
+| Google Sheet ID | `1fTapWU64r78Fyd8J-RM1Xh0z-fKo2y-wF9o6rtNJ5ME` |
+| Google Drive — Lennar folder | `1hIN1WhrARVrQ7Y4KCh3hlCrI0Q-JS8az` |
+| Google Drive — Properties folder | `1EypC5Ep7VRMqwWcoMvUb5juVvJKAEi7B` |
+| Gmail thread — 15912 Greenhart Dr | `19ee0f5f7f909ecd` |
+| Gmail thread — 6035 Blue Iris Dr | `19ee12982e889ccc` |
+| Gmail thread — Megan Cook intro (Gary) | `19edd38e2489160d` |
+| Bookmarklet Build Doc | AAR-TC-LENNAR-BM-001 |
+
+---
+*Next session: Features tab field mapping (dedicated session — extract in steps with Chrome extension). Room Info, General Info, Remarks. Second extraction pass for Listing Info dynamic dropdowns with County/City pre-selected. Two live listings still pending.*
