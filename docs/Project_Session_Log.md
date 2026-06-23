@@ -321,3 +321,110 @@ Lennar listing protocol continuation — completing the two live listings from S
 
 ---
 *Next session: Features tab field mapping — dedicated session, extract in chunks of 5-6 fields with Chrome extension, top to bottom.*
+
+---
+
+## Session 006 — June 23, 2026
+
+**Focus:** Protocol consolidation — incorporating learnings from working sessions (Topping Lane 6/23 intake, mixed 6/22 session) into the buyer-side and Lennar listing protocols; deepening agent profile data; capturing the commission/payout model from the Aframe field tree.
+
+**Accomplished:**
+
+*New Buyer Side Session Protocol — v1.0 → v1.1 (7 surgical changes):*
+- Ratification date Gmail-first rule added to Step 3 — when ambiguous on contract, check the ratification delivery email before flagging to agent
+- Name convention consolidated in Step 6 — all couples (married or otherwise, same or different last names) = one contact + alt contact on the same record; middle names ignored; supersedes prior "shared last name vs. different last names" split and folds in the spouse-as-2nd-buyer carve-out
+- Categories section hardened in Step 6 — ⚠️ callout that the connector cannot update categories after creation (contact must be deleted/recreated if missed); Co-Op Agent + transaction year rule added for other-side agents (never "Agent"); seller-on-buyer-side rule added (name + role + category only, no contact info needed)
+- Step 7 replaced wholesale — new title "Populate Aframe Merge Fields and Transaction Fields"; adds Commission and Payout model section, Concessions handling section, redrafted Paragraph 23 rule (default verbatim, ask when long — standard is post-ratification relevance), Notes (`f_Notes`) section, Possession (`f_Possession`) section, Services Requested rule with full pricing table, native transaction fields callout (`percentageCommission`, `payoutEstimated`, `payoutActual` via `update_transaction`), and Primary Agent + Assistant 1 added to UI-only fields
+- Buyer's agent placement note added to Step 8 — on a buyer-side file the buyer's agent lives in the Primary Agent slot only, not in the participant roster
+- Step 10 handoff checklist expanded — adds Primary Agent / Assistant 1 confirmation, `f_ServiceRequested` confirmation, `percentageCommission` / `payoutEstimated` confirmation
+
+*Lennar Listing Session Protocol — v1.0 → v1.1 (8 surgical changes):*
+- Systems & Reference table updated — Google Sheet main tab now flagged read-only for sessions; Session Data tab writable with narrate-before-execute rule
+- Compliance Rules expanded — Sheet main tab read-only rule, categories-creation-time-only rule, Co-Op Agent + year rule for other-side agents at Under Contract
+- Step 6 Sheet write path converted to read-and-surface — sessions read main tab to verify no duplicate, then surface proposed row to Andrew for manual entry
+- Step 8 — capture MLS data sheet file URL after saving to property folder; URL surfaces in Step 12 handoff for Andrew to apply as Column A hyperlink on the address
+- Step 9 expanded — Primary Agent (Gary Martin) and Assistant 1 (Andrew Rich) marked UI-only; `percentageCommission` = `0` via `update_transaction`; `f_ServiceRequested` = `Listing Data Input - $100`; explicit callout that other commission/payout fields (`payoutEstimated`, `payoutActual`, `f_BuyerSideCommission`, `f_SellerSideCommission`, `f_CommissioncoveredbytheBuyer`, `f_CommissionNotes`) all stay blank on Lennar listings
+- Lifecycle sections (Price Adjustment, Under Contract, Closed) updated — Sheet writes become surface-to-Andrew; Co-Op Agent rule added to Under Contract for buyer's agent participant creation
+- Step 12 handoff checklist expanded — Sheet add with hyperlink instruction, Primary Agent + Assistant 1 confirmation, MLS# manual entry note
+
+*Agent Profiles — v1.2 → v1.3:*
+- New "File Setup Rule" admonition added at the top — roster agent = Primary Agent, Andrew = Assistant 1, all file types, UI-only at creation
+- New "Invoicing & Payment (QuickBooks Online)" admonition added at the top — 3% CC surcharge default, Venmo/bank opt-out, ~1% bank fee Andrew absorbs
+- Admin Fee vs. Services Requested admonition updated — clarifies seller-side admin fee source (Listing Agreement) in addition to buyer-side (Buyer Agency Agreement)
+- Kelly Painschab — admin fee now split buyer-side $395 / seller-side $425; listing service level added (`Listing Data Input - $100`); Merge Field Defaults table updated for `f_ServiceRequested` and `f_AdminFee`; new Payment Preferences section (bank routing, ~1% absorbed by Andrew)
+- Gary Martin — gender fields populated (`him` / `his`); listing service level added (`Listing Data Input - $100`); Merge Field Defaults table updated; new Payment Preferences section (credit card, absorbs surcharge himself)
+- Liz Brown — gender fields populated (`her` / `her`); listing service level added (`Listing Management - $200`); admin fees populated ($425 buyer-side / $625 seller-side with CC passthrough explanation); Merge Field Defaults table updated; new Payment Preferences section (credit card, passes 3% surcharge through to clients via inflated admin fees)
+- Bethanne Elamghari — Payment Preferences section added with all fields TBC; listing service line added (TBC)
+
+*Discoveries:*
+- Aframe custom field tree retrieved via `list_custom_fields_tree` — confirmed no "Payout" custom field group exists; payout data lives at the native transaction level via `update_transaction` (`payoutEstimated`, `payoutActual`, `percentageCommission` — the last as decimal, e.g. `0.025` for 2.5%)
+- Six existing custom merge fields surfaced that the prior protocol did not document: `f_CommissioncoveredbytheBuyer`, `f_CommissionNotes`, `f_ConcessionsTotal`, `f_Notes`, `f_Possession`, `f_HOAtruefalse` — first five incorporated into buyer-side Step 7; `f_HOAtruefalse` deferred (potential duplicate of `f_HOA`, not in scope this session)
+
+**Decisions Made:**
+- **Sheet main tab is read-only for sessions** (confirmed and codified from 6/22 brief) — main Lennar Listings tab is externally visible to Lennar sales contacts; the Zapier mishap on 6/22 (JSON written to COL$A of row 21) is the cautionary precedent. Sessions read and surface; Andrew writes.
+- **Column A hyperlink target = MLS data sheet file** (not folder) — on the two new listings from 6/22 this is already in place; backfill of existing rows deferred to a future one-off cleanup session
+- **Listing service level lives on the agent profile**, not in the protocol — protocol references Agent Profiles for non-buyer-side service levels; profile is the source of truth
+- **Aframe URL attachment promotion deferred to its own session** — coupling roadmap promotion with the actual connector build (Swagger extraction via `EXTRACTION-PROC-001` plus tool wrap via `CURSOR-HANDOFF-PROTOCOL-001`) into one commit is cleaner than splitting them
+- **Old `Lennar_New_Listing_Protocol.md`** (the pre-session-protocol doc) — still slated for deletion per Session 004; not done this session
+
+**Protocol Rules Established:**
+- Ratification date — Gmail-first when ambiguous on contract; ratification delivery email usually confirms
+- Buyer name convention — one contact + alt contact for all couples regardless of last name match; middle names ignored
+- Co-Op Agent categories — other-side agents always get `Co-Op Agent` + transaction year; never `Agent`; both at creation
+- Sellers on buyer-side files — name + role (Seller Other Side, role ID 43983) + category only; no contact info
+- Paragraph 23 — default verbatim, ask when long; standard for inclusion is whether content affects deal post-ratification
+- Commission and Payout model — contract states seller's portion of buyer-side commission; Buyer Agency states buyer's total; delta in `f_CommissioncoveredbytheBuyer`; `percentageCommission` = total as decimal; `payoutEstimated` = `contractPrice × percentageCommission`; `payoutActual` blank at intake
+- Lennar payout simplification — `percentageCommission` = `0`, all other commission/payout fields blank
+- Services Requested — buyer-side default `C2C - $395`; listing values per agent profile (`Listing Data Input - $100` for data input only; `Listing Management - $200` for full management)
+- Primary Agent / Assistant 1 — UI-only on every file type; roster agent = Primary, Andrew = Assistant 1
+- Concessions at intake — `f_ConcessionsTotal` numeric dollar value from contract; `f_Concessions` = `On contract` if any, blank if none; Mode 2 appends additional lines as concessions accrue
+- Possession (`f_Possession`) — used only for rent back; format `Rentback ends on X/X`
+- Notes (`f_Notes`) — surface deal characteristics worth keeping in mind (Waived Inspections, As-Is, etc.); not contract terms (those go in `f_ContractOtherInfo`) or commission specifics (those go in `f_CommissionNotes`)
+
+**Gaps Cleared:**
+- Buyer-side protocol now codifies the 8 Topping items (6/23 intake brief)
+- Lennar listing protocol now carries the 6/22 Sheet read-only decision
+- Lennar listing protocol now has explicit MLS sheet hyperlink workflow (Step 8 captures URL; Step 12 surfaces it in handoff)
+- Agent profile listing service levels populated for Kelly, Gary, Liz
+- Agent profile gender fields populated for Gary and Liz
+- Kelly seller-side admin fee documented ($425 on Listing Agreement)
+- Liz buyer-side ($425) and seller-side ($625) admin fees documented with CC passthrough mechanism
+- QBO payment workflow and per-agent payment preferences documented
+
+**Gaps Identified / Carried Forward:**
+- ⭐ **Aframe URL attachment endpoints — promote from Tier 4 to Tier 2 in `CONNECTOR-ROAD-001` and build.** Per 6/22 brief, the `URL` variant of `attachmentType` eliminates the binary upload complexity that originally deferred attachments to Tier 4. Building this would enable the Gmail → Drive → Aframe attachment chain in-session — sessions could grab a signed document from a new email, save to the property's Drive folder, patch a Drive share link into the matching Aframe attachment slot, and apply the Gmail label, all in one pass. **This was the most-felt gap across working sessions on 6/22 and 6/23 (Lennar signed addenda, Winshire St closing extension, Kelly's Ridgecrest LA packet — 7 attachment slots that remain empty without it).** High priority for the next connector build session: extract via `EXTRACTION-PROC-001`, then wrap `create_transaction_attachment` (URL variant) + `list_transaction_attachments` via `CURSOR-HANDOFF-PROTOCOL-001`. Roadmap promotion lands in the same commit as the tool wrap.
+- ⭐ **MLS bookmarklet — Features tab extraction and full build.** Features is the only remaining tab to map (dedicated session — extract in chunks of 5-6 with Chrome extension, top to bottom). Once mapped, the full bookmarklet set can be built in Cursor. **Non-Lennar applicability confirmed during 6/23 intake (Kelly's 4508 Ridgecrest Ln new listing) — would have removed substantial manual entry friction.** The full semantic checkbox label lists already captured during prior extractions are explicitly designed to support non-Lennar use. High priority.
+- Second extraction pass for Listing Info dynamic dropdowns (Area, ZIP, Subdivision, schools) with County/City pre-selected — still pending; blocks both Listing Info bookmarklet build and Community Reference Database rewrite
+- Sales rep roster by community — Megan Cook onboards 6/30; document once she's in
+- Bethanne Elamghari agent profile — most fields still TBC; will fill as her files come in
+- Old `Lennar_New_Listing_Protocol.md` — still slated for deletion per Session 004; one-off cleanup handoff when convenient
+- Existing rows in the Google Sheet main tab without Column A hyperlinks — backfill task, out of scope; do when convenient
+- New session protocols still to be written: New Lennar Listing Session Protocol covers listings, New Buyer Side Session Protocol covers buyer-side intake — a Seller-Side Contract Update Protocol is still in the planned-but-not-created bucket (Session 001 carried this forward; still open)
+
+**Cursor handoffs produced this session:**
+- `HANDOFF-2026-06-23-protocol-updates.md` — two-target surgical update (New_Buyer_Side_Session_Protocol.md v1.1, New_Lennar_Listing_Session_Protocol.md v1.1); applied earlier in session, commit deferred until this handoff
+- `HANDOFF-2026-06-23-session-log.md` — this entry; carries commit block and `git rm` for both handoff files
+
+**Documents Updated This Session:**
+
+| Document | Version | File Name |
+|---|---|---|
+| New Buyer Side Session Protocol | 1.0 → 1.1 | New_Buyer_Side_Session_Protocol.md |
+| Lennar Listing Session Protocol | 1.0 → 1.1 | New_Lennar_Listing_Session_Protocol.md |
+| Agent Profiles | 1.2 → 1.3 | Agent_Profiles.md *(project-only doc — re-uploaded to project knowledge by Andrew)* |
+| Project Session Log | — | Project_Session_Log.md |
+
+**Key references:**
+
+| Item | Value |
+|---|---|
+| Google Sheet ID | `1fTapWU64r78Fyd8J-RM1Xh0z-fKo2y-wF9o6rtNJ5ME` |
+| Google Drive — Properties folder | `1EypC5Ep7VRMqwWcoMvUb5juVvJKAEi7B` |
+| Aframe Custom Field Collections | `Transaction Info` (fc_TransactionInfo, ID 457), `Contract Info` (fc_ContractInfo, ID 458) |
+| Aframe Field Group — Commissions and fees | fg_Commissionsandfees, ID 9726 |
+| Connector Roadmap | `CONNECTOR-ROAD-001` |
+| Cursor Handoff Procedure | `CURSOR-HANDOFF-PROTOCOL-001` |
+| Swagger Extraction Procedure | `EXTRACTION-PROC-001` |
+
+---
+*Next session priority: connector build session — extract Aframe attachment endpoints from Swagger (`EXTRACTION-PROC-001`), then wrap `create_transaction_attachment` (URL variant) + `list_transaction_attachments` and promote in `CONNECTOR-ROAD-001` from Tier 4 to Tier 2. Alternative: dedicated Features tab extraction session for the bookmarklet — extract in chunks of 5-6 with Chrome extension, top to bottom.*

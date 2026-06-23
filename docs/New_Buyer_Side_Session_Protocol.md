@@ -1,5 +1,5 @@
 # New Buyer Side Session Protocol
-**Version 1.0** | *Last Updated: June 20, 2026*
+**Version 1.1** | *Last Updated: June 23, 2026*
 *Claude-facing SOP | Generic — applies to all agents and file types*
 
 ---
@@ -45,7 +45,7 @@ The contract is either pulled from the Gmail attachment or provided directly by 
 
 **Transaction Details**
 - Property address, county, tax parcel ID, legal description, subdivision
-- Ratification date / effective date
+- Ratification date / effective date *(when ambiguous on the contract, check the Gmail thread first — the date is usually confirmed in the ratification delivery email. Only flag to the agent if it cannot be confirmed from either source.)*
 - Purchase price
 - Financing type (VA, Conventional, FHA, Cash, etc.)
 - Loan term
@@ -110,69 +110,164 @@ Also pull:
 When creating a new contact, always apply these rules:
 
 **Name Fields**
-- Individual: `firstName` + `lastName` as they appear on the contract
-- Married couple with same last name: one contact, shared last name only — Aframe handles the rendering automatically
-- Different last names: each person entered with their own last name — Aframe handles the separator
+- Individual: `firstName` + `lastName` as they appear on the contract — ignore middle names
+- Couples (married or otherwise): one contact record for the primary; the second person goes in the alt contact fields on that same record. Applies regardless of whether the couple shares a last name. Aframe handles the display.
 - Entity (LLC, Corp, Trust, etc.): `lastName` = short entity name as it appears on the contract (e.g. `MPE LLC`), `company` = full legal name, `jobTitle` = authorized signatory/rep name
 
 **Categories — REQUIRED at creation time**
-Categories cannot be added after the fact via the connector. They must be passed in the `create_contact` call. Never skip this step.
 
-| Contact Type | Category |
+> ⚠️ **Hard limitation: the Aframe connector cannot update contact categories after a contact is created.** Categories must be passed in the `create_contact` call. If missed, the contact must be deleted and recreated, or accepted as miscategorized — there is no in-session fix. Get this right the first time, every time.
+
+| Contact Type | Categories (pass all at creation) |
 |---|---|
-| Seller on a buyer-side file | Seller Other Side |
-| Buyer on a seller-side file | Buyer Other Side |
+| Seller on a buyer-side file | `Seller Other Side` |
+| Buyer on a seller-side file | `Buyer Other Side` |
+| Other-side agent (any file) | `Co-Op Agent` + transaction year (e.g. `2026`) |
+
+**Other-side agents — Co-Op Agent rule**
+Other-side agents always receive two categories at creation: `Co-Op Agent` plus the transaction year. Never use `Agent` as the category for an other-side agent. Both must be passed in the same `create_contact` call.
+
+**Sellers on a buyer-side file — no contact info required**
+The seller record on a buyer-side file is name + role (Seller Other Side, role ID 43983) + category (Seller Other Side). Do not ask for or populate phone, email, or address. The record exists for transaction roster completeness only.
 
 **Agent + TC on the Other Side**
 When the listing agent has an assistant or TC copied on the email thread, create one contact record for the agent and include the TC as the alt contact on the same record.
 
-**Spouse as 2nd Buyer**
-When Kelly (or another agent) lists a spouse as Buyer 2 for communications purposes only, the spouse is not a separate participant in Aframe. They are linked within the buyer's contact record. Confirm with the agent if unclear whether the 2nd buyer is a true co-buyer or a spouse.
-
 ---
 
-## Step 7 — Populate Aframe Merge Fields
+## Step 7 — Populate Aframe Merge Fields and Transaction Fields
 
-Write all merge fields via `update_custom_field`. Follow these formatting rules:
+Most fields are written via `update_custom_field` using Merge Field Codes. A few are native to the transaction object and written via `update_transaction` — called out below.
 
-- **Commission percentages** — numeric only, no % sign (e.g. `2`)
-- **Dollar amounts** — numeric with comma formatting, no $ sign (e.g. `1,000`)
+### Formatting Rules
+
+- **Commission percentages (custom merge fields)** — numeric only, no `%` (e.g. `2.5`)
+- **Commission rates (native `percentageCommission`)** — decimal form (e.g. `0.025` for 2.5%)
+- **Dollar amounts (custom merge fields)** — numeric with comma formatting, no `$` (e.g. `1,000`)
+- **Dollar amounts (native transaction fields)** — numeric, no formatting (e.g. `12500`)
 - **Financing** — plain text, short form (e.g. `VA Loan`, `Conventional`, `Cash`)
 - **Yes/No fields** — `Yes` or `No`
 - **Agent gender fields** — `her` or `him` (both `f_Agentgender` and `f_Agentgender2hisher`)
-- **Paragraph 23** — copy verbatim from the contract into `f_ContractOtherInfo`
 
-**Standard fields to populate on every file:**
+### Standard Merge Fields (via `update_custom_field`)
 
-| Merge Field Code | Description |
+| Merge Field Code | Description | Notes |
+|---|---|---|
+| `f_EarnestMoney` | EMD amount | Dollar amount per formatting rules |
+| `f_Financing` | Loan type | Plain text short form |
+| `f_BuyerSideCommission` | Buyer-side commission % | See Commission and Payout below |
+| `f_CommissioncoveredbytheBuyer` | Delta the buyer covers, if any | See Commission and Payout below |
+| `f_CommissionNotes` | Notes on atypical commission situations | Used to flag deltas, splits, or anything non-standard |
+| `f_Concessions` | Concessions narrative | See Concessions below |
+| `f_ConcessionsTotal` | Concessions dollar total | See Concessions below |
+| `f_HOA` | HOA yes/no | `Yes` or `No` |
+| `f_WellWater` | Well yes/no | `Yes` or `No` |
+| `f_SepticSystem` | Septic yes/no | `Yes` or `No` |
+| `f_HomeWarranty1` | Home warranty yes/no | `Yes` or `No` |
+| `f_ContractOtherInfo` | Paragraph 23 additional terms | See Paragraph 23 below |
+| `f_Notes` | Deal characteristics worth surfacing | See Notes below |
+| `f_Possession` | Rent back end date if applicable | See Possession below |
+| `f_County` | County | Plain text |
+| `f_TaxId` | Tax parcel ID | Plain text |
+| `f_MlsId` | MLS number | Plain text |
+| `f_YearBuilt` | Year built | Plain text |
+| `f_Subdivision` | Subdivision | Plain text |
+| `f_Agentgender` | Agent gender pronoun | `her` or `him` |
+| `f_Agentgender2hisher` | Agent gender pronoun 2 | `her` or `him` |
+| `f_ServiceRequested` | Services rendered for invoice tracking | See Services Requested below |
+
+### Native Transaction Fields (via `update_transaction`)
+
+These are properties on the transaction object itself, not custom merge fields. They are written through `update_transaction`, not `update_custom_field`.
+
+| Field | Description | Notes |
+|---|---|---|
+| `percentageCommission` | Total commission rate for this side | Decimal form. See Commission and Payout below. |
+| `payoutEstimated` | Estimated payout at intake | See Commission and Payout below. |
+| `payoutActual` | Actual payout at closing | **Blank at intake.** Populated post-closing only. |
+
+### Commission and Payout
+
+Commission lives across two source documents — the contract states what the **seller** is paying toward buyer-side commission; the Buyer Agency Agreement states what the **buyer** is willing to pay in total. These usually align. When they don't, the buyer covers the delta.
+
+| Field | Source | Tool | Value |
+|---|---|---|---|
+| `f_BuyerSideCommission` | Contract | `update_custom_field` | What the *contract* states (seller's portion). Numeric, no `%`. |
+| `f_CommissioncoveredbytheBuyer` | Buyer Agency vs. contract | `update_custom_field` | The delta when there is one — what the buyer covers above what the seller is paying. Numeric, no `%`. Blank when aligned. |
+| `f_CommissionNotes` | Session | `update_custom_field` | Note explaining the delta or any other atypical commission detail. Blank when standard. |
+| `percentageCommission` | Computed | `update_transaction` | Total buyer-side rate as **decimal** — `(f_BuyerSideCommission + f_CommissioncoveredbytheBuyer) / 100`. Example: 2.5% total → `0.025`. |
+| `payoutEstimated` | Computed | `update_transaction` | `contractPrice × percentageCommission`. Example: $500,000 × 0.025 = `12500`. |
+| `payoutActual` | Post-closing | `update_transaction` | **Blank at intake.** |
+
+**Worked examples:**
+
+*Aligned case* — contract says seller pays 2.5%, Buyer Agency says buyer total is 2.5%, contract price $500K:
+- `f_BuyerSideCommission` = `2.5`
+- `f_CommissioncoveredbytheBuyer` = blank
+- `f_CommissionNotes` = blank
+- `percentageCommission` = `0.025`
+- `payoutEstimated` = `12500`
+
+*Delta case* — contract says seller pays 2%, Buyer Agency says buyer total is 2.5%, contract price $500K:
+- `f_BuyerSideCommission` = `2`
+- `f_CommissioncoveredbytheBuyer` = `0.5`
+- `f_CommissionNotes` = `Buyer covering 0.5% delta — seller paying 2%, Buyer Agency total is 2.5%`
+- `percentageCommission` = `0.025`
+- `payoutEstimated` = `12500`
+
+### Concessions
+
+- `f_ConcessionsTotal` — at intake, the dollar value of concessions stated in the contract. Numeric with comma formatting, no `$` (e.g. `1,500`). Blank if none.
+- `f_Concessions` — at intake, write `On contract` if concessions are in the contract; leave blank otherwise. As concessions evolve during the deal (Mode 2), append new lines describing each (e.g. `Credit in lieu of repairs — $500`). The total in `f_ConcessionsTotal` is updated to reflect the running sum.
+
+### Paragraph 23 — `f_ContractOtherInfo`
+
+By default, copy paragraph 23 verbatim from the contract into `f_ContractOtherInfo`.
+
+When paragraph 23 contains a lot of content — for example, escalation clause terms embedded in 23 rather than as a separate addendum (Gary does this; other agents may too), or other lengthy additional terms — **stop and ask Andrew what should be included before writing**. The standard for inclusion is whether the information affects the deal *post-ratification*. If not (e.g. an escalation clause that's already settled at ratification), it can be summarized or omitted. Default to asking when paragraph 23 runs more than a few short lines.
+
+### Notes — `f_Notes`
+
+Use `f_Notes` to surface deal characteristics worth keeping in mind throughout the file — anything unusual, atypical, or specific that should remain visible. Examples:
+- `Waived Inspections`
+- `As-Is Sale`
+- `Cash deal — no financing contingency`
+- `Buyer paying admin fee directly`
+
+This field is for at-a-glance deal context, not contract terms (which go in `f_ContractOtherInfo`) or commission specifics (which go in `f_CommissionNotes`).
+
+### Possession — `f_Possession`
+
+Used when the contract includes a rent back. Format: `Rentback ends on X/X` (e.g. `Rentback ends on 8/15`). Blank when no rent back.
+
+### Services Requested — `f_ServiceRequested`
+
+`f_ServiceRequested` must be populated on every file. It captures the work Andrew performs on the file, sourced from AAR-TC pricing (aar-tc.com). It is **not** the agent's admin fee — that's `f_AdminFee`, which is a separate field.
+
+| File Type / Service | Value |
 |---|---|
-| `f_EarnestMoney` | EMD amount |
-| `f_Financing` | Loan type |
-| `f_BuyerSideCommission` or `f_SellerSideCommission` | Commission % |
-| `f_Concessions` | Seller concessions |
-| `f_HOA` | HOA yes/no |
-| `f_WellWater` | Well yes/no |
-| `f_SepticSystem` | Septic yes/no |
-| `f_HomeWarranty1` | Home warranty yes/no |
-| `f_ContractOtherInfo` | Paragraph 23 additional terms |
-| `f_County` | County |
-| `f_TaxId` | Tax parcel ID |
-| `f_MlsId` | MLS number |
-| `f_YearBuilt` | Year built |
-| `f_Subdivision` | Subdivision |
-| `f_Agentgender` | Agent gender pronoun (her/him) |
-| `f_Agentgender2hisher` | Agent gender pronoun 2 (her/him) |
-| `f_ServiceRequested` | Services rendered for invoice tracking |
+| Buyer-side contract intake | `C2C - $395` |
+| Listing — data input only | `Listing Data Input - $100` |
+| Listing — full listing management | `Listing Management - $200` |
 
-**UI-Only Fields (cannot be written via connector — flag for Andrew)**
-- Property Type — must be set manually from dropdown in Aframe UI
+Format: one service per line. Multiple services on the same file appear as multi-line entries. Agent profiles record which service level each agent uses for their listings; buyer-side files are always `C2C - $395` regardless of agent.
+
+### UI-Only Fields (cannot be written via connector — flag for Andrew)
+
+- **Property Type** — must be set manually from dropdown in Aframe UI
   - Valid values: 2-4 Units, Apartment, Condo/Townhome, Land, Lease, New Construction, Other, Single Family
+- **Primary Agent** — the roster agent (Kelly, Gary, Liz, etc.) is always the Primary Agent on every file regardless of side. Set manually in the UI at file creation.
+- **Assistant 1** — Andrew Rich is always Assistant 1 on every file regardless of side. Set manually in the UI at file creation.
 
 ---
 
 ## Step 8 — Add Participants to the Transaction
 
-Add all participants via `add_transaction_participant` using the confirmed contact IDs and role IDs. Standard roles:
+Add all participants via `add_transaction_participant` using the confirmed contact IDs and role IDs.
+
+> **Buyer's agent placement on a buyer-side file:** the buyer's agent (the roster agent — Kelly, Gary, Liz, etc.) lives in the Primary Agent slot only (see Step 7 UI-only fields). **Do not add the buyer's agent as a participant in the participant roster.** The Primary Agent slot is the single placement.
+
+Standard roles:
 
 | Role | Role ID |
 |---|---|
@@ -211,10 +306,14 @@ Apply the appropriate task template(s) via `apply_task_templates` using the rati
 
 At the close of every session, present Andrew with a clear handoff summary of what still requires action in the UI:
 
+- [ ] Confirm Primary Agent set to the roster agent (UI-only — cannot be written via connector)
+- [ ] Confirm Assistant 1 set to Andrew Rich (UI-only — cannot be written via connector)
 - [ ] Set Property Type (UI dropdown — cannot be written via connector)
 - [ ] Apply date template and enter all key dates
 - [ ] Apply attachment template
-- [ ] Verify any contact categories that could not be set (only possible if contact already existed without category)
+- [ ] Verify any contact categories that could not be set at creation — note: existing contacts created without categories cannot be fixed via connector and must be edited in the UI
+- [ ] Confirm `f_ServiceRequested` populated (buyer-side default `C2C - $395`)
+- [ ] Confirm `percentageCommission` and `payoutEstimated` populated on the transaction (via `update_transaction`)
 - [ ] Confirm EMD wire received by due date
 - [ ] Review and action any flagged items from signature verification
 - [ ] Note any pending contacts (e.g. TC Other Side not yet introduced)

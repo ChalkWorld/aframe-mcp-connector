@@ -1,5 +1,5 @@
 # Lennar Listing Session Protocol
-**Version 1.0** | *Last Updated: June 20, 2026*
+**Version 1.1** | *Last Updated: June 23, 2026*
 *Claude-facing SOP | Lennar new listing intake and lifecycle management*
 
 ---
@@ -18,8 +18,8 @@ Sessions replace the Zap chain for Aframe file creation. All other automation (f
 
 | System | Purpose | Notes |
 |---|---|---|
-| Google Sheet | Source of truth — file status, pricing, MLS# | Shared with Lennar sales team; keep lean |
-| Session Data tab | Session metadata — model, addendum status, photo source, etc. | Session-facing only |
+| Google Sheet — main tab | Source of truth — file status, pricing, MLS# | Shared with Lennar sales team; **read-only for sessions** — Andrew handles all writes manually |
+| Session Data tab | Session metadata — model, addendum status, photo source, etc. | Session-facing; writable — narrate intended writes before executing |
 | Google Drive — Properties folder | One subfolder per address; holds tax record, signed addendum, MLS listing sheet | Folder ID: `1EypC5Ep7VRMqwWcoMvUb5juVvJKAEi7B` |
 | Gmail | Source of new listing emails; label tracks file state | Label convention: `Lennar/[Address]` |
 | Aframe | Optional — lightweight lifecycle tracking and doc storage | Created in session; not load-bearing |
@@ -70,6 +70,9 @@ Community-specific data (schools, HOA, MLS Area, heating/fuel/cooling) comes fro
 - **Do not activate** — listing must not go Active in MLS until the signed addendum is on file. Session does not touch MLS activation.
 - **Duplicate check** — search the Google Sheet and Aframe before creating anything. Carly has submitted duplicates before.
 - **List date is always today** — never the email date or form submission date.
+- **Google Sheet main tab is read-only for sessions** — the primary tab is visible externally to Lennar sales contacts. Sessions read it to check status and flag discrepancies but never write to it; Andrew handles all writes to the main tab manually. The Session Data tab remains writable; narrate intended writes before executing.
+- **Contact categories are creation-time only** — the Aframe connector cannot update categories after a contact is created. Pass all required categories in the `create_contact` call. If missed, the contact must be deleted and recreated, or accepted as miscategorized. There is no in-session fix.
+- **Other-side agents — Co-Op Agent categories** — when this listing goes under contract and the buyer's agent is added as a participant, the agent contact must be created (or already exist) with two categories: `Co-Op Agent` and the transaction year (e.g. `2026`). Never use `Agent` as a category for an other-side agent.
 
 ---
 
@@ -132,10 +135,12 @@ Full details, field maps, tab inventory, build roadmap, and payload schema: **`L
 ---
 
 ### 6. Update the Google Sheet
-Add the new listing row in the correct position:
-- Group by community, then SF or TH
-- Descending numeric order within the group
-- Columns: Address, blank MLS#, List Price, blank New Price, Community, Status = **Input in Progress**, blank Closing Date, blank Price Change Date
+**Main tab is read-only for sessions.** Read the main tab to confirm the listing is not already present, then surface the proposed new row to Andrew for him to add manually:
+- Position: grouped by community, then SF or TH, descending numeric order within the group
+- Columns to populate: Address, blank MLS#, List Price, blank New Price, Community, Status = **Input in Progress**, blank Closing Date, blank Price Change Date
+- **Column A hyperlink**: the address text in Column A should be a hyperlink pointing to the MLS data sheet file in the property's Drive folder. The URL is captured in Step 8 and surfaced again in the Step 12 handoff for Andrew to apply when he adds the row.
+
+The Session Data tab (Step 7) is the session's write target for tracking.
 
 ### 7. Update the Session Data Tab
 Add a corresponding row with:
@@ -151,19 +156,23 @@ Add a corresponding row with:
 ### 8. Create the Google Drive Property Folder
 Inside the Properties folder (`1EypC5Ep7VRMqwWcoMvUb5juVvJKAEi7B`), create a subfolder named `[Street Number] [Street Name]` (e.g. `15912 Greenhart Dr`).
 
-Save the MLS data sheet to this folder.
+Save the MLS data sheet to this folder, then **capture the file URL** of the saved MLS data sheet. This URL is surfaced in the Step 12 handoff — Andrew applies it as a hyperlink on the address text in Column A of the main tab when he adds the new row to the Google Sheet.
 
 ### 9. Create Aframe Transaction
 Create the transaction with standard Lennar defaults:
 
-| Field | Value |
-|---|---|
-| Transaction Side | Seller |
-| Primary Agent | Gary Martin |
-| TC/Assistant | Andrew Rich (agentandrewrich@gmail.com) |
-| Seller Company | Lennar |
-| Status | Lennar - Active *(may create as Draft — flag for Andrew)* |
-| List Date | Today |
+| Field | Value | Tool | Notes |
+|---|---|---|---|
+| Transaction Side | Seller | `create_transaction` | |
+| Primary Agent | Gary Martin | — | **UI-only — set manually at file creation. Connector cannot write this field.** |
+| Assistant 1 | Andrew Rich (agentandrewrich@gmail.com) | — | **UI-only — set manually at file creation. Connector cannot write this field.** |
+| Seller Company | Lennar | `create_transaction` | |
+| Status | Lennar - Active *(may create as Draft — flag for Andrew)* | `create_transaction` | |
+| List Date | Today | `create_transaction` | |
+| `percentageCommission` | `0` | `update_transaction` | Native transaction field. Lennar listings have no commission tracked at the transaction level. |
+| `f_ServiceRequested` | `Listing Data Input - $100` | `update_custom_field` | Andrew's service level for Lennar listings is data input only. See Agent Profiles for non-Lennar listing service levels. |
+
+**Other commission and payout fields stay blank on Lennar listings:** `payoutEstimated`, `payoutActual`, `f_BuyerSideCommission`, `f_SellerSideCommission`, `f_CommissioncoveredbytheBuyer`, `f_CommissionNotes`. Do not populate any of these at intake — they remain empty for the life of the file unless a future workflow requires otherwise.
 
 Apply task templates:
 - Lennar New Listing Task List — always
@@ -187,12 +196,15 @@ Sales rep roster by community: *(stub — see Primary Contact section above)*
 
 ### 12. Session Handoff Summary
 Close every session with a clear handoff of what still needs Andrew's action:
+- [ ] Add the new listing row to the Google Sheet main tab — main tab is read-only for sessions; Andrew adds manually using the row surfaced in Step 6. **Apply the MLS data sheet URL captured in Step 8 as a hyperlink on the address text in Column A.**
+- [ ] Confirm Primary Agent set to Gary Martin in Aframe (UI-only — cannot be written via connector)
+- [ ] Confirm Assistant 1 set to Andrew Rich in Aframe (UI-only — cannot be written via connector)
 - [ ] MLS data input (using the generated data sheet)
 - [ ] Photos — download/save; upload and reorder in MLS (exterior first, bathrooms to back)
 - [ ] Send listing addendum to Megan/Carly for signature (until DocuSign is connected)
 - [ ] Flip Aframe status from Draft to Lennar - Active if needed
 - [ ] Set Property Type in Aframe UI (dropdown — cannot be written via connector)
-- [ ] Save MLS# back to Google Sheet and Session Data tab once assigned
+- [ ] Save MLS# back to the Session Data tab once assigned; surface to Andrew for manual entry on the main tab
 - [ ] Save signed addendum to Google Drive property folder once returned
 - [ ] Activate listing in MLS once signed addendum is on file
 - [ ] Send active listing email to community sales rep(s)
@@ -204,21 +216,21 @@ Close every session with a clear handoff of what still needs Andrew's action:
 ### Price Adjustment
 Carly/Megan sends an email with the new price. Session:
 1. Read the email, confirm address and new price
-2. Update Current Price in the Google Sheet; log today's date in Price Change Date
+2. Surface the proposed main-tab update to Andrew (Current Price + today's date in Price Change Date) — Andrew applies manually
 3. Update Current Price in Session Data tab
 4. Update the MLS (Andrew does this manually — flag in handoff)
 5. Apply the Gmail label if not already applied
 
 ### Under Contract
 Session:
-1. Update Google Sheet status to **Pending**; add closing date if known
+1. Surface proposed main-tab status change to **Pending** + closing date if known — Andrew applies manually
 2. Update Session Data tab status
 3. Update Gmail label to `Lennar/@Under Contract/[Address]`
-4. Update Aframe status if applicable
+4. Update Aframe status if applicable. When adding the buyer's agent as a participant, create or confirm the agent contact with categories `Co-Op Agent` + transaction year (e.g. `2026`).
 
 ### Closed
 Session:
-1. Update Google Sheet status to **Closed**; confirm closing date
+1. Surface proposed main-tab status change to **Closed** + confirmed closing date — Andrew applies manually
 2. Update Session Data tab status
 3. Update Gmail label to `Lennar/Closed/[Address]`
 4. Update Aframe status if applicable
