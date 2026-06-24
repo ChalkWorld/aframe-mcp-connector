@@ -30,6 +30,13 @@ import {
   applyTaskTemplates,
   listContactCategories,
   listTransactionStatuses,
+  createTransactionAttachment,
+  getTransactionAttachment,
+  listTransactionAttachments,
+  updateTransactionAttachment,
+  uploadTransactionAttachmentFile,
+  unassignTransactionAttachmentFile,
+  assignTransactionAttachmentFile,
 } from "./aframe.js";
 
 // ---------------------------------------------------------------------------
@@ -58,7 +65,7 @@ function formatResult(header, { payload, warnings }) {
 
 const server = new McpServer({
   name: "aframe-connector",
-  version: "0.4.1",
+  version: "0.5.0",
 });
 
 // Tool 1: create_transaction
@@ -962,6 +969,233 @@ server.tool(
   }
 );
 
+// Tool 28: create_transaction_attachment
+server.tool(
+  "create_transaction_attachment",
+  "Create a new Transaction Attachment record on an Aframe transaction (metadata only). Use attachmentType 'URL' to attach a Google Drive link or other web link — supply webLink when doing so. Use attachmentType 'FILE' to create a placeholder slot, then upload the binary via upload_transaction_attachment_file. Supply either folderId or newFolderName to place the attachment in a folder (mutually exclusive). Returns the created attachment object including the new xactionAttachmentId.",
+  {
+    xactionId: z.number().int().describe("ID of the Transaction to attach to"),
+    attachmentType: z
+      .enum(["FILE", "URL"])
+      .describe("Attachment type — FILE for binary uploads, URL for web links"),
+    title: z.string().optional().describe("Attachment title (max 300 chars)"),
+    description: z.string().optional().describe("Attachment description"),
+    webLink: z
+      .string()
+      .optional()
+      .describe("URL link — required when attachmentType is 'URL'"),
+    folderId: z
+      .number()
+      .int()
+      .optional()
+      .describe("ID of an existing folder to place the attachment in. Mutually exclusive with newFolderName."),
+    newFolderName: z
+      .string()
+      .optional()
+      .describe("Name of a new folder to create and place the attachment in. Mutually exclusive with folderId."),
+    required: z.boolean().optional().describe("Whether the attachment is required"),
+    completed: z.boolean().optional().describe("Whether the attachment is completed"),
+    color: z
+      .enum(["NONE", "RED", "TANGERINE", "TAUPE", "YELLOW", "LIME", "GREEN", "CYAN", "TEAL", "COBALT", "PURPLE", "MAGENTA"])
+      .optional()
+      .describe("Display color label (default NONE)"),
+    agentVisible: z.boolean().optional().describe("Visible on Agent Portal"),
+    buyerSellerVisible: z.boolean().optional().describe("Visible on Buyer/Seller Portal"),
+    mergeFieldCode: z.string().optional().describe("Merge field code"),
+    sort: z.number().int().optional().describe("Sort order within the folder"),
+  },
+  async (params) => {
+    const result = await createTransactionAttachment(params);
+    return formatResult("Transaction attachment created successfully.", result);
+  }
+);
+
+// Tool 29: get_transaction_attachment
+server.tool(
+  "get_transaction_attachment",
+  "Retrieve a single Transaction Attachment by ID. Returns the full attachment record including title, type, file metadata (fileName, contentType, fileSizeBytes), webLink, completion and visibility flags, folder, and audit timestamps. Use this to confirm state after a write operation.",
+  {
+    xactionAttachmentId: z
+      .number()
+      .int()
+      .describe("ID of the Transaction Attachment to retrieve"),
+  },
+  async ({ xactionAttachmentId }) => {
+    const result = await getTransactionAttachment(xactionAttachmentId);
+    return formatResult(`Transaction Attachment ${xactionAttachmentId}:`, result);
+  }
+);
+
+// Tool 30: list_transaction_attachments
+server.tool(
+  "list_transaction_attachments",
+  "List all attachments on a Transaction. Returns a paged list of attachment records — title, type, file metadata, webLink, completion flags, folder, and sort order. Only non-omitted attachments are returned. Pagination is 0-based; default page size is 50, max 100. Use this to discover existing attachment IDs and slot structure before creating or updating attachments.",
+  {
+    xactionId: z.number().int().describe("The transaction ID"),
+    page: z
+      .number()
+      .int()
+      .min(0)
+      .optional()
+      .default(0)
+      .describe("Page number, 0-based (default 0)"),
+    pageSize: z
+      .number()
+      .int()
+      .min(1)
+      .max(100)
+      .optional()
+      .default(50)
+      .describe("Page size, max 100 (default 50)"),
+  },
+  async ({ xactionId, page, pageSize }) => {
+    const result = await listTransactionAttachments(xactionId, { page, pageSize });
+    return formatResult(`Attachments on transaction ${xactionId}:`, result);
+  }
+);
+
+// Tool 31: update_transaction_attachment
+server.tool(
+  "update_transaction_attachment",
+  "Update metadata on an existing Transaction Attachment using JSON Patch. Include only the fields you want to change. Use this to patch a webLink into an existing URL-type slot, rename an attachment, toggle completion or visibility flags, or move the attachment to a different folder. To upload or manipulate the file binary, use the dedicated file tools instead.",
+  {
+    xactionAttachmentId: z
+      .number()
+      .int()
+      .describe("ID of the Transaction Attachment to update"),
+    attachmentType: z.enum(["FILE", "URL"]).optional().describe("Attachment type"),
+    title: z.string().optional().describe("Attachment title (max 300 chars)"),
+    description: z.string().optional().describe("Attachment description"),
+    webLink: z
+      .string()
+      .optional()
+      .describe("URL link — applicable when attachmentType is URL"),
+    fileName: z
+      .string()
+      .optional()
+      .describe("Rename the stored file — extension must match the existing file's extension"),
+    required: z.boolean().optional().describe("Whether the attachment is required"),
+    completed: z.boolean().optional().describe("Whether the attachment is completed"),
+    color: z
+      .enum(["NONE", "RED", "TANGERINE", "TAUPE", "YELLOW", "LIME", "GREEN", "CYAN", "TEAL", "COBALT", "PURPLE", "MAGENTA"])
+      .optional()
+      .describe("Display color label"),
+    agentVisible: z.boolean().optional().describe("Visible on Agent Portal"),
+    buyerSellerVisible: z.boolean().optional().describe("Visible on Buyer/Seller Portal"),
+    mergeFieldCode: z.string().optional().describe("Merge field code"),
+    sort: z.number().int().optional().describe("Sort order within the folder"),
+    folderId: z
+      .number()
+      .int()
+      .optional()
+      .describe("Move to an existing folder by ID. Mutually exclusive with newFolderName."),
+    newFolderName: z
+      .string()
+      .optional()
+      .describe("Move to a new folder (created on the fly). Mutually exclusive with folderId."),
+  },
+  async ({ xactionAttachmentId, ...changes }) => {
+    const result = await updateTransactionAttachment(xactionAttachmentId, changes);
+    return formatResult(
+      `Transaction Attachment ${xactionAttachmentId} updated.`,
+      result
+    );
+  }
+);
+
+// Tool 32: upload_transaction_attachment_file
+server.tool(
+  "upload_transaction_attachment_file",
+  "Upload or replace the binary file on a FILE-type Transaction Attachment. Sends the file as multipart/form-data. If a file is already present it is replaced. Supply fileBase64 as a base64-encoded string of the file content, along with fileName and mimeType. Optional newFileName overrides the stored file name (extension must match). Optional completeMode controls whether the attachment is auto-marked complete after upload (DEFAULT, COMPLETE, INCOMPLETE, UNCHANGED).",
+  {
+    xactionAttachmentId: z
+      .number()
+      .int()
+      .describe("ID of the Transaction Attachment to upload to"),
+    fileBase64: z
+      .string()
+      .describe("Base64-encoded file content"),
+    fileName: z
+      .string()
+      .describe("File name including extension, e.g. 'contract.pdf'"),
+    mimeType: z
+      .string()
+      .describe("MIME type of the file, e.g. 'application/pdf'"),
+    newFileName: z
+      .string()
+      .optional()
+      .describe("Override the stored file name after upload — extension must match the uploaded file"),
+    completeMode: z
+      .enum(["DEFAULT", "COMPLETE", "INCOMPLETE", "UNCHANGED"])
+      .optional()
+      .describe("Controls the completed flag after upload. DEFAULT applies system behavior; UNCHANGED leaves the flag as-is."),
+  },
+  async ({ xactionAttachmentId, fileBase64, fileName, mimeType, newFileName, completeMode }) => {
+    const fileBuffer = Buffer.from(fileBase64, "base64");
+    const result = await uploadTransactionAttachmentFile(
+      xactionAttachmentId,
+      fileBuffer,
+      fileName,
+      mimeType,
+      { newFileName, completeMode }
+    );
+    return formatResult(
+      `File uploaded to Transaction Attachment ${xactionAttachmentId}.`,
+      result
+    );
+  }
+);
+
+// Tool 33: unassign_transaction_attachment_file
+server.tool(
+  "unassign_transaction_attachment_file",
+  "Detach the file from a named (placeholder) Transaction Attachment slot, parking it as a new untitled attachment. The original slot is marked incomplete. Returns the newly created untitled attachment that now owns the file — not the original. Preconditions: the original attachment must have a file and must be a placeholder (non-blank title). Use this to free up a named slot before assigning a different file into it.",
+  {
+    xactionAttachmentId: z
+      .number()
+      .int()
+      .describe("ID of the Transaction Attachment to unassign the file from"),
+  },
+  async ({ xactionAttachmentId }) => {
+    const result = await unassignTransactionAttachmentFile(xactionAttachmentId);
+    return formatResult(
+      `File unassigned from Transaction Attachment ${xactionAttachmentId}. New untitled attachment:`,
+      result
+    );
+  }
+);
+
+// Tool 34: assign_transaction_attachment_file
+server.tool(
+  "assign_transaction_attachment_file",
+  "Move the file from a source Transaction Attachment into a target Transaction Attachment that has no file. The target is marked complete; if the source has a blank title (not a placeholder) it is deleted, otherwise it remains and is marked incomplete. Returns a plain confirmation string — fetch source/target attachments separately if post-op state is needed. Optional completeMode overrides the completion mutation on the target only.",
+  {
+    xactionAttachmentId: z
+      .number()
+      .int()
+      .describe("ID of the source Transaction Attachment giving up its file"),
+    targetXactionAttachmentId: z
+      .number()
+      .int()
+      .describe("ID of the target Transaction Attachment receiving the file"),
+    completeMode: z
+      .enum(["DEFAULT", "COMPLETE", "INCOMPLETE", "UNCHANGED"])
+      .optional()
+      .describe("Override completion mutation on the target only. Does not affect the source."),
+  },
+  async ({ xactionAttachmentId, targetXactionAttachmentId, completeMode }) => {
+    const result = await assignTransactionAttachmentFile(
+      xactionAttachmentId,
+      targetXactionAttachmentId,
+      { completeMode }
+    );
+    return formatResult(
+      `File moved from Attachment ${xactionAttachmentId} to Attachment ${targetXactionAttachmentId}.`,
+      result
+    );
+  }
+);
+
 // ---------------------------------------------------------------------------
 // Express HTTP server
 // ---------------------------------------------------------------------------
@@ -973,7 +1207,7 @@ app.get("/", (_req, res) => {
   res.json({
     status: "ok",
     service: "aframe-mcp-connector",
-    version: "0.4.1",
+    version: "0.5.0",
   });
 });
 
@@ -1001,7 +1235,7 @@ app.post("/mcp", async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Aframe MCP connector v0.4.1 listening on port ${PORT}`);
+  console.log(`Aframe MCP connector v0.5.0 listening on port ${PORT}`);
   console.log(`  Health check: GET  /`);
   console.log(`  MCP endpoint: POST /mcp`);
   console.log(`  Tools: create_transaction, get_transaction, update_transaction,`);
@@ -1014,5 +1248,9 @@ app.listen(PORT, () => {
   console.log(`         update_participant_linked_contact, update_participant_contact_info,`);
   console.log(`         list_custom_fields, list_custom_fields_tree, get_transaction_field_tree,`);
   console.log(`         search_transactions, list_task_templates, apply_task_templates,`);
-  console.log(`         list_contact_categories, list_transaction_statuses`);
+  console.log(`         list_contact_categories, list_transaction_statuses,`);
+  console.log(`         create_transaction_attachment, get_transaction_attachment,`);
+  console.log(`         list_transaction_attachments, update_transaction_attachment,`);
+  console.log(`         upload_transaction_attachment_file, unassign_transaction_attachment_file,`);
+  console.log(`         assign_transaction_attachment_file`);
 });

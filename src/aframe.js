@@ -62,6 +62,41 @@ async function aframeRequest(method, path, body, contentType) {
   };
 }
 
+async function aframeMultipartRequest(method, path, formData) {
+  const url = `${AFRAME_BASE_URL}${path}`;
+  const headers = {
+    "X-AFrame-API-Key": getApiKey(),
+    // Do NOT set Content-Type — fetch sets it automatically with the correct
+    // multipart boundary when the body is a FormData instance.
+  };
+
+  const res = await fetch(url, { method, headers, body: formData });
+
+  const text = await res.text();
+  let json = null;
+  if (text) {
+    try {
+      json = JSON.parse(text);
+    } catch {
+      throw new Error(
+        `Aframe API returned non-JSON (status ${res.status}): ${text.slice(0, 500)}`
+      );
+    }
+  }
+
+  if (!res.ok) {
+    const errPayload = json?.error ?? json ?? `HTTP ${res.status}`;
+    throw new Error(
+      `Aframe API error (${res.status}): ${JSON.stringify(errPayload)}`
+    );
+  }
+
+  return {
+    payload: json?.payload ?? json,
+    warnings: json?.error ?? null,
+  };
+}
+
 // Build a JSON Patch (RFC 6902) array from a flat { field: value } object.
 // Only defined values are included; `undefined` is treated as "no change".
 function toJsonPatch(changes) {
@@ -331,4 +366,94 @@ export async function listTransactionStatuses({ xactionStages } = {}) {
     path += `?${qs}`;
   }
   return aframeRequest("GET", path);
+}
+
+// ---------------------------------------------------------------------------
+// Transaction Attachments
+// ---------------------------------------------------------------------------
+
+// POST /v1/xaction-attachments
+export async function createTransactionAttachment(params) {
+  return aframeRequest("POST", "/v1/xaction-attachments", params);
+}
+
+// GET /v1/xaction-attachments/{xactionAttachmentId}
+export async function getTransactionAttachment(xactionAttachmentId) {
+  return aframeRequest(
+    "GET",
+    `/v1/xaction-attachments/${encodeURIComponent(xactionAttachmentId)}`
+  );
+}
+
+// GET /v1/xactions/{xactionId}/xaction-attachments
+export async function listTransactionAttachments(xactionId, { page = 0, pageSize = 50 } = {}) {
+  const qs = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+  return aframeRequest(
+    "GET",
+    `/v1/xactions/${encodeURIComponent(xactionId)}/xaction-attachments?${qs}`
+  );
+}
+
+// PATCH /v1/xaction-attachments/{xactionAttachmentId} — JSON Patch RFC 6902
+export async function updateTransactionAttachment(xactionAttachmentId, changes) {
+  const ops = toJsonPatch(changes);
+  if (ops.length === 0) {
+    throw new Error("updateTransactionAttachment called with no fields to update");
+  }
+  return aframeRequest(
+    "PATCH",
+    `/v1/xaction-attachments/${encodeURIComponent(xactionAttachmentId)}`,
+    ops,
+    "application/json-patch+json"
+  );
+}
+
+// PATCH /v1/xaction-attachments/{xactionAttachmentId}/file — multipart/form-data
+// `fileBuffer` must be a Buffer or Blob; `fileName` and `mimeType` are used to build the form.
+export async function uploadTransactionAttachmentFile(
+  xactionAttachmentId,
+  fileBuffer,
+  fileName,
+  mimeType,
+  { newFileName, completeMode } = {}
+) {
+  const qs = new URLSearchParams();
+  if (newFileName !== undefined) qs.set("newFileName", newFileName);
+  if (completeMode !== undefined) qs.set("completeMode", completeMode);
+  const qsStr = qs.toString() ? `?${qs.toString()}` : "";
+
+  const formData = new FormData();
+  const blob = new Blob([fileBuffer], { type: mimeType });
+  formData.append("file", blob, fileName);
+
+  return aframeMultipartRequest(
+    "PATCH",
+    `/v1/xaction-attachments/${encodeURIComponent(xactionAttachmentId)}/file${qsStr}`,
+    formData
+  );
+}
+
+// PATCH /v1/xaction-attachments/{xactionAttachmentId}/file/unassign
+export async function unassignTransactionAttachmentFile(xactionAttachmentId) {
+  return aframeRequest(
+    "PATCH",
+    `/v1/xaction-attachments/${encodeURIComponent(xactionAttachmentId)}/file/unassign`
+  );
+}
+
+// PATCH /v1/xaction-attachments/{xactionAttachmentId}/file/assign
+// Moves the file from `xactionAttachmentId` (source) to `targetXactionAttachmentId`.
+export async function assignTransactionAttachmentFile(
+  xactionAttachmentId,
+  targetXactionAttachmentId,
+  { completeMode } = {}
+) {
+  const qs = new URLSearchParams({
+    targetXactionAttachmentId: String(targetXactionAttachmentId),
+  });
+  if (completeMode !== undefined) qs.set("completeMode", completeMode);
+  return aframeRequest(
+    "PATCH",
+    `/v1/xaction-attachments/${encodeURIComponent(xactionAttachmentId)}/file/assign?${qs}`
+  );
 }
