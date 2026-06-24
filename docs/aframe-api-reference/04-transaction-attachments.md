@@ -94,10 +94,68 @@ Error responses use the `APIResponse` envelope (`payload`, `error.requestId`, `e
 
 ---
 
-#### `GET /v1/xaction-attachments/{xactionAttachmentId}` — Get an attachment
-**Status:** Not extracted
+#### `GET /v1/xaction-attachments/{xactionAttachmentId}` — Get a Transaction Attachment
+**Status:** ✅ Extracted 2026-06-24
 
-_Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format._
+**Summary:** Get a Transaction Attachment
+
+**Description:** Returns the Transaction Attachment with the supplied ID.
+
+**Request**
+- Content-Type: `application/json`
+- Path params:
+
+  | Param | Type | Required | Description |
+  |---|---|---|---|
+  | `xactionAttachmentId` | integer (int32) | Yes | ID of the XactionAttachment |
+
+- Query params: None
+- Body schema: None
+
+**Response (2xx payload)** (`APIXactionAttachmentDto`)
+
+  | Field | Type | Description |
+  |---|---|---|
+  | `xactionAttachmentId` | integer (int32) | ID of the XactionAttachment |
+  | `xactionId` | integer (int32) | ID of the associated Xaction |
+  | `appUserId` | integer (int32) | ID of the AppUser who created the entry or uploaded the attachment |
+  | `attachmentType` | string enum | Attachment type |
+  | `title` | string ≤100 chars | Title |
+  | `description` | string ≤500 chars | Description |
+  | `fileName` | string ≤255 chars | File name |
+  | `contentType` | string ≤100 chars | Content type (MIME) |
+  | `fileSizeBytes` | integer (int64) | File size in bytes |
+  | `fileUploadDateTime` | string (date-time) | Date and time the file was uploaded |
+  | `webLink` | string (uri) ≤500 chars | Web link for attachments of type `"URL"` |
+  | `required` | boolean | Whether the attachment is required |
+  | `completed` | boolean | Whether the attachment is completed |
+  | `color` | string enum | Color |
+  | `agentVisible` | boolean | Whether the attachment is visible on the Agent Portal |
+  | `buyerSellerVisible` | boolean | Whether the attachment is visible on the Buyer/Seller Portal |
+  | `mergeFieldCode` | string ≤100 chars | Merge field code |
+  | `sort` | integer (int32) | Sort order |
+  | `createDateTime` | string (date-time) | Date and time the record was created |
+  | `folder` | object | Folder containing this attachment (null if not in a folder) |
+  | `folder.folderId` | integer (int32) | ID of the Folder |
+  | `folder.name` | string | Folder name |
+  | `folder.sort` | integer (int32) | Folder sort order |
+
+**Enums / constants:**
+- `attachmentType`: `"FILE"`, `"URL"`
+- `color`: `"NONE"`, `"RED"`, `"TANGERINE"`, `"TAUPE"`, `"YELLOW"`, `"LIME"`, `"GREEN"`, `"CYAN"`, `"TEAL"`, `"COBALT"`, `"PURPLE"`, `"MAGENTA"` (default: `"NONE"`)
+
+**Notable errors:**
+
+Error responses use the `APIResponse` envelope (`payload`, `error.requestId`, `error.messages[]`, `error.details[]`, `error.validationErrors[].fieldName`, `error.validationErrors[].message`).
+
+- `403` — Forbidden: The authenticated user does not have permission to access this Transaction Attachment.
+- `404` — Not Found: Transaction Attachment with the supplied ID does not exist.
+- `429` — Too Many Requests: Rate limit exceeded.
+
+**Quirks & notes:**
+- Response DTO is `APIXactionAttachmentDto` — same shape as the `POST /v1/xaction-attachments` create response.
+- `folder` field is `null` if the attachment is not in a folder.
+- Authentication: global `X-AFrame-API-Key` header.
 
 ---
 
