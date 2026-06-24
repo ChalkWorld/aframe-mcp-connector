@@ -323,10 +323,52 @@ Error responses use the `APIResponse` envelope (`payload`, `error.requestId`, `e
 
 ---
 
-#### `PATCH /v1/xaction-attachments/{xactionAttachmentId}/file/assign` — Assign file
-**Status:** Not extracted
+#### `PATCH /v1/xaction-attachments/{xactionAttachmentId}/file/assign` — Move a file from one Transaction Attachment to another
+**Status:** ✅ Extracted 2026-06-24
 
-_Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format._
+**Summary:** Move a file from one Transaction Attachment to another
+
+**Description:** Moves a Transaction Attachment's file (source) onto another Transaction Attachment that has no file (target). After assignment, if the source is not a placeholder (the title is blank), the source is deleted. The target is marked complete; the source (if not deleted) is marked incomplete.
+
+**Request**
+- Content-Type: `application/json`
+- Path params:
+
+  | Param | Type | Required | Description |
+  |---|---|---|---|
+  | `xactionAttachmentId` | integer | Yes | ID of the source Transaction Attachment (the one giving up its file) |
+
+- Query params:
+
+  | Param | Type | Required | Description |
+  |---|---|---|---|
+  | `targetXactionAttachmentId` | integer | Yes | ID of the target Transaction Attachment (the one receiving the file) |
+  | `completeMode` | string enum | No | Override of the implicit completion mutation on the target; has no effect on the source |
+
+- Body schema: None
+
+**Response (2xx payload)**
+
+Returns a plain `string` on successful assignment. No resource object returned.
+
+**Enums / constants:**
+- `completeMode`: `DEFAULT`, `COMPLETE`, `INCOMPLETE`, `UNCHANGED`
+
+**Notable errors:**
+
+Error responses use the `APIResponse` envelope (`payload`, `error.requestId`, `error.messages[]`, `error.details[]`, `error.validationErrors[].fieldName`, `error.validationErrors[].message`).
+
+- `400` — Bad Request: The source and target are not compatible, or the target already has a file
+- `403` — Forbidden: The authenticated user does not have permission
+- `404` — Not Found: A Transaction Attachment with the supplied ID does not exist
+- `429` — Too Many Requests: Rate limit exceeded
+
+**Quirks & notes:**
+- No request body; all operation parameters are supplied via path and query params.
+- The 200 response payload is a plain `string` — callers must fetch the source/target attachments separately if post-op state is needed.
+- `completeMode` affects only the **target** attachment's completed flag; the source is not affected by this parameter.
+- Source deletion logic: if the source has a blank `title` (not a placeholder), it is deleted after the move; otherwise it remains and is marked incomplete.
+- Authentication: global `X-AFrame-API-Key` header.
 
 ---
 
