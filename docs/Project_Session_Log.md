@@ -324,6 +324,76 @@ Lennar listing protocol continuation — completing the two live listings from S
 
 ---
 
+## Session 007 — June 24, 2026 (Extraction) / Session 008 — June 24, 2026 (Build)
+
+**Focus:** Transaction Attachment tools — full Swagger extraction (Session 007) and connector build (Session 008). Both sessions completed same day; logged as one entry.
+
+**Accomplished:**
+
+*Session 007 — Extraction*
+- All 7 Transaction Attachment endpoints extracted into `API-REF-001` via `EXTRACTION-PROC-001`
+- Changelog notes incorporated: `omitted` field removed from all attachment DTOs; uploader field renamed `appUserIdUploader` → `appUserId`; `completeMode` query parameter documented on `/file` sub-endpoints
+- Tool scope decisions made for Session 008 build (see below)
+- `PREAUTOMATION-001` gate lifted — task tools (`search_tasks`, `get_task`, `update_task`, `create_task`) are now ungated Tier 2; task visibility needed before template cleanup can be assessed
+
+*Session 008 — Build*
+- All 7 Transaction Attachment tools built and deployed as v0.5.0
+- `aframeMultipartRequest` helper added to `src/aframe.js` for multipart/form-data file uploads
+- `CONNECTOR-ROAD-001` fully rewritten as v3.0 — Tier 1 now reflects all 34 tools shipped v0.1.0–v0.5.0; Tier 2 cleared of all built items; task tools listed as ungated Tier 2
+
+**Tools Built (v0.5.0):**
+
+| Tool | Endpoint |
+|---|---|
+| `create_transaction_attachment` | `POST /v1/xaction-attachments` |
+| `get_transaction_attachment` | `GET /v1/xaction-attachments/{xactionAttachmentId}` |
+| `list_transaction_attachments` | `GET /v1/xactions/{xactionId}/xaction-attachments` |
+| `update_transaction_attachment` | `PATCH /v1/xaction-attachments/{xactionAttachmentId}` |
+| `upload_transaction_attachment_file` | `PATCH /v1/xaction-attachments/{xactionAttachmentId}/file` |
+| `unassign_transaction_attachment_file` | `PATCH /v1/xaction-attachments/{xactionAttachmentId}/file/unassign` |
+| `assign_transaction_attachment_file` | `PATCH /v1/xaction-attachments/{xactionAttachmentId}/file/assign` |
+
+**Deferred:** `DELETE /v1/xaction-attachments/{xactionAttachmentId}/file` — remains Tier 4; not needed for current workflows.
+
+**Decisions Made:**
+- `upload_transaction_attachment_file` accepts `fileBase64` (base64-encoded string) as the MCP tool input — Claude cannot pass raw binary across a tool call; `Buffer.from(fileBase64, 'base64')` converts before the multipart fetch
+- `assign_transaction_attachment_file` returns a plain string from the API (not a DTO) — `formatResult` handles this correctly
+- Roadmap rewrite (v3.0) performed wholesale rather than surgical patches — too many stale sections for surgical edits to be practical
+
+**Cursor Handoffs Produced:**
+- `HANDOFF-v0.5.0-aframe-js.md` — `aframeMultipartRequest` helper + 7 new attachment functions
+- `HANDOFF-v0.5.0-index-js.md` — import block, tool registrations (Tools 28–34), version bump, startup log
+- `HANDOFF-v0.5.0-package-json.md` — version bump to 0.5.0
+- `HANDOFF-v0.5.0-roadmap.md` — surgical tier promotion patch (attachment tools Tier 4 → Tier 1)
+- `HANDOFF-v0.5.0-roadmap-rewrite.md` — full `CONNECTOR-ROAD-001` rewrite to v3.0; carries commit block
+
+**Documents Updated This Session:**
+
+| Document | Version | File |
+|---|---|---|
+| Aframe API Reference — Transaction Attachments | — | `docs/aframe-api-reference/04-transaction-attachments.md` |
+| Aframe Connector source | v0.5.0 | `src/aframe.js`, `src/index.js`, `package.json` |
+| Connector Tool Roadmap | v3.0 | `docs/CONNECTOR_TOOL_ROADMAP.md` |
+| Project Session Log | — | `docs/Project_Session_Log.md` |
+
+**Key References:**
+
+| Item | Value |
+|---|---|
+| Connector Roadmap | `CONNECTOR-ROAD-001` |
+| Cursor Handoff Protocol | `CURSOR-HANDOFF-PROTOCOL-001` |
+| Swagger Extraction Procedure | `EXTRACTION-PROC-001` |
+| Aframe API Reference | `API-REF-001` |
+| Railway connector URL | `https://aframe-mcp-connector-production.up.railway.app/mcp` |
+
+**Next Session Priorities:**
+1. Task endpoint extraction + build — `search_tasks`, `get_task`, `update_task`, `create_task` — extract from Swagger, wrap in connector (Session 009 lead)
+2. Smoke test v0.5.0 attachment tools on Kelly's 4508 Ridgecrest Ln LA packet (7 attachment slots)
+3. Features tab field map (Lennar bookmarklet)
+4. Second extraction pass — Listing Info dynamic dropdowns
+
+---
+
 ## Session 006 — June 23, 2026
 
 **Focus:** Protocol consolidation — incorporating learnings from working sessions (Topping Lane 6/23 intake, mixed 6/22 session) into the buyer-side and Lennar listing protocols; deepening agent profile data; capturing the commission/payout model from the Aframe field tree.
