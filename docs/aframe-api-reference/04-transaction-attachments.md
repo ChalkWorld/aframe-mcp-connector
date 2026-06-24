@@ -330,10 +330,73 @@ _Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format
 
 ---
 
-#### `PATCH /v1/xaction-attachments/{xactionAttachmentId}/file/unassign` — Unassign file
-**Status:** Not extracted
+#### `PATCH /v1/xaction-attachments/{xactionAttachmentId}/file/unassign` — Unassign a file from a Transaction Attachment
+**Status:** ✅ Extracted 2026-06-24
 
-_Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format._
+**Summary:** Unassign a file from a Transaction Attachment
+
+**Description:** Removes the file from the Transaction Attachment and creates a new, untitled Transaction Attachment that owns the file. The original Attachment is marked incomplete. Only applies when the original has a file and is a placeholder (the title is non-blank). The newly created Attachment is returned.
+
+**Request**
+- Content-Type: `application/json`
+- Path params:
+
+  | Param | Type | Required | Description |
+  |---|---|---|---|
+  | `xactionAttachmentId` | integer (int32) | Yes | ID of the Transaction Attachment to unassign the file from |
+
+- Query params: None
+- Body schema: None
+
+**Response (2xx payload)** (`APIXactionAttachmentDto`)
+
+Returns the **newly created** Transaction Attachment that now owns the file (not the original).
+
+  | Field | Type | Description |
+  |---|---|---|
+  | `xactionAttachmentId` | integer (int32) | ID of the XactionAttachment |
+  | `xactionId` | integer (int32) | ID of the associated Xaction |
+  | `appUserId` | integer (int32) | ID of the AppUser who created the entry or uploaded the attachment |
+  | `attachmentType` | string enum | Attachment type |
+  | `title` | string ≤100 chars | Title |
+  | `description` | string ≤500 chars | Description |
+  | `fileName` | string ≤255 chars | File name |
+  | `contentType` | string ≤100 chars | Content type (MIME) |
+  | `fileSizeBytes` | integer (int64) | File size in bytes |
+  | `fileUploadDateTime` | string (date-time) | Date and time the file was uploaded |
+  | `webLink` | string (uri) ≤500 chars | Web link for attachments of type `"URL"` |
+  | `required` | boolean | Whether the attachment is required |
+  | `completed` | boolean | Whether the attachment is completed |
+  | `color` | string enum | Color |
+  | `agentVisible` | boolean | Whether the attachment is visible on the Agent Portal |
+  | `buyerSellerVisible` | boolean | Whether the attachment is visible on the Buyer/Seller Portal |
+  | `mergeFieldCode` | string ≤100 chars | Merge field code |
+  | `sort` | integer (int32) | Sort order |
+  | `createDateTime` | string (date-time) | Date and time the record was created |
+  | `folder` | object | Folder containing this attachment (null if not in a folder) |
+  | `folder.folderId` | integer (int32) | ID of the Folder |
+  | `folder.name` | string | Folder name |
+  | `folder.sort` | integer (int32) | Folder sort order |
+
+**Enums / constants:**
+- `attachmentType`: `"FILE"`, `"URL"`
+- `color`: `"NONE"`, `"RED"`, `"TANGERINE"`, `"TAUPE"`, `"YELLOW"`, `"LIME"`, `"GREEN"`, `"CYAN"`, `"TEAL"`, `"COBALT"`, `"PURPLE"`, `"MAGENTA"` (default: `"NONE"`)
+
+**Notable errors:**
+
+Error responses use the `APIResponse` envelope (`payload`, `error.requestId`, `error.messages[]`, `error.details[]`, `error.validationErrors[].fieldName`, `error.validationErrors[].message`).
+
+- `400` — Bad Request: The Transaction Attachment cannot be unassigned (e.g. has no file, or is not a placeholder)
+- `403` — Forbidden: The authenticated user does not have permission
+- `404` — Not Found: Transaction Attachment with the supplied ID does not exist
+- `429` — Too Many Requests: Rate limit exceeded
+
+**Quirks & notes:**
+- This is a fire-and-forget action endpoint — no request body; the operation is fully determined by the path param.
+- The **return value is the new attachment** (the untitled one that owns the file), not the original. Callers that need the post-op state of the original must fetch it separately.
+- The original attachment is marked `completed: false` as a side effect.
+- Preconditions: original attachment must (a) have a file and (b) be a placeholder (non-blank `title`). Either condition failing returns 400.
+- Authentication: global `X-AFrame-API-Key` header.
 
 ---
 
