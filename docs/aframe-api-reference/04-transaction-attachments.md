@@ -247,10 +247,79 @@ Error responses use the `APIResponse` envelope (`payload`, `error.requestId`, `e
 
 ---
 
-#### `PATCH /v1/xaction-attachments/{xactionAttachmentId}/file` — Assign/update file on attachment
-**Status:** Not extracted
+#### `PATCH /v1/xaction-attachments/{xactionAttachmentId}/file` — Upload or replace the file on a Transaction Attachment
+**Status:** ✅ Extracted 2026-06-24
 
-_Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format._
+**Summary:** Upload or replace the file on a Transaction Attachment
+
+**Description:** Uploads a file to a Transaction Attachment of type `FILE`. If a file is already present it is replaced.
+
+**Request**
+- Content-Type: `multipart/form-data`
+- Path params:
+
+  | Param | Type | Required | Description |
+  |---|---|---|---|
+  | `xactionAttachmentId` | integer (int32) | Yes | ID of the Transaction Attachment |
+
+- Query params:
+
+  | Param | Type | Required | Description |
+  |---|---|---|---|
+  | `newFileName` | string | No | Optional override of the uploaded file's name; extension must match the uploaded file's extension |
+  | `completeMode` | string enum | No | Optional override of the implicit "mark as complete" mutation after upload (default: `DEFAULT`) |
+
+- Body schema: Binary file upload via `multipart/form-data`. No JSON schema available — Swagger UI does not expose an Example Value schema for multipart/form-data media types.
+
+**Response (2xx payload)** (`APIXactionAttachmentDto`)
+
+  | Field | Type | Description |
+  |---|---|---|
+  | `xactionAttachmentId` | integer (int32) | ID of the XactionAttachment |
+  | `xactionId` | integer (int32) | ID of the associated Xaction |
+  | `appUserId` | integer (int32) | ID of the AppUser who created the entry or uploaded the attachment |
+  | `attachmentType` | string enum | Attachment type |
+  | `title` | string ≤100 chars | Title |
+  | `description` | string ≤500 chars | Description |
+  | `fileName` | string ≤255 chars | File name |
+  | `contentType` | string ≤100 chars | Content type (MIME) |
+  | `fileSizeBytes` | integer (int64) | File size in bytes |
+  | `fileUploadDateTime` | string (date-time) | Date and time the file was uploaded |
+  | `webLink` | string (uri) ≤500 chars | Web link for attachments of type `"URL"` |
+  | `required` | boolean | Whether the attachment is required |
+  | `completed` | boolean | Whether the attachment is completed |
+  | `color` | string enum | Color |
+  | `agentVisible` | boolean | Whether the attachment is visible on the Agent Portal |
+  | `buyerSellerVisible` | boolean | Whether the attachment is visible on the Buyer/Seller Portal |
+  | `mergeFieldCode` | string ≤100 chars | Merge field code |
+  | `sort` | integer (int32) | Sort order |
+  | `createDateTime` | string (date-time) | Date and time the record was created |
+  | `folder` | object | Folder containing this attachment (null if not in a folder) |
+  | `folder.folderId` | integer (int32) | ID of the Folder |
+  | `folder.name` | string | Folder name |
+  | `folder.sort` | integer (int32) | Folder sort order |
+
+**Enums / constants:**
+- `attachmentType`: `"FILE"`, `"URL"`
+- `color`: `"NONE"`, `"RED"`, `"TANGERINE"`, `"TAUPE"`, `"YELLOW"`, `"LIME"`, `"GREEN"`, `"CYAN"`, `"TEAL"`, `"COBALT"`, `"PURPLE"`, `"MAGENTA"` (default: `"NONE"`)
+- `completeMode`: `"DEFAULT"`, `"COMPLETE"`, `"INCOMPLETE"`, `"UNCHANGED"`
+
+**Notable errors:**
+
+Error responses use the `APIResponse` envelope (`payload`, `error.requestId`, `error.messages[]`, `error.details[]`, `error.validationErrors[].fieldName`, `error.validationErrors[].message`).
+
+- `403` — Forbidden: The authenticated user does not have permission
+- `404` — Not Found: Transaction Attachment with the supplied ID does not exist
+- `422` — Unprocessable Content: Validation errors occurred
+- `429` — Too Many Requests: Rate limit exceeded
+
+**Quirks & notes:**
+- Only applies to attachments of type `"FILE"`; behavior on a `"URL"` attachment is not documented.
+- Replaces any existing file — this is an upsert on the file binary.
+- `newFileName` extension must match the uploaded file's extension; mismatches presumably return 422.
+- `completeMode` controls whether the attachment is auto-marked complete after upload: `DEFAULT` applies the system's default behavior, `COMPLETE` forces complete, `INCOMPLETE` forces incomplete, `UNCHANGED` leaves the `completed` flag as-is.
+- Request body is a raw binary file stream sent as `multipart/form-data`; no JSON schema is available from Swagger.
+- Authentication: global `X-AFrame-API-Key` header.
 
 ---
 

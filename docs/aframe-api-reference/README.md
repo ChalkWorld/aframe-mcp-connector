@@ -75,6 +75,7 @@ WORKFLOWS-FW-*           Workflow docs     — business processes using the tool
 | 1.0 | 2026-06-24 | Cursor / Claude-in-Chrome | Extracted: GET /v1/xaction-attachments/{xactionAttachmentId} |
 | 1.0 | 2026-06-24 | Cursor / Claude-in-Chrome | Extracted: GET /v1/xactions/{xactionId}/xaction-attachments |
 | 1.0 | 2026-06-24 | Cursor / Claude-in-Chrome | Extracted: PATCH /v1/xaction-attachments/{xactionAttachmentId} |
+| 1.0 | 2026-06-24 | Cursor / Claude-in-Chrome | Extracted: PATCH /v1/xaction-attachments/{xactionAttachmentId}/file |
 
 ---
 
