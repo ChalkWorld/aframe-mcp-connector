@@ -386,9 +386,34 @@ Lennar listing protocol continuation — completing the two live listings from S
 | Aframe API Reference | `API-REF-001` |
 | Railway connector URL | `https://aframe-mcp-connector-production.up.railway.app/mcp` |
 
+**Smoke Test Results (v0.5.0 — Oakwood test file, xactionId 554560):**
+- `list_transaction_attachments` — confirmed working; returned all 15 placeholder slots in Contract Files folder
+- `update_transaction_attachment` — confirmed working; patched Ratified Contract slot to URL type with Drive link, marked complete
+- `upload_transaction_attachment_file` — partially confirmed; API call succeeded and slot marked complete, but binary routing through MCP context is not viable for real file sizes (640KB PDF = ~853k base64 chars / ~200k tokens); file stored in Aframe was truncated/corrupt
+
+**Key Decision — Binary Upload Architecture:**
+Binary files cannot be routed through Claude's context window for real-world document sizes. The correct architecture is a **server-side transfer endpoint** in the Railway connector app. Claude orchestrates (provides IDs, confirms intent); binary moves server-to-server without touching the MCP layer.
+
+**Gmail→Aframe Vision Scoped:**
+Full Mode 2 attachment workflow defined and documented in `GMAIL-TO-AFRAME-001`:
+1. Email arrives with attachment during active transaction
+2. Claude reads thread (Gmail MCP), understands document type from context
+3. Claude matches to correct Aframe slot or determines new slot needed
+4. Claude confirms with Andrew
+5. Transfer tool fires — Gmail API → Aframe API, server-side, no context burn
+6. Slot marked complete
+
+Stretch goal: intelligent PDF splitting inside the endpoint (server-side Claude API call) to handle merged packets (contract + addenda + disclosures as one file → split and routed to correct slots).
+
+**Documents Created This Session:**
+
+| Document | Version | File |
+|---|---|---|
+| Gmail→Aframe File Transfer Scoping Doc | 0.1 | `docs/GMAIL-TO-AFRAME-001.md` |
+
 **Next Session Priorities:**
 1. Task endpoint extraction + build — `search_tasks`, `get_task`, `update_task`, `create_task` — extract from Swagger, wrap in connector (Session 009 lead)
-2. Smoke test v0.5.0 attachment tools on Kelly's 4508 Ridgecrest Ln LA packet (7 attachment slots)
+2. Gmail→Aframe scoping session — confirm auth path (personal Gmail vs. Workspace), finalize endpoint design, decide splitting v1 vs. v2, author handoffs
 3. Features tab field map (Lennar bookmarklet)
 4. Second extraction pass — Listing Info dynamic dropdowns
 
