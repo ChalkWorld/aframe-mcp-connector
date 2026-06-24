@@ -159,10 +159,91 @@ Error responses use the `APIResponse` envelope (`payload`, `error.requestId`, `e
 
 ---
 
-#### `PATCH /v1/xaction-attachments/{xactionAttachmentId}` — Update an attachment
-**Status:** Not extracted
+#### `PATCH /v1/xaction-attachments/{xactionAttachmentId}` — Patch a Transaction Attachment
+**Status:** ✅ Extracted 2026-06-24
 
-_Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format._
+**Summary:** Patch a Transaction Attachment
+
+**Description:** Updates the specified Transaction Attachment using JSON Patch (RFC 6902) operations. See `APIXactionAttachmentPatchDto` for the patchable fields. Attempts to patch fields outside this set return 400.
+
+**Request**
+- Content-Type: `application/json-patch+json`
+- Path params:
+
+  | Param | Type | Required | Description |
+  |---|---|---|---|
+  | `xactionAttachmentId` | integer (int32) | Yes | ID of the XactionAttachment to patch |
+
+- Query params: None
+- Body schema (`APIXactionAttachmentPatchDto` — JSON Patch target fields):
+
+  | Field | Type | Required | Description / Notes |
+  |---|---|---|---|
+  | `attachmentType` | string enum | — | Attachment type (`"FILE"` or `"URL"`) |
+  | `title` | string ≤300 chars | — | Attachment title |
+  | `description` | string ≤65535 chars | — | Attachment description |
+  | `webLink` | string (uri) | — | URL link (applicable when `attachmentType` is `"URL"`) |
+  | `fileName` | string | — | File name of the stored file (rename without re-uploading; extension must match) |
+  | `required` | boolean | — | Whether the attachment is required |
+  | `completed` | boolean | — | Whether the attachment is completed |
+  | `color` | string enum | — | Color (default `"NONE"`) |
+  | `agentVisible` | boolean | — | Whether the attachment is visible on the Agent Portal |
+  | `buyerSellerVisible` | boolean | — | Whether the attachment is visible on the Buyer/Seller Portal |
+  | `mergeFieldCode` | string | — | Merge field code |
+  | `sort` | integer (int32) | — | Sort order within the Folder |
+  | `folderId` | integer (int32) | — | ID of the Folder to move the attachment to; mutually exclusive with `newFolderName` |
+  | `newFolderName` | string | — | Name of a new Folder to create and move the attachment to; mutually exclusive with `folderId` |
+
+**Response (2xx payload)** (`APIXactionAttachmentDto`)
+
+  | Field | Type | Description |
+  |---|---|---|
+  | `xactionAttachmentId` | integer (int32) | ID of the XactionAttachment |
+  | `xactionId` | integer (int32) | ID of the associated Xaction |
+  | `appUserId` | integer (int32) | ID of the AppUser who created the entry or uploaded the attachment |
+  | `attachmentType` | string enum | Attachment type |
+  | `title` | string ≤100 chars | Title |
+  | `description` | string ≤500 chars | Description |
+  | `fileName` | string ≤255 chars | File name |
+  | `contentType` | string ≤100 chars | Content type (MIME) |
+  | `fileSizeBytes` | integer (int64) | File size in bytes |
+  | `fileUploadDateTime` | string (date-time) | Date and time the file was uploaded |
+  | `webLink` | string (uri) ≤500 chars | Web link for attachments of type `"URL"` |
+  | `required` | boolean | Whether the attachment is required |
+  | `completed` | boolean | Whether the attachment is completed |
+  | `color` | string enum | Color |
+  | `agentVisible` | boolean | Whether the attachment is visible on the Agent Portal |
+  | `buyerSellerVisible` | boolean | Whether the attachment is visible on the Buyer/Seller Portal |
+  | `mergeFieldCode` | string ≤100 chars | Merge field code |
+  | `sort` | integer (int32) | Sort order |
+  | `createDateTime` | string (date-time) | Date and time the record was created |
+  | `folder` | object | Folder containing this attachment (null if not in a folder) |
+  | `folder.folderId` | integer (int32) | ID of the Folder |
+  | `folder.name` | string | Folder name |
+  | `folder.sort` | integer (int32) | Folder sort order |
+
+**Enums / constants:**
+- `attachmentType`: `"FILE"`, `"URL"`
+- `color`: `"NONE"`, `"RED"`, `"TANGERINE"`, `"TAUPE"`, `"YELLOW"`, `"LIME"`, `"GREEN"`, `"CYAN"`, `"TEAL"`, `"COBALT"`, `"PURPLE"`, `"MAGENTA"` (default: `"NONE"`)
+
+**Notable errors:**
+
+Error responses use the `APIResponse` envelope (`payload`, `error.requestId`, `error.messages[]`, `error.details[]`, `error.validationErrors[].fieldName`, `error.validationErrors[].message`).
+
+- `400` — Bad Request: Invalid JSON Patch format or operation
+- `403` — Forbidden: The authenticated user does not have permission to update this Transaction Attachment
+- `404` — Not Found: Transaction Attachment with the supplied ID does not exist
+- `422` — Unprocessable Content: Validation errors occurred
+- `429` — Too Many Requests: Rate limit exceeded
+
+**Quirks & notes:**
+- Request body is a JSON Patch (RFC 6902) array — standard ops (`add`, `replace`, `remove`, etc.) targeting the `APIXactionAttachmentPatchDto` fields listed above.
+- Only fields defined in `APIXactionAttachmentPatchDto` may be patched; targeting other paths returns 400.
+- `folderId` and `newFolderName` are mutually exclusive — use one or the other to move/assign a folder.
+- To rename a file, patch `fileName`; the new extension must match the existing one.
+- To upload, replace, remove, or reassign the actual file binary, use the dedicated `/file` sub-routes instead.
+- `color` defaults to `"NONE"` if not set.
+- Authentication: global `X-AFrame-API-Key` header.
 
 ---
 
