@@ -194,10 +194,86 @@ _Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format
 
 ---
 
-#### `GET /v1/xactions/{xactionId}/xaction-attachments` — List attachments on a Transaction
-**Status:** Not extracted
+#### `GET /v1/xactions/{xactionId}/xaction-attachments` — List Transaction Attachments for a Transaction
+**Status:** ✅ Extracted 2026-06-24
 
-_Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format._
+**Summary:** List Transaction Attachments for a Transaction
+
+**Description:** Returns a paged list of file attachments on the specified Transaction. Only non-omitted attachments are returned. Pagination via page (0-based) and pageSize (max 100) is supported as query parameters.
+
+**Request**
+- Content-Type: `application/json`
+- Path params:
+
+  | Param | Type | Required | Description |
+  |---|---|---|---|
+  | `xactionId` | integer (int32) | Yes | ID of the Transaction whose attachments to fetch |
+
+- Query params (`apiXactionAttachmentPagedQueryDto`):
+
+  | Param | Type | Required | Description / Notes |
+  |---|---|---|---|
+  | `page` | integer (int32) ≥ 0 | — | Page number (0-based); default `0` |
+  | `pageSize` | integer (int32) [1, 100] | — | Page size (max 100); default `50` |
+
+- Body schema: None
+
+**Response (2xx payload)** (`APIXactionAttachmentListDto`)
+
+  | Field | Type | Description |
+  |---|---|---|
+  | `xactionAttachments[]` | array | List of XactionAttachment objects |
+  | `xactionAttachments[].xactionAttachmentId` | integer (int32) | ID of the XactionAttachment |
+  | `xactionAttachments[].xactionId` | integer (int32) | ID of the associated Xaction |
+  | `xactionAttachments[].appUserId` | integer (int32) | ID of the AppUser who created the entry or uploaded the attachment |
+  | `xactionAttachments[].attachmentType` | string enum | Attachment type |
+  | `xactionAttachments[].title` | string ≤100 chars | Title |
+  | `xactionAttachments[].description` | string ≤500 chars | Description |
+  | `xactionAttachments[].fileName` | string ≤255 chars | File name |
+  | `xactionAttachments[].contentType` | string ≤100 chars | Content type (MIME) |
+  | `xactionAttachments[].fileSizeBytes` | integer (int64) | File size in bytes |
+  | `xactionAttachments[].fileUploadDateTime` | string (date-time) | Date and time the file was uploaded |
+  | `xactionAttachments[].webLink` | string (uri) ≤500 chars | Web link for attachments of type `"URL"` |
+  | `xactionAttachments[].required` | boolean | Whether the attachment is required |
+  | `xactionAttachments[].completed` | boolean | Whether the attachment is completed |
+  | `xactionAttachments[].color` | string enum | Color (default `"NONE"`) |
+  | `xactionAttachments[].agentVisible` | boolean | Whether the attachment is visible on the Agent Portal |
+  | `xactionAttachments[].buyerSellerVisible` | boolean | Whether the attachment is visible on the Buyer/Seller Portal |
+  | `xactionAttachments[].mergeFieldCode` | string ≤100 chars | Merge field code |
+  | `xactionAttachments[].sort` | integer (int32) | Sort order |
+  | `xactionAttachments[].createDateTime` | string (date-time) | Date and time the record was created |
+  | `xactionAttachments[].folder` | object | Folder containing this attachment (null if not in a folder) |
+  | `xactionAttachments[].folder.folderId` | integer (int32) | ID of the Folder |
+  | `xactionAttachments[].folder.name` | string | Folder name |
+  | `xactionAttachments[].folder.sort` | integer (int32) | Folder sort order |
+  | `pageMetadata` | object | Page metadata |
+  | `pageMetadata.page` | integer (int32) | Current page number (0-based) |
+  | `pageMetadata.pageSize` | integer (int32) | Current page size |
+  | `pageMetadata.totalElementsOnPage` | integer (int32) | Number of elements on this page |
+  | `pageMetadata.totalElements` | integer (int32) | Total number of elements |
+  | `pageMetadata.hasNextPage` | boolean | Has next page |
+  | `pageMetadata.lastPage` | integer (int32) | Last page number |
+  | `pageMetadata.groupCounts` | object | Optional map of group counts if grouping applied (values: integer int32) |
+
+**Enums / constants:**
+- `attachmentType`: `"FILE"`, `"URL"`
+- `color`: `"NONE"`, `"RED"`, `"TANGERINE"`, `"TAUPE"`, `"YELLOW"`, `"LIME"`, `"GREEN"`, `"CYAN"`, `"TEAL"`, `"COBALT"`, `"PURPLE"`, `"MAGENTA"` (default: `"NONE"`)
+
+**Notable errors:**
+
+Error responses use the `APIResponse` envelope (`payload`, `error.requestId`, `error.messages[]`, `error.details[]`, `error.validationErrors[].fieldName`, `error.validationErrors[].message`).
+
+- `403` — Forbidden: The authenticated user does not have permission to access this Transaction.
+- `404` — Not Found: Transaction with the supplied ID does not exist.
+- `429` — Too Many Requests: Rate limit exceeded.
+
+**Quirks & notes:**
+- Response is wrapped in `APIXactionAttachmentListDto` containing a `xactionAttachments[]` array and `pageMetadata`.
+- Query parameters are passed as the `apiXactionAttachmentPagedQueryDto` object; only `page` and `pageSize` are supported fields.
+- Only non-omitted attachments are returned.
+- `folder` is `null` if the attachment is not in a folder.
+- `pageMetadata.groupCounts` is an additional-properties map (string → integer); only present if grouping is applied.
+- Authentication: global `X-AFrame-API-Key` header.
 
 ---
 
