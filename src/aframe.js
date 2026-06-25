@@ -457,3 +457,36 @@ export async function assignTransactionAttachmentFile(
     `/v1/xaction-attachments/${encodeURIComponent(xactionAttachmentId)}/file/assign?${qs}`
   );
 }
+
+// ---------------------------------------------------------------------------
+// Tasks
+// ---------------------------------------------------------------------------
+
+// POST /v1/tasks/search
+export async function searchTasks(body) {
+  return aframeRequest("POST", "/v1/tasks/search", body);
+}
+
+// GET /v1/tasks/{taskId}
+export async function getTask(taskId) {
+  return aframeRequest("GET", `/v1/tasks/${encodeURIComponent(taskId)}`);
+}
+
+// PATCH /v1/tasks/{taskId} — JSON Patch RFC 6902
+export async function updateTask(taskId, changes) {
+  const ops = toJsonPatch(changes);
+  if (ops.length === 0) {
+    throw new Error("updateTask called with no fields to update");
+  }
+  return aframeRequest(
+    "PATCH",
+    `/v1/tasks/${encodeURIComponent(taskId)}`,
+    ops,
+    "application/json-patch+json"
+  );
+}
+
+// POST /v1/tasks
+export async function createTask(params) {
+  return aframeRequest("POST", "/v1/tasks", params);
+}

@@ -37,6 +37,10 @@ import {
   uploadTransactionAttachmentFile,
   unassignTransactionAttachmentFile,
   assignTransactionAttachmentFile,
+  searchTasks,
+  getTask,
+  updateTask,
+  createTask,
 } from "./aframe.js";
 
 // ---------------------------------------------------------------------------
@@ -1196,6 +1200,329 @@ server.tool(
   }
 );
 
+// Tool 35: search_tasks
+server.tool(
+  "search_tasks",
+  "Search for Tasks using the supplied criteria. Filter by status, xactionId, contactId, assignees, completedBy, dueDate range, or completeDate range. Pagination is 0-based; default page size is 20, max is 100. All criteria are optional — omitting taskSearchCriteriaDto returns all tasks (paginated). Use xactionId to list all tasks on a specific transaction.",
+  {
+    taskStatuses: z
+      .array(z.enum(["OPEN", "IN_PROGRESS", "COMPLETE"]))
+      .optional()
+      .describe("Filter by task statuses"),
+    xactionId: z
+      .number()
+      .int()
+      .optional()
+      .describe("Filter by ID of the associated Transaction"),
+    contactId: z
+      .number()
+      .int()
+      .optional()
+      .describe("Filter by ID of the associated Contact"),
+    assignees: z
+      .array(z.number().int())
+      .optional()
+      .describe("Filter by IDs of assignee AppUsers"),
+    completedBy: z
+      .array(z.number().int())
+      .optional()
+      .describe("Filter by IDs of AppUsers who completed the task"),
+    dueDateFrom: z
+      .string()
+      .optional()
+      .describe("Due date range start (inclusive), YYYY-MM-DD"),
+    dueDateTo: z
+      .string()
+      .optional()
+      .describe("Due date range end (inclusive), YYYY-MM-DD"),
+    completeDateFrom: z
+      .string()
+      .optional()
+      .describe("Complete date range start (inclusive), YYYY-MM-DD"),
+    completeDateTo: z
+      .string()
+      .optional()
+      .describe("Complete date range end (inclusive), YYYY-MM-DD"),
+    page: z
+      .number()
+      .int()
+      .min(0)
+      .optional()
+      .default(0)
+      .describe("Page number, 0-based (default 0)"),
+    pageSize: z
+      .number()
+      .int()
+      .min(1)
+      .max(100)
+      .optional()
+      .default(20)
+      .describe("Page size, max 100 (default 20)"),
+  },
+  async ({
+    taskStatuses,
+    xactionId,
+    contactId,
+    assignees,
+    completedBy,
+    dueDateFrom,
+    dueDateTo,
+    completeDateFrom,
+    completeDateTo,
+    page,
+    pageSize,
+  }) => {
+    const criteria = {
+      ...(taskStatuses !== undefined && { taskStatuses }),
+      ...(xactionId !== undefined && { xactionId }),
+      ...(contactId !== undefined && { contactId }),
+      ...(assignees !== undefined && { assignees }),
+      ...(completedBy !== undefined && { completedBy }),
+      ...((dueDateFrom !== undefined || dueDateTo !== undefined) && {
+        dueDate: {
+          ...(dueDateFrom !== undefined && { from: dueDateFrom }),
+          ...(dueDateTo !== undefined && { to: dueDateTo }),
+        },
+      }),
+      ...((completeDateFrom !== undefined || completeDateTo !== undefined) && {
+        completeDate: {
+          ...(completeDateFrom !== undefined && { from: completeDateFrom }),
+          ...(completeDateTo !== undefined && { to: completeDateTo }),
+        },
+      }),
+    };
+    const body = {
+      taskSearchCriteriaDto: criteria,
+      page: page ?? 0,
+      pageSize: pageSize ?? 20,
+    };
+    const result = await searchTasks(body);
+    return formatResult("Task search results:", result);
+  }
+);
+
+// Tool 36: get_task
+server.tool(
+  "get_task",
+  "Retrieve a single Task by ID. Returns the full APITaskDto including subject, status, type, due date, assignee, associated transaction and contact, folder, recurring settings, reminder destinations, letter templates, and computed fields. Richer than the digest returned by update_task.",
+  {
+    taskId: z.number().int().describe("ID of the Task to retrieve"),
+  },
+  async ({ taskId }) => {
+    const result = await getTask(taskId);
+    return formatResult(`Task ${taskId}:`, result);
+  }
+);
+
+// Tool 37: update_task
+server.tool(
+  "update_task",
+  "Update a Task using JSON Patch (RFC 6902). Supply only the fields to change — all fields are optional. Common use cases: mark complete (status: 'COMPLETE', completeDate: 'YYYY-MM-DD'), change due date (dueDate), reassign (appUserId), omit from agent view (agentVisible: false). Returns APITaskDigestDto — an abbreviated view. Use get_task to read the full record afterward if needed.",
+  {
+    taskId: z
+      .number()
+      .int()
+      .describe("ID of the Task to update"),
+    status: z
+      .enum(["OPEN", "IN_PROGRESS", "COMPLETE"])
+      .optional()
+      .describe("Task status"),
+    taskType: z
+      .enum(["TODO", "PHONE", "LETTER", "EMAIL"])
+      .optional()
+      .describe("Task type"),
+    subject: z
+      .string()
+      .max(255)
+      .optional()
+      .describe("Task subject/title"),
+    note: z
+      .string()
+      .optional()
+      .describe("Task description/notes"),
+    appUserId: z
+      .number()
+      .int()
+      .optional()
+      .describe("ID of the AppUser to assign the task to"),
+    appUserIdCompletedBy: z
+      .number()
+      .int()
+      .optional()
+      .describe("ID of the AppUser who completed the task"),
+    dueDate: z
+      .string()
+      .optional()
+      .describe("Due date, YYYY-MM-DD"),
+    dueTime: z
+      .string()
+      .optional()
+      .describe("Due time, e.g. '14:30'"),
+    completeDate: z
+      .string()
+      .optional()
+      .describe("Completion date, YYYY-MM-DD"),
+    reminderSet: z
+      .boolean()
+      .optional()
+      .describe("Whether a reminder is set"),
+    reminderDate: z
+      .string()
+      .optional()
+      .describe("Reminder date, YYYY-MM-DD"),
+    reminderTime: z
+      .string()
+      .optional()
+      .describe("Reminder time, e.g. '09:00'"),
+    agentVisible: z
+      .boolean()
+      .optional()
+      .describe("Whether the task is visible on the agent portal"),
+    buyerSellerVisible: z
+      .boolean()
+      .optional()
+      .describe("Whether the task is visible on the buyer/seller portal"),
+    prospecting: z
+      .boolean()
+      .optional()
+      .describe("Whether the task is a prospecting task"),
+    onCalendar: z
+      .boolean()
+      .optional()
+      .describe("Whether the task is included in the calendar feed"),
+    milestone: z
+      .boolean()
+      .optional()
+      .describe("Whether the task is a milestone"),
+    color: z
+      .enum(["NONE", "RED", "TANGERINE", "TAUPE", "YELLOW", "LIME", "GREEN", "CYAN", "TEAL", "COBALT", "PURPLE", "MAGENTA"])
+      .optional()
+      .describe("Task color (default NONE)"),
+    folderId: z
+      .number()
+      .int()
+      .optional()
+      .describe("ID of the folder to assign the task to"),
+    newFolderName: z
+      .string()
+      .max(255)
+      .optional()
+      .describe("Create a new folder with this name and assign the task to it"),
+  },
+  async ({ taskId, ...changes }) => {
+    const result = await updateTask(taskId, changes);
+    return formatResult(`Task ${taskId} updated:`, result);
+  }
+);
+
+// Tool 38: create_task
+server.tool(
+  "create_task",
+  "Create a new Task assigned to a Team Member. Requires subject and appUserId (assignee). Optionally scope to a Transaction (xactionId) or Contact (contactId). Use folderId to place in an existing folder, or newFolderName to create a new folder in one step. Returns the full APITaskDto (HTTP 201).",
+  {
+    appUserId: z
+      .number()
+      .int()
+      .describe("ID of the AppUser to assign the task to (required)"),
+    subject: z
+      .string()
+      .max(255)
+      .describe("Task subject/title (required)"),
+    xactionId: z
+      .number()
+      .int()
+      .optional()
+      .describe("ID of the Transaction to associate the task with"),
+    contactId: z
+      .number()
+      .int()
+      .optional()
+      .describe("ID of the Contact to associate the task with"),
+    note: z
+      .string()
+      .optional()
+      .describe("Task description/notes"),
+    taskType: z
+      .enum(["TODO", "PHONE", "LETTER", "EMAIL"])
+      .optional()
+      .describe("Task type (default TODO)"),
+    status: z
+      .enum(["OPEN", "IN_PROGRESS", "COMPLETE"])
+      .optional()
+      .describe("Task status (default OPEN)"),
+    dueDate: z
+      .string()
+      .optional()
+      .describe("Due date, YYYY-MM-DD"),
+    dueTime: z
+      .string()
+      .optional()
+      .describe("Due time, e.g. '14:30'"),
+    reminderSet: z
+      .boolean()
+      .optional()
+      .describe("Whether a reminder is set"),
+    reminderDate: z
+      .string()
+      .optional()
+      .describe("Reminder date, YYYY-MM-DD"),
+    reminderTime: z
+      .string()
+      .optional()
+      .describe("Reminder time, e.g. '09:00'"),
+    folderId: z
+      .number()
+      .int()
+      .optional()
+      .describe("ID of an existing folder to place the task in"),
+    newFolderName: z
+      .string()
+      .max(255)
+      .optional()
+      .describe("Create a new folder with this name and place the task in it (mutually exclusive with folderId)"),
+    agentVisible: z
+      .boolean()
+      .optional()
+      .describe("Whether the task is visible on the agent portal"),
+    buyerSellerVisible: z
+      .boolean()
+      .optional()
+      .describe("Whether the task is visible on the buyer/seller portal"),
+    color: z
+      .enum(["NONE", "RED", "TANGERINE", "TAUPE", "YELLOW", "LIME", "GREEN", "CYAN", "TEAL", "COBALT", "PURPLE", "MAGENTA"])
+      .optional()
+      .describe("Task color (default NONE)"),
+    milestone: z
+      .boolean()
+      .optional()
+      .describe("Whether the task is a milestone"),
+  },
+  async ({ appUserId, subject, xactionId, contactId, note, taskType, status, dueDate, dueTime, reminderSet, reminderDate, reminderTime, folderId, newFolderName, agentVisible, buyerSellerVisible, color, milestone }) => {
+    const params = {
+      appUserId,
+      subject,
+      ...(xactionId !== undefined && { xactionId }),
+      ...(contactId !== undefined && { contactId }),
+      ...(note !== undefined && { note }),
+      ...(taskType !== undefined && { taskType }),
+      ...(status !== undefined && { status }),
+      ...(dueDate !== undefined && { dueDate }),
+      ...(dueTime !== undefined && { dueTime }),
+      ...(reminderSet !== undefined && { reminderSet }),
+      ...(reminderDate !== undefined && { reminderDate }),
+      ...(reminderTime !== undefined && { reminderTime }),
+      ...(folderId !== undefined && { folderId }),
+      ...(newFolderName !== undefined && { newFolderName }),
+      ...(agentVisible !== undefined && { agentVisible }),
+      ...(buyerSellerVisible !== undefined && { buyerSellerVisible }),
+      ...(color !== undefined && { color }),
+      ...(milestone !== undefined && { milestone }),
+    };
+    const result = await createTask(params);
+    return formatResult("Task created:", result);
+  }
+);
+
 // ---------------------------------------------------------------------------
 // Express HTTP server
 // ---------------------------------------------------------------------------
@@ -1207,7 +1534,7 @@ app.get("/", (_req, res) => {
   res.json({
     status: "ok",
     service: "aframe-mcp-connector",
-    version: "0.5.0",
+    version: "0.6.0",
   });
 });
 
@@ -1235,7 +1562,7 @@ app.post("/mcp", async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Aframe MCP connector v0.5.0 listening on port ${PORT}`);
+  console.log(`Aframe MCP connector v0.6.0 listening on port ${PORT}`);
   console.log(`  Health check: GET  /`);
   console.log(`  MCP endpoint: POST /mcp`);
   console.log(`  Tools: create_transaction, get_transaction, update_transaction,`);
@@ -1252,5 +1579,6 @@ app.listen(PORT, () => {
   console.log(`         create_transaction_attachment, get_transaction_attachment,`);
   console.log(`         list_transaction_attachments, update_transaction_attachment,`);
   console.log(`         upload_transaction_attachment_file, unassign_transaction_attachment_file,`);
-  console.log(`         assign_transaction_attachment_file`);
+  console.log(`         assign_transaction_attachment_file,`);
+  console.log(`         search_tasks, get_task, update_task, create_task`);
 });
