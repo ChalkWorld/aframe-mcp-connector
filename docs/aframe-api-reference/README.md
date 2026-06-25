@@ -80,6 +80,7 @@ WORKFLOWS-FW-*           Workflow docs     — business processes using the tool
 | 1.0 | 2026-06-24 | Cursor / Claude-in-Chrome | Extracted: PATCH /v1/xaction-attachments/{xactionAttachmentId}/file/assign |
 | 1.0 | 2026-06-24 | Cursor / Claude-in-Chrome | Extracted: POST /v1/tasks/search |
 | 1.0 | 2026-06-24 | Cursor / Claude-in-Chrome | Extracted: GET /v1/tasks/{taskId} |
+| 1.0 | 2026-06-24 | Cursor / Claude-in-Chrome | Extracted: POST /v1/tasks |
 
 ---
 

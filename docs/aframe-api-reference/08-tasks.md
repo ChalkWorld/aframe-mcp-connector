@@ -13,10 +13,260 @@ project: AAR-TC Aframe Connector
 
 ---
 
-#### `POST /v1/tasks` — Create a task
-**Status:** Not extracted
+#### `POST /v1/tasks` — Create a Task
+**Status:** ✅ Extracted 2026-06-24
 
-_Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format._
+**Summary:** Create a Task
+
+**Description:** Creates a new Task assigned to a Team Member. A Task must have at least a subject and an `appUserId` (assignee). See `APITaskCreateDto` for all supported fields.
+
+**Request**
+- Content-Type: `application/json`
+- Path params: None
+- Query params: None
+- Body schema (`APITaskCreateDto` — Task creation data):
+
+  | Field | Type | Constraints | Description |
+  |---|---|---|---|
+  | `appUserId` | integer (int32) | required | ID of the AppUser assigned to the task |
+  | `subject` | string | ≤255 chars, required | Task subject/title |
+  | `xactionId` | integer (int32) | — | ID of the related Xaction |
+  | `contactId` | integer (int32) | — | ID of the related Contact |
+  | `folderId` | integer (int32) | — | ID of the associated Folder |
+  | `newFolderName` | string | ≤255 chars | Create a new folder with this name (instead of using `folderId`) |
+  | `note` | string | ≤65535 chars | Task description |
+  | `taskType` | string (enum) | default `"TODO"` | Task type — see Enums |
+  | `status` | string (enum) | default `"OPEN"` | Task status — see Enums |
+  | `color` | string (enum) | default `"NONE"` | Task color — see Enums |
+  | `dueDate` | string (date) | — | Due date (e.g., `"2026-01-15"`) |
+  | `dueTime` | string | — | Due time (e.g., `"14:30"`) |
+  | `reminderSet` | boolean | — | Whether a reminder is set for the task |
+  | `reminderDate` | string (date) | — | Reminder date (e.g., `"2026-01-15"`) |
+  | `reminderTime` | string | — | Reminder time (e.g., `"14:30"`) |
+  | `agentVisible` | boolean | — | Whether the task is visible on the agent portal |
+  | `buyerSellerVisible` | boolean | — | Whether the task is visible on the buyer/seller portal |
+  | `prospecting` | boolean | — | Whether the task is a prospecting task |
+  | `onCalendar` | boolean | — | Whether the task is included in the calendar feed |
+  | `milestone` | boolean | — | Whether the task is a milestone |
+  | `recurring` | boolean | — | Whether the task is recurring |
+  | `recurringFrequency` | string (enum) | default `"DAILY"` | Recurring frequency — see Enums |
+  | `recurringSeparationCount` | integer (int32) | — | Recurring separation count (1-based) |
+  | `recurringEndDate` | string (date) | — | Recurring end date |
+  | `recurringCount` | integer (int32) | — | Recurring count |
+  | `recurringDayOfWeek` | string (enum) | — | Recurring day of week — see Enums |
+  | `recurringDayOfMonth` | integer (int32) | — | Recurring day of month |
+  | `recurringMonthOfYear` | string (enum) | — | Recurring month of year — see Enums |
+  | `expense` | number | — | Task expense amount |
+  | `dueDateAdjustActive` | boolean | — | Whether auto-adjusting due date is enabled |
+  | `dueDateAdjustRefTaskIdParent` | integer (int32) | — | ID of the parent Task for due date adjustment |
+  | `dueDateAdjustRefTaskParentContingent` | boolean | — | Whether the task is hidden when the parent task is not complete |
+  | `dateAdjustReferenceCode` | string | ≤255 chars | Merge field code for auto-adjusting the date (relevant when `dueDateAdjustType` is `EVENT_MERGE_FIELD_CODE`) |
+  | `dueDateAdjustDelta` | integer (int32) | — | Number of days to auto-adjust the due date |
+  | `dueDateAdjustReminderDelta` | integer (int32) | — | Number of days to auto-adjust the reminder date |
+  | `dueDateAdjustmentRulesId` | integer (int32) | — | ID of the date adjustment rules (date calculator) |
+  | `completeDate` | string (date) | — | Completion date (e.g., `"2026-01-15"`) |
+  | `taskTZ` | string | ≤100 chars | Time zone for the task; if null, uses current user's time zone |
+  | `reminderDestinations` | array\<object\> | — | Reminder override destinations |
+  | `reminderDestinations[].method` | string (enum) | — | Reminder destination method — see Enums |
+  | `reminderDestinations[].appUserId` | integer (int32) | — | AppUser ID (required when method is `EMAIL_USER` or `SMS_USER`) |
+  | `reminderDestinations[].destination` | string | — | Custom destination (required when method is `EMAIL_CUSTOM` or `SMS_CUSTOM`; valid email or phone) |
+  | `taskLetterTemplates` | array\<object\> | — | Associated letter templates |
+  | `taskLetterTemplates[].taskId` | integer (int32) | — | Task ID |
+  | `taskLetterTemplates[].letterTemplateId` | integer (int32) | — | Letter Template ID |
+  | `taskLetterTemplates[].sort` | integer (int32) | — | Sort Order |
+
+**Response (2xx payload)**
+
+Returns HTTP 201. Response body is `APITaskDto` — the full Task representation (same DTO as `GET /v1/tasks/{taskId}`).
+
+  | Field | Type | Description |
+  |---|---|---|
+  | `teamId` | integer | ID of the Team |
+  | `taskId` | integer | ID of the Task |
+  | `xaction.xactionId` | integer | ID of the associated Xaction |
+  | `xaction.xactionStatus.xactionStatusId` | integer | ID for the transaction status |
+  | `xaction.xactionStatus.name` | string | Transaction status name |
+  | `xaction.xactionStatus.sort` | integer | Status sort order |
+  | `xaction.xactionStatus.xactionStage` | string (enum) | Stage of the transaction — see Enums |
+  | `xaction.xactionStatus.xactionStatusSystemType` | string (enum) | System status type — see Enums |
+  | `xaction.xactionStatus.colorHex` | string | Color hex code for the status |
+  | `xaction.xactionStatus.agentVisible` | boolean | Status visible to agent Team Members |
+  | `xaction.xactionStatus.buyerSellerVisible` | boolean | Status visible on Buyer/Seller portal |
+  | `xaction.address.address1` | string | Address Line 1 |
+  | `xaction.address.address2` | string | Address Line 2 |
+  | `xaction.address.city` | string | City |
+  | `xaction.address.state` | string | State |
+  | `xaction.address.zip` | string | Zip or Postal Code |
+  | `xaction.address.country` | string | Country |
+  | `xaction.address.county` | string | County |
+  | `xaction.address.latitude` | number (double) | Latitude |
+  | `xaction.address.longitude` | number (double) | Longitude |
+  | `xaction.xactionSide` | string (enum) | Side of the transaction — see Enums |
+  | `xaction.closingDate` | string (date) | Closing date |
+  | `xaction.closedDate` | string (date) | Closed date |
+  | `xaction.currentPrice` | number | Current price (list or contract depending on stage) |
+  | `xaction.timeZone.zoneId` | string | Time zone ID (e.g., `"America/New_York"`) |
+  | `xaction.timeZone.fullName` | string | Time zone full name (e.g., `"America/New_York (ET)"`) |
+  | `xaction.timeZone.shortName` | string | Time zone short name (e.g., `"ET"`) |
+  | `xaction.editDateTime` | string (date-time) | Transaction last edit date/time |
+  | `contact.contactId` | integer | ID of the associated Contact |
+  | `contact.associatedAppUserId` | integer | ID of the associated AppUser if Contact is a team member |
+  | `contact.namesDisplay` | string | Display name(s) of the contact |
+  | `contact.name.company` | string | Contact company |
+  | `contact.name.title` | string | Contact title (e.g., `"Mr."`) |
+  | `contact.name.firstName` | string | Contact first name |
+  | `contact.name.middleName` | string | Contact middle name |
+  | `contact.name.lastName` | string | Contact last name |
+  | `contact.nameAltContact.company` | string | Alt contact company |
+  | `contact.nameAltContact.title` | string | Alt contact title |
+  | `contact.nameAltContact.firstName` | string | Alt contact first name |
+  | `contact.nameAltContact.middleName` | string | Alt contact middle name |
+  | `contact.nameAltContact.lastName` | string | Alt contact last name |
+  | `contact.editDateTime` | string (date-time) | Contact last edit date/time |
+  | `folder.folderId` | integer | Folder ID |
+  | `folder.teamId` | integer | Team ID |
+  | `folder.contactId` | integer | Contact ID |
+  | `folder.xactionId` | integer | Xaction ID |
+  | `folder.name` | string | Folder name |
+  | `folder.folderType` | string (enum) | Folder type — see Enums |
+  | `folder.renderClosed` | boolean | Whether folder renders initially closed |
+  | `folder.sort` | integer | Folder sort order |
+  | `appUser.appUserId` | integer | ID of the AppUser assigned to the task |
+  | `appUser.name` | string | AppUser full name |
+  | `appUser.initials` | string | AppUser initials |
+  | `appUser.profileUrl` | string (uri) | AppUser profile picture URL |
+  | `appUser.timeZone.zoneId` | string | AppUser time zone ID |
+  | `appUser.timeZone.fullName` | string | AppUser time zone full name |
+  | `appUser.timeZone.shortName` | string | AppUser time zone short name |
+  | `taskType` | string (enum) | Task type — see Enums |
+  | `status` | string (enum) | Task status — see Enums |
+  | `subject` | string | Task subject/title |
+  | `note` | string | Task notes/description |
+  | `color` | string (enum) | Task color — see Enums |
+  | `dueDate` | string (date) | Due date (e.g., `"2026-01-15"`) |
+  | `dueTimeMinutes` | integer | Due time in minutes from midnight |
+  | `dueTime` | string | Due time as string, converted from `dueTimeMinutes` (e.g., `"14:30"`) |
+  | `timeZone.zoneId` | string | Due date time zone ID |
+  | `timeZone.fullName` | string | Due date time zone full name |
+  | `timeZone.shortName` | string | Due date time zone short name |
+  | `recurring` | boolean | Whether the task is recurring |
+  | `recurringFrequency` | string (enum) | Recurring frequency — see Enums |
+  | `recurringSeparationCount` | integer | Recurring separation count |
+  | `recurringEndDate` | string (date) | Recurring end date |
+  | `recurringCount` | integer | Recurring count |
+  | `recurringDayOfWeek` | string (enum) | Recurring day of week — see Enums |
+  | `recurringDayOfMonth` | integer | Recurring day of month |
+  | `recurringMonthOfYear` | string (enum) | Recurring month of year — see Enums |
+  | `dueDateAdjustActive` | boolean | Whether due date adjustment is active |
+  | `dueDateAdjustType` | string (enum) | Due date adjustment type — see Enums |
+  | `dueDateAdjustRefMergeFieldCode` | string | Due date adjustment reference merge field code |
+  | `dueDateAdjustRefTaskIdParent` | integer | ID of the parent Task for due date adjustment |
+  | `dueDateAdjustRefTaskParentSubject` | string | Subject of the parent task for due date adjustment |
+  | `dueDateAdjustRefTaskParentContingent` | boolean | Whether the parent task is contingent |
+  | `dateAdjustReferenceCode` | string | Date adjustment reference code |
+  | `dueDateAdjustDelta` | integer | Due date adjustment delta in days |
+  | `dueDateAdjustReminderDelta` | integer | Due date adjustment reminder delta in days |
+  | `dueDateAdjustmentRulesId` | integer | ID of the date adjustment rules |
+  | `dueDateAdjustmentRulesName` | string | Name of the date adjustment rules |
+  | `completeDate` | string (date) | Completion date (e.g., `"2026-01-15"`) |
+  | `completedBy.appUserId` | integer | ID of the AppUser who completed the task |
+  | `completedBy.name` | string | Completing AppUser full name |
+  | `completedBy.initials` | string | Completing AppUser initials |
+  | `completedBy.profileUrl` | string (uri) | Completing AppUser profile picture URL |
+  | `completedBy.timeZone.zoneId` | string | Completing AppUser time zone ID |
+  | `completedBy.timeZone.fullName` | string | Completing AppUser time zone full name |
+  | `completedBy.timeZone.shortName` | string | Completing AppUser time zone short name |
+  | `editDateTime` | string (date-time) | Last edit date/time |
+  | `createDateTime` | string (date-time) | Creation date/time |
+  | `reminderSet` | boolean | Whether a reminder is set |
+  | `reminderDate` | string (date) | Reminder date (e.g., `"2026-01-15"`) |
+  | `reminderTimeMinutes` | integer | Reminder time in minutes from midnight |
+  | `reminderTime` | string | Reminder time as string, converted from `reminderTimeMinutes` (e.g., `"14:30"`) |
+  | `sortByDate` | integer | Internal sort-by-date value |
+  | `sortByFolder` | integer | Internal sort-by-folder value |
+  | `templateSortOrder` | integer | Template sort order |
+  | `prospecting` | boolean | Whether the task is a prospecting task |
+  | `onCalendar` | boolean | Whether the task appears on the calendar |
+  | `milestone` | boolean | Whether the task is a milestone |
+  | `agentVisible` | boolean | Whether the task is visible to the agent |
+  | `buyerSellerVisible` | boolean | Whether the task is visible to the buyer/seller |
+  | `expense` | number | Task expense amount |
+  | `is_contingentChildHidden` | boolean | Whether the contingent child is hidden |
+  | `get_alarmDateTime` | string (date-time) | Alarm date/time (computed) |
+  | `get_dueDateTime` | string (date-time) | Due date/time as instant (computed) |
+  | `reminderDestinations[].method` | string (enum) | Reminder destination method — see Enums |
+  | `reminderDestinations[].appUserId` | integer | AppUser ID for custom destinations |
+  | `reminderDestinations[].destination` | string | Custom destination address |
+  | `taskLetterTemplates[].taskLetterTemplateId` | integer | Task Letter Template ID |
+  | `taskLetterTemplates[].taskId` | integer | Task ID |
+  | `taskLetterTemplates[].letterTemplate.letterTemplateId` | integer | Letter Template entity ID |
+  | `taskLetterTemplates[].letterTemplate.teamId` | integer | Team ID |
+  | `taskLetterTemplates[].letterTemplate.folder.folderId` | integer | Folder ID |
+  | `taskLetterTemplates[].letterTemplate.folder.teamId` | integer | Team ID |
+  | `taskLetterTemplates[].letterTemplate.folder.contactId` | integer | Contact ID |
+  | `taskLetterTemplates[].letterTemplate.folder.xactionId` | integer | Xaction ID |
+  | `taskLetterTemplates[].letterTemplate.folder.name` | string | Folder name |
+  | `taskLetterTemplates[].letterTemplate.folder.folderType` | string (enum) | Folder type — see Enums |
+  | `taskLetterTemplates[].letterTemplate.folder.renderClosed` | boolean | Whether folder renders initially closed |
+  | `taskLetterTemplates[].letterTemplate.folder.sort` | integer | Folder sort number |
+  | `taskLetterTemplates[].letterTemplate.type` | string (enum) | Template entity type — see Enums |
+  | `taskLetterTemplates[].letterTemplate.name` | string | Template name |
+  | `taskLetterTemplates[].letterTemplate.description` | string | Template description |
+  | `taskLetterTemplates[].letterTemplate.note` | string | Template note |
+  | `taskLetterTemplates[].letterTemplate.systemTemplate` | boolean | True if system template |
+  | `taskLetterTemplates[].letterTemplate.sort` | integer | Template sort order |
+
+**Enums / constants:**
+
+`taskType` (request + response, default `"TODO"`): `"TODO"`, `"PHONE"`, `"LETTER"`, `"EMAIL"`
+
+`status` (request + response, default `"OPEN"`): `"OPEN"`, `"IN_PROGRESS"`, `"COMPLETE"`
+
+`color` (request + response, default `"NONE"`): `"NONE"`, `"RED"`, `"TANGERINE"`, `"TAUPE"`, `"YELLOW"`, `"LIME"`, `"GREEN"`, `"CYAN"`, `"TEAL"`, `"COBALT"`, `"PURPLE"`, `"MAGENTA"`
+
+`recurringFrequency` (request + response, default `"DAILY"`): `"DAILY"`, `"WEEKLY"`, `"MONTHLY"`, `"YEARLY"`
+
+`recurringDayOfWeek` (request + response): `"MONDAY"`, `"TUESDAY"`, `"WEDNESDAY"`, `"THURSDAY"`, `"FRIDAY"`, `"SATURDAY"`, `"SUNDAY"`
+
+`recurringMonthOfYear` (request + response): `"JANUARY"`, `"FEBRUARY"`, `"MARCH"`, `"APRIL"`, `"MAY"`, `"JUNE"`, `"JULY"`, `"AUGUST"`, `"SEPTEMBER"`, `"OCTOBER"`, `"NOVEMBER"`, `"DECEMBER"`
+
+`dueDateAdjustType` (response): `"TEMPLATE_START_DATE"`, `"PARENT_TASK"`, `"XACTION_LIST_DATE"`, `"XACTION_ON_MARKET_DATE"`, `"XACTION_EXPIRE_DATE"`, `"XACTION_EFFECTIVE_DATE"`, `"EVENT_MERGE_FIELD_CODE"`
+
+`reminderDestinations[].method` (request + response): `"EMAIL_USER"`, `"SMS_USER"`, `"EMAIL_CUSTOM"`, `"SMS_CUSTOM"`
+
+`xaction.xactionStatus.xactionStage` (response): `"PRE_ACTIVE"`, `"ACTIVE"`, `"UNDER_CONTRACT"`, `"SOLD"`, `"NOT_SOLD"`, `"NOT_ACTIVE"`
+
+`xaction.xactionStatus.xactionStatusSystemType` (response): `"XACTION_STATUS_SYSTEM_ACTIVE"`, `"XACTION_STATUS_SYSTEM_CLOSED"`, `"XACTION_STATUS_SYSTEM_FELL_APART"`, `"XACTION_STATUS_SYSTEM_DRAFT"`
+
+`xaction.xactionSide` (response): `"BUYER"`, `"SELLER"`, `"DUAL"`
+
+`folder.folderType` (request + response): `"TEAM_ATTACHMENTS"`, `"LETTER_TEMPLATES"`, `"TASK_TEMPLATES"`, `"EVENT_TEMPLATES"`, `"ATTACHMENT_TEMPLATES"`, `"XACTION_ATTACHMENTS"`, `"TASKS"`, `"EVENTS"`
+
+`taskLetterTemplates[].letterTemplate.type` (response): `"TEAM"`, `"CONTACT"`, `"XACTION"`, `"EVENT"`, `"TASK"`, `"CONTACT_NOTE"`, `"EMAIL_QUEUE"`, `"APPUSER"`, `"FOLDER"`, `"XACTION_ATTACHMENT"`, `"XACTION_ACTIVITY"`, `"XACTION_PARTICIPANT"`
+
+**Notable errors:**
+
+All error responses use the `APIResponse` envelope with fields: `payload` (any), `error.requestId` (string), `error.messages[]` (string), `error.details[]` (string), `error.validationErrors[]` (`fieldName`, `message`).
+
+| Code | Description |
+|---|---|
+| 400 | Bad Request — Malformed JSON or unreadable payload |
+| 403 | Forbidden — Authenticated user does not have permission to create a Task on the referenced Transaction or for the referenced assignee |
+| 404 | Not Found — A referenced resource (Transaction, assignee, Contact, Folder, etc.) does not exist |
+| 422 | Unprocessable Content — The Task data is invalid or missing required fields |
+| 429 | Too Many Requests — Rate limit exceeded |
+
+**Quirks & notes:**
+- A Task requires at minimum a `subject` and an `appUserId` (assignee); all other fields are optional.
+- Use `folderId` to assign to an existing folder, or `newFolderName` to create a new folder and assign in one step (mutually exclusive).
+- `taskTZ` sets the time zone for due/reminder date-time interpretation; if null, uses the current user's time zone.
+- `reminderDestinations[].appUserId` is required when method is `EMAIL_USER` or `SMS_USER`; `reminderDestinations[].destination` is required when method is `EMAIL_CUSTOM` or `SMS_CUSTOM` and must be a valid email or phone number.
+- Returns HTTP 201 (not 200) on success.
+- The response DTO is `APITaskDto` — the full task representation, identical to `GET /v1/tasks/{taskId}`. Includes recurring fields, reminder destinations, letter templates, computed fields (`get_alarmDateTime`, `get_dueDateTime`), and sort fields.
+- `dueTime` and `reminderTime` in the response are computed strings derived from `dueTimeMinutes` and `reminderTimeMinutes` (integer, minutes from midnight). Both raw and converted forms are present.
+- `get_alarmDateTime` and `get_dueDateTime` use a `get_` prefix — getter-method names leaking into the Swagger schema; treat as computed read-only fields.
+- `is_contingentChildHidden` uses snake_case (vs. camelCase for all other fields) — likely an API/Swagger inconsistency, consistent with the same field in `GET` and `PATCH` task endpoints.
+- Authentication: global `X-AFrame-API-Key` header.
 
 ---
 
