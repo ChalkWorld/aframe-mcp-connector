@@ -20,10 +20,177 @@ _Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format
 
 ---
 
-#### `POST /v1/tasks/search` — Search tasks
-**Status:** Not extracted
+#### `POST /v1/tasks/search` — Search Tasks
+**Status:** ✅ Extracted 2026-06-24
 
-_Schema TBD. See [master](README.md#endpoint-schema-template) for fill-in format._
+**Summary:** Search Tasks
+
+**Description:** Search for Tasks using the supplied criteria. Pagination via `page` (0-based) and `pageSize` (max 100) is supported.
+
+**Request**
+- Content-Type: `application/json`
+- Path params: None
+- Query params: None
+- Body schema (`APITaskPagedQueryDto` — request wrapper for paginated Task search):
+
+  | Field | Type | Constraints | Description |
+  |---|---|---|---|
+  | `taskSearchCriteriaDto` | object | — | Task search criteria (all sub-fields optional) |
+  | `taskSearchCriteriaDto.taskStatuses` | array\<string\> (unique) | — | Filter by task statuses — see Enums |
+  | `taskSearchCriteriaDto.dueDate.from` | string (date) | — | Due date range from (inclusive), e.g. `"2021-01-01"` |
+  | `taskSearchCriteriaDto.dueDate.to` | string (date) | — | Due date range to (inclusive) |
+  | `taskSearchCriteriaDto.completeDate.from` | string (date) | — | Complete date range from (inclusive) |
+  | `taskSearchCriteriaDto.completeDate.to` | string (date) | — | Complete date range to (inclusive) |
+  | `taskSearchCriteriaDto.xactionId` | integer (int32) | — | Filter by ID of the associated Xaction |
+  | `taskSearchCriteriaDto.contactId` | integer (int32) | — | Filter by ID of the associated Contact |
+  | `taskSearchCriteriaDto.assignees` | array\<integer\> (unique) | — | Filter by IDs of the assignee AppUsers |
+  | `taskSearchCriteriaDto.completedBy` | array\<integer\> (unique) | — | Filter by IDs of the AppUsers who completed the task |
+  | `page` | integer (int32) | ≥ 0 | Page number (0-based) |
+  | `pageSize` | integer (int32) | [1, 100] | Number of items per page (max 100) |
+
+**Response (2xx payload)**
+
+Returns `APITaskPagedResultDto` — paged list of Task digest results.
+
+  | Field | Type | Description |
+  |---|---|---|
+  | `items[].taskId` | integer | ID of the Task |
+  | `items[].xaction.xactionId` | integer | ID of the associated Xaction |
+  | `items[].xaction.xactionStatus.xactionStatusId` | integer | ID for the transaction status |
+  | `items[].xaction.xactionStatus.name` | string | Transaction status name |
+  | `items[].xaction.xactionStatus.sort` | integer | Status sort order |
+  | `items[].xaction.xactionStatus.xactionStage` | string (enum) | Stage of the transaction — see Enums |
+  | `items[].xaction.xactionStatus.xactionStatusSystemType` | string (enum) | System status type — see Enums |
+  | `items[].xaction.xactionStatus.colorHex` | string | Color hex code for the status |
+  | `items[].xaction.xactionStatus.agentVisible` | boolean | Status visible to agent Team Members |
+  | `items[].xaction.xactionStatus.buyerSellerVisible` | boolean | Status visible on Buyer/Seller portal |
+  | `items[].xaction.address.address1` | string | Address Line 1 |
+  | `items[].xaction.address.address2` | string | Address Line 2 |
+  | `items[].xaction.address.city` | string | City |
+  | `items[].xaction.address.state` | string | State |
+  | `items[].xaction.address.zip` | string | Zip or Postal Code |
+  | `items[].xaction.address.country` | string | Country |
+  | `items[].xaction.address.county` | string | County |
+  | `items[].xaction.address.latitude` | number (double) | Latitude |
+  | `items[].xaction.address.longitude` | number (double) | Longitude |
+  | `items[].xaction.xactionSide` | string (enum) | Side of the transaction — see Enums |
+  | `items[].xaction.closingDate` | string (date) | Closing date |
+  | `items[].xaction.closedDate` | string (date) | Closed date |
+  | `items[].xaction.currentPrice` | number | Current price (list or contract depending on stage) |
+  | `items[].xaction.timeZone.zoneId` | string | Time zone ID (e.g., `"America/New_York"`) |
+  | `items[].xaction.timeZone.fullName` | string | Time zone full name (e.g., `"America/New_York (ET)"`) |
+  | `items[].xaction.timeZone.shortName` | string | Time zone short name (e.g., `"ET"`) |
+  | `items[].xaction.editDateTime` | string (date-time) | Transaction last edit date/time |
+  | `items[].contact.contactId` | integer | ID of the associated Contact |
+  | `items[].contact.associatedAppUserId` | integer | ID of the associated AppUser if Contact is a team member |
+  | `items[].contact.namesDisplay` | string | Display name(s) of the contact |
+  | `items[].contact.name.company` | string | Contact company |
+  | `items[].contact.name.title` | string | Contact title (e.g., `"Mr."`) |
+  | `items[].contact.name.firstName` | string | Contact first name |
+  | `items[].contact.name.middleName` | string | Contact middle name |
+  | `items[].contact.name.lastName` | string | Contact last name |
+  | `items[].contact.nameAltContact.company` | string | Alt contact company |
+  | `items[].contact.nameAltContact.title` | string | Alt contact title |
+  | `items[].contact.nameAltContact.firstName` | string | Alt contact first name |
+  | `items[].contact.nameAltContact.middleName` | string | Alt contact middle name |
+  | `items[].contact.nameAltContact.lastName` | string | Alt contact last name |
+  | `items[].contact.editDateTime` | string (date-time) | Contact last edit date/time |
+  | `items[].folder.folderId` | integer | Folder ID |
+  | `items[].folder.teamId` | integer | Team ID |
+  | `items[].folder.contactId` | integer | Contact ID |
+  | `items[].folder.xactionId` | integer | Xaction ID |
+  | `items[].folder.name` | string | Folder name |
+  | `items[].folder.folderType` | string (enum) | Folder type — see Enums |
+  | `items[].folder.renderClosed` | boolean | Whether folder renders initially closed |
+  | `items[].folder.sort` | integer | Folder sort order |
+  | `items[].appUser.appUserId` | integer | ID of the AppUser assigned to the task |
+  | `items[].appUser.name` | string | AppUser full name |
+  | `items[].appUser.initials` | string | AppUser initials |
+  | `items[].appUser.profileUrl` | string (uri) | AppUser profile picture URL |
+  | `items[].appUser.timeZone.zoneId` | string | AppUser time zone ID |
+  | `items[].appUser.timeZone.fullName` | string | AppUser time zone full name |
+  | `items[].appUser.timeZone.shortName` | string | AppUser time zone short name |
+  | `items[].taskType` | string (enum) | Task type — see Enums |
+  | `items[].status` | string (enum) | Task status — see Enums |
+  | `items[].subject` | string | Task subject/title |
+  | `items[].note` | string | Task notes/description |
+  | `items[].color` | string (enum) | Task color — see Enums |
+  | `items[].dueDate` | string (date) | Due date (e.g., `"2026-01-15"`) |
+  | `items[].dueTime` | string | Due time (e.g., `"14:30"`) |
+  | `items[].timeZone.zoneId` | string | Due date time zone ID |
+  | `items[].timeZone.fullName` | string | Due date time zone full name |
+  | `items[].timeZone.shortName` | string | Due date time zone short name |
+  | `items[].completeDate` | string (date) | Completion date |
+  | `items[].completedBy.appUserId` | integer | ID of the AppUser who completed the task |
+  | `items[].completedBy.name` | string | Completing AppUser full name |
+  | `items[].completedBy.initials` | string | Completing AppUser initials |
+  | `items[].completedBy.profileUrl` | string (uri) | Completing AppUser profile picture URL |
+  | `items[].completedBy.timeZone.zoneId` | string | Completing AppUser time zone ID |
+  | `items[].completedBy.timeZone.fullName` | string | Completing AppUser time zone full name |
+  | `items[].completedBy.timeZone.shortName` | string | Completing AppUser time zone short name |
+  | `items[].recurring` | boolean | Whether the task is recurring |
+  | `items[].dueDateAdjustActive` | boolean | Whether due date adjustment is active |
+  | `items[].dueDateAdjustStatus` | string (enum) | Due date adjustment status (computed) — see Enums |
+  | `items[].dueDateAdjustRefTaskParentContingent` | boolean | Whether the parent task is contingent |
+  | `items[].dueDateAdjustRefTaskIdParent` | integer | ID of the parent task for due date adjustment |
+  | `items[].dueDateAdjustRefTaskParentSubject` | string | Subject of the parent task for due date adjustment |
+  | `items[].dueDateAdjustRefMergeFieldCode` | string | Due date adjustment reference merge field code |
+  | `items[].is_contingentChildHidden` | boolean | Whether the contingent child is hidden |
+  | `items[].reminderSet` | boolean | Whether a reminder is set |
+  | `items[].prospecting` | boolean | Whether the task is a prospecting task |
+  | `items[].onCalendar` | boolean | Whether the task appears on the calendar |
+  | `items[].milestone` | boolean | Whether the task is a milestone |
+  | `items[].agentVisible` | boolean | Whether the task is visible to the agent |
+  | `items[].buyerSellerVisible` | boolean | Whether the task is visible to the buyer/seller |
+  | `items[].editDateTime` | string (date-time) | Last edit date/time |
+  | `items[].createDateTime` | string (date-time) | Creation date/time |
+  | `items[].taskNoteCount` | integer | Number of task notes |
+  | `items[].taskLetterTemplateCount` | integer | Number of associated letter templates |
+  | `pageMetadata.page` | integer | Current page number (0-based) |
+  | `pageMetadata.pageSize` | integer | Current page size |
+  | `pageMetadata.totalElementsOnPage` | integer | Number of elements on this page |
+  | `pageMetadata.totalElements` | integer | Total number of matching elements |
+  | `pageMetadata.hasNextPage` | boolean | Whether a next page exists |
+  | `pageMetadata.lastPage` | integer | Last page number |
+  | `pageMetadata.groupCounts` | object | Optional map of group counts if grouping is applied (values: integer) |
+
+**Enums / constants:**
+
+`taskSearchCriteriaDto.taskStatuses[]` (filter): `"OPEN"`, `"IN_PROGRESS"`, `"COMPLETE"`
+
+`items[].taskType`: `"TODO"`, `"PHONE"`, `"LETTER"`, `"EMAIL"`
+
+`items[].status`: `"OPEN"`, `"IN_PROGRESS"`, `"COMPLETE"`
+
+`items[].color` (default `"NONE"`): `"NONE"`, `"RED"`, `"TANGERINE"`, `"TAUPE"`, `"YELLOW"`, `"LIME"`, `"GREEN"`, `"CYAN"`, `"TEAL"`, `"COBALT"`, `"PURPLE"`, `"MAGENTA"`
+
+`items[].dueDateAdjustStatus` (computed): `"INCOMPLETE"`, `"WAITING"`, `"SET"`, `"NOT_ADJUSTING"`
+
+`items[].xaction.xactionStatus.xactionStage`: `"PRE_ACTIVE"`, `"ACTIVE"`, `"UNDER_CONTRACT"`, `"SOLD"`, `"NOT_SOLD"`, `"NOT_ACTIVE"`
+
+`items[].xaction.xactionStatus.xactionStatusSystemType`: `"XACTION_STATUS_SYSTEM_ACTIVE"`, `"XACTION_STATUS_SYSTEM_CLOSED"`, `"XACTION_STATUS_SYSTEM_FELL_APART"`, `"XACTION_STATUS_SYSTEM_DRAFT"`
+
+`items[].xaction.xactionSide`: `"BUYER"`, `"SELLER"`, `"DUAL"`
+
+`items[].folder.folderType`: `"TEAM_ATTACHMENTS"`, `"LETTER_TEMPLATES"`, `"TASK_TEMPLATES"`, `"EVENT_TEMPLATES"`, `"ATTACHMENT_TEMPLATES"`, `"XACTION_ATTACHMENTS"`, `"TASKS"`, `"EVENTS"`
+
+**Notable errors:**
+
+All error responses use the `APIResponse` envelope with fields: `payload` (any), `error.requestId` (string), `error.messages[]` (string), `error.details[]` (string), `error.validationErrors[]` (`fieldName`, `message`).
+
+| Code | Description |
+|---|---|
+| 400 | Bad Request — Malformed JSON or unreadable payload |
+| 422 | Unprocessable Content — Invalid search criteria (e.g. `pageSize` out of range) |
+| 429 | Too Many Requests — Rate limit exceeded |
+
+**Quirks & notes:**
+- Request body wraps all search criteria in `taskSearchCriteriaDto` sub-object inside the `APITaskPagedQueryDto` wrapper; `page` and `pageSize` are top-level siblings.
+- `page` is 0-based; `pageSize` is constrained to [1, 100].
+- `taskSearchCriteriaDto.assignees` and `taskSearchCriteriaDto.completedBy` accept arrays of unique AppUser IDs.
+- `dueDate` and `completeDate` criteria each accept a `from`/`to` date range (both inclusive).
+- `items[].is_contingentChildHidden` uses snake_case, consistent with the same field in `PATCH /v1/tasks/{taskId}` and likely an API/Swagger inconsistency.
+- Authentication: global `X-AFrame-API-Key` header.
 
 ---
 
