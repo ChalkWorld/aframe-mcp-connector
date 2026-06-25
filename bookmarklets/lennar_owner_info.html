@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Matrix — Owner Info (Lennar)</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 60px auto; padding: 0 20px; color: #333; }
+    h2 { margin-bottom: 4px; }
+    .tab-label { font-size: 12px; font-weight: bold; letter-spacing: 0.08em; text-transform: uppercase; color: #1a73e8; margin-bottom: 16px; }
+    p { margin-top: 4px; color: #666; font-size: 14px; }
+    a.bookmarklet { display: inline-block; margin: 20px 0; padding: 14px 28px; background: #1a73e8; color: white; text-decoration: none; border-radius: 6px; font-size: 16px; font-weight: bold; }
+    a.bookmarklet:hover { background: #1558b0; }
+    .instructions { background: #f5f5f5; border-left: 4px solid #1a73e8; padding: 16px 20px; border-radius: 4px; font-size: 14px; line-height: 1.8; margin-top: 8px; }
+    .static-note { background: #e8f5e9; border-left: 4px solid #34a853; padding: 12px 16px; border-radius: 4px; font-size: 13px; margin-top: 20px; line-height: 1.7; }
+    .note { font-size: 12px; color: #888; margin-top: 24px; }
+  </style>
+</head>
+<body>
+
+  <div class="tab-label">Tab 8 — Owner Info</div>
+  <h2>Fill Owner Info</h2>
+  <p>Lennar variant — fully static, no clipboard needed</p>
+
+  <a class="bookmarklet" href="javascript:(function(){function s(id,v){var e=document.getElementById(id);if(e)e.value=v;}function c(id,v){var e=document.getElementById(id);if(e)e.checked=v;}s('Input_118','Lennar');s('Input_119','None');s('Input_606','V');s('Input_124','0');s('Input_707','0');['02','03','04','06','07','08','01'].forEach(function(v){c('Input_120_'+v,false);});c('Input_120_02',true);['01','02','06','03','04','05'].forEach(function(v){c('Input_121_'+v,false);});c('Input_121_01',true);})();">Fill Owner Info</a>
+
+  <div class="instructions">
+    <strong>To install:</strong><br>
+    1. Make bookmarks bar visible — Cmd+Shift+B<br>
+    2. Drag the blue button to the bookmarks bar<br>
+    3. Place in the <strong>Matrix — Lennar</strong> folder<br><br>
+    <strong>To use:</strong><br>
+    1. Navigate to the Owner Info tab in Matrix<br>
+    2. Click the bookmark — no clipboard copy needed<br>
+    3. On Tax ID path: Owner Name will be force-overwritten to <strong>Lennar</strong>
+  </div>
+
+  <div class="static-note">
+    <strong>Hardcoded values:</strong><br>
+    Owner Name → Lennar (overwrites tax record on Tax ID path)<br>
+    Occupant Name → None<br>
+    Occupied By → Vacant<br>
+    Owned By → Corporate<br>
+    Possession → At Closing<br>
+    Owner Agent → No<br>
+    Agent Related to Seller → No
+  </div>
+
+  <div class="note">AAR-TC-LENNAR-BM-SRC-001 | Source: Lennar_MLS_Bookmarklet_Source.md</div>
+
+</body>
+</html>
