@@ -1501,6 +1501,7 @@ server.tool(
     const params = {
       appUserId,
       subject,
+      taskTZ: "America/New_York",
       ...(xactionId !== undefined && { xactionId }),
       ...(contactId !== undefined && { contactId }),
       ...(note !== undefined && { note }),
