@@ -523,3 +523,113 @@ Stretch goal: intelligent PDF splitting inside the endpoint (server-side Claude 
 
 ---
 *Next session priority: connector build session — extract Aframe attachment endpoints from Swagger (`EXTRACTION-PROC-001`), then wrap `create_transaction_attachment` (URL variant) + `list_transaction_attachments` and promote in `CONNECTOR-ROAD-001` from Tier 4 to Tier 2. Alternative: dedicated Features tab extraction session for the bookmarklet — extract in chunks of 5-6 with Chrome extension, top to bottom.*
+
+---
+
+## Session 009 — June 25, 2026
+
+**Focus:** Task tools — Swagger extraction, connector build (v0.6.0), smoke testing, and behavioral discoveries
+
+---
+
+**Accomplished:**
+
+*Extraction*
+- Extracted 3 missing task endpoints from Swagger via `EXTRACTION-PROC-001` (Path B): `POST /v1/tasks/search`, `GET /v1/tasks/{taskId}`, `POST /v1/tasks`. `PATCH /v1/tasks/{taskId}` was already extracted (Session 006). All 4 now complete in `08-tasks.md`.
+
+*Build — v0.6.0*
+- All 4 task tools built and deployed: `search_tasks`, `get_task`, `update_task`, `create_task`
+- Connector now at 38 tools (up from 34)
+- Two post-build patches applied:
+  - `taskTZ` added to `create_task` — undocumented required field discovered during smoke test; hardcoded to `"America/New_York"`
+  - Date-adjustment field block added to both `create_task` and `update_task` — fields were in the extracted schema but omitted from initial build; corrected same session
+  - Version strings in `src/index.js` health check and startup log fixed (were still showing `0.5.0`)
+
+*Smoke testing — all 4 tools confirmed on xactionId 554560 (4821 Oakwood Drive test file)*
+
+| Tool | Result | Notes |
+|---|---|---|
+| `search_tasks` | ✅ Clean | WAITING behavior confirmed (see quirks below) |
+| `get_task` | ✅ Clean | Full APITaskDto returned correctly |
+| `update_task` | ✅ Clean | COMPLETE/OPEN toggle, color, due date, folder assignment all working |
+| `create_task` | ✅ Clean (after patch) | Required `taskTZ` not documented in schema |
+
+*Date-adjustment smoke test*
+- `update_task` with date-adjustment fields returns 422 with no validation detail — behavior appears to be create-only; PATCH rejection is silent and may be an API limitation
+- `create_task` with `dueDateAdjustType: PARENT_TASK` confirmed working after discovering that `dateAdjustReferenceCode` must be `"d_{parentTaskId}"` (parent task ID prefixed with `d_`) — API auto-converts internally and stores as `EVENT_MERGE_FIELD_CODE` type
+- `dueDateAdjustRefTaskParentContingent: true` confirmed working — task was hidden in UI until flag flipped to false via `update_task`
+- Before/after direction is controlled entirely by sign of `dueDateAdjustDelta` — negative = before, 0 = day of, positive = after; no separate direction field
+
+---
+
+**Behavioral Discoveries (document in `08-tasks.md` quirks):**
+
+- `search_tasks` excludes tasks with `dueDateAdjustStatus: WAITING` from results — tasks anchored to an unset merge field (e.g. `d_ClosingDate`) are invisible to search until the field is populated. Once a close date is entered, WAITING tasks resolve to SET and appear. In production this is a non-issue — all files will have a close date before task management begins.
+- `taskTZ` is required on `create_task` even when no due date is supplied — not flagged as required in the Swagger schema.
+- `status` is required on `create_task` — not flagged as required in the Swagger schema; defaults exist in the schema description but the API enforces explicit supply.
+- Date-adjustment fields (`dueDateAdjustActive`, `dueDateAdjustType`, etc.) appear patchable in the schema but `update_task` returns silent 422 for all combinations tested — may be create-only.
+- `dateAdjustReferenceCode` for `PARENT_TASK` type must be `"d_{parentTaskId}"` — pass the parent task ID as a plain string; the `d_` prefix is applied and stored by Aframe.
+- The task date formula dropdown in the Aframe UI pulls from the team's event/date merge field list (e.g. `d_ClosingDate`, `d_EarnestMoneyDue`). This list is not yet accessible as a dedicated connector tool — blocked by `list_transaction_events` being unextracted (see Roadmap flag below).
+
+---
+
+**Roadmap Flag:**
+
+`list_transaction_events` (`GET /v1/xactions/{xactionId}/events`) is currently Tier 4. Promote to Tier 3 minimum — the events endpoint is the source of all date merge fields used in task due date formulas (`d_ClosingDate`, `d_EarnestMoneyDue`, etc.). Without it, dynamic task creation with date-anchored due dates requires hardcoding merge field codes rather than reading them from the transaction. Full dynamic due date input for `create_task` is blocked until this tool is built.
+
+---
+
+**Tools Built (v0.6.0):**
+
+| Tool | Endpoint |
+|---|---|
+| `search_tasks` | `POST /v1/tasks/search` |
+| `get_task` | `GET /v1/tasks/{taskId}` |
+| `update_task` | `PATCH /v1/tasks/{taskId}` |
+| `create_task` | `POST /v1/tasks` |
+
+---
+
+**Cursor Handoffs Produced:**
+
+| Handoff | Target | Notes |
+|---|---|---|
+| `HANDOFF-v0.6.0-aframe-js.md` | `src/aframe.js` | 4 new task functions |
+| `HANDOFF-v0.6.0-index-js.md` | `src/index.js` | 4 tool registrations + imports |
+| `HANDOFF-v0.6.0-package-json.md` | `package.json` + `src/index.js` | Version bump to 0.6.0; carries commit block |
+| `HANDOFF-v0.6.0-patch-create-task-tz.md` | `src/index.js` | Add `taskTZ` hardcoded to `create_task` params |
+| `HANDOFF-v0.6.0-patch-task-date-adjust.md` | `src/index.js` | Date-adjustment field block on both task tools; version string fix |
+
+---
+
+**Documents Updated This Session:**
+
+| Document | Change | File |
+|---|---|---|
+| Aframe API Reference — Tasks | 3 endpoints extracted (search, get, create); date-adjust quirks to be added | `docs/aframe-api-reference/08-tasks.md` |
+| Aframe Connector source | v0.6.0 — 4 task tools + 2 patches | `src/aframe.js`, `src/index.js`, `package.json` |
+| Project Session Log | This entry | `docs/Project_Session_Log.md` |
+
+---
+
+**Open Items Carried Forward:**
+
+- [ ] Add quirks to `08-tasks.md` — `taskTZ` undocumented required, `status` undocumented required, WAITING search exclusion, date-adjust PATCH silent 422, `dateAdjustReferenceCode` prefix behavior
+- [ ] Promote `list_transaction_events` from Tier 4 → Tier 3 in `CONNECTOR-ROAD-001` with blocking note
+- [ ] Delete test tasks from 4821 Oakwood Drive test file (21440040, 21442067) — Andrew to do in UI
+- [ ] Remove close date from 4821 Oakwood Drive test file — Andrew to do in UI if desired
+
+**Key References:**
+
+| Item | Value |
+|---|---|
+| Connector Roadmap | `CONNECTOR-ROAD-001` |
+| Aframe API Reference — Tasks | `docs/aframe-api-reference/08-tasks.md` |
+| Cursor Handoff Protocol | `CURSOR-HANDOFF-PROTOCOL-001` |
+| Swagger Extraction Procedure | `EXTRACTION-PROC-001` |
+| Railway connector URL | `https://aframe-mcp-connector-production.up.railway.app/mcp` |
+| Test file xactionId | 554560 (4821 Oakwood Drive) |
+
+---
+
+*Next session priority: Features tab field mapping and full bookmarklet build.*
