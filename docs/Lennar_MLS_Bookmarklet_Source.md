@@ -618,8 +618,7 @@ Same structure. No Lennar-specific static values for Bath Info — all bath data
     // Always write
     setField('Input_249', d.model_available   || "0");  // Model Available
     setField('Input_94',  d.waterfront        || "N");  // Waterfront
-    // TODO: Assd Improvement field ID not captured during General Info extraction — verify in Matrix before adding
-    //   Write "0" on both paths (does not pre-populate even on Tax ID path)
+    setField('Input_246', d.assd_improvement  || "0");  // Assd Improvement — confirmed Input_246; write "0" on both paths (does not pre-populate even on Tax ID path)
 
     // Disclosures checkbox group — set from payload array
     // Uncheck all first, then check selected
@@ -689,7 +688,7 @@ Same structure. No Lennar-specific static values for Bath Info — all bath data
     setField('Input_249', '0');   // Model Available = No
 
     // Assd Improvement = 0 on both paths (does not pre-populate even on Tax ID path)
-    // TODO: Assd Improvement field ID not captured during General Info extraction — verify in Matrix before adding
+    setField('Input_246', '0');  // Assd Improvement — confirmed Input_246
 
     // Disclosures = Not Required — hardcoded
     setCheck('Input_102_NOTREQ', true);
