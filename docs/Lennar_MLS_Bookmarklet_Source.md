@@ -186,73 +186,64 @@ function wait(ms) {
 Used by the Lennar variant to map community name → correct stored option values for cascade dropdowns.
 
 ```javascript
-// TODO: Replace all null values with confirmed stored option values after extraction pass
+// Confirmed stored option values — extracted via ES session 2026-06-25
+// Matrix stores multi-word school names without spaces (DeepCreek, RiverCity, FallingCreek, HighlandSprings)
+// Wynwood at Fox Creek removed — community sold out, no forthcoming listings
 var LENNAR_COMMUNITIES = {
   "harpers_mill_th": {
-    county_city:  null,  // TODO: confirm Input_29 stored value
-    area:         null,  // TODO: confirm Input_30 stored value
-    zip:          null,  // TODO: confirm Input_635 stored value
-    post_office:  null,  // TODO: confirm Input_41 stored value
-    subdivision:  null,  // TODO: confirm Input_259 stored value
-    neighborhood: "",    // blank
-    elementary:   null,  // TODO: confirm Input_51 stored value
-    middle:       null,  // TODO: confirm Input_53 stored value
-    high:         null   // TODO: confirm Input_52 stored value
+    county_city:  "Chesterfield",
+    area:         "54",
+    zip:          "23832",
+    post_office:  "Chesterfield",
+    subdivision:  "Harpers Mill",
+    neighborhood: "",
+    elementary:   "Winterpock",
+    middle:       "DeepCreek",
+    high:         "Cosby"
   },
   "harpers_mill_sf": {
-    county_city:  null,
-    area:         null,
-    zip:          null,
-    post_office:  null,
-    subdivision:  null,
+    county_city:  "Chesterfield",
+    area:         "54",
+    zip:          "23832",
+    post_office:  "Chesterfield",
+    subdivision:  "Harpers Mill",
     neighborhood: "",
-    elementary:   null,
-    middle:       null,
-    high:         null
+    elementary:   "Winterpock",
+    middle:       "DeepCreek",
+    high:         "Cosby"
   },
   "creekside_run_th": {
-    county_city:  null,
-    area:         null,
-    zip:          null,
-    post_office:  null,
-    subdivision:  null,
+    county_city:  "Richmond",
+    area:         "60",
+    zip:          "23224",
+    post_office:  "Richmond",
+    subdivision:  "Creekside Run",
     neighborhood: "",
-    elementary:   null,
-    middle:       null,
-    high:         null
+    elementary:   "Reid",
+    middle:       "RiverCity",
+    high:         "Huguenot"
   },
   "everstone_sf": {
-    county_city:  null,
-    area:         null,
-    zip:          null,
-    post_office:  null,
-    subdivision:  "None",  // Everstone exception — does not appear in Subdivision list
-    neighborhood: "Everstone",
-    elementary:   null,
-    middle:       null,
-    high:         null
+    county_city:  "Henrico",
+    area:         "42",
+    zip:          "23223",
+    post_office:  "Richmond",
+    subdivision:  "None",           // "None" is a real Matrix option value for Input_259
+    neighborhood: "Everstone",      // text field Input_236
+    elementary:   "Harvie",
+    middle:       "Fairfield",
+    high:         "HighlandSprings"
   },
   "watermark_sf": {
-    county_city:  null,
-    area:         null,
-    zip:          null,
-    post_office:  null,
-    subdivision:  null,
+    county_city:  "Chesterfield",
+    area:         "54",
+    zip:          "23234",
+    post_office:  "Chesterfield",
+    subdivision:  "Watermark",
     neighborhood: "",
-    elementary:   null,
-    middle:       null,
-    high:         null
-  },
-  "wynwood_foxcreek_sf": {
-    county_city:  null,
-    area:         null,
-    zip:          null,
-    post_office:  null,
-    subdivision:  null,
-    neighborhood: "",
-    elementary:   null,
-    middle:       null,
-    high:         null
+    elementary:   "Hopkins",
+    middle:       "FallingCreek",
+    high:         "Bird"
   }
 };
 ```
@@ -397,14 +388,12 @@ Lennar constants hardcoded. Only listing-specific dynamic fields come from clipb
   }
 
   // --- Lennar community lookup ---
-  // TODO: Replace all null values with confirmed stored option values after extraction pass
   var COMMUNITIES = {
-    "harpers_mill_th":    { county_city: null, area: null, zip: null, post_office: null, subdivision: null, neighborhood: "", elementary: null, middle: null, high: null },
-    "harpers_mill_sf":    { county_city: null, area: null, zip: null, post_office: null, subdivision: null, neighborhood: "", elementary: null, middle: null, high: null },
-    "creekside_run_th":   { county_city: null, area: null, zip: null, post_office: null, subdivision: null, neighborhood: "", elementary: null, middle: null, high: null },
-    "everstone_sf":       { county_city: null, area: null, zip: null, post_office: null, subdivision: "None", neighborhood: "Everstone", elementary: null, middle: null, high: null },
-    "watermark_sf":       { county_city: null, area: null, zip: null, post_office: null, subdivision: null, neighborhood: "", elementary: null, middle: null, high: null },
-    "wynwood_foxcreek_sf":{ county_city: null, area: null, zip: null, post_office: null, subdivision: null, neighborhood: "", elementary: null, middle: null, high: null }
+    "harpers_mill_th":  { county_city: "Chesterfield", area: "54", zip: "23832", post_office: "Chesterfield", subdivision: "Harpers Mill",  neighborhood: "", elementary: "Winterpock", middle: "DeepCreek",    high: "Cosby"           },
+    "harpers_mill_sf":  { county_city: "Chesterfield", area: "54", zip: "23832", post_office: "Chesterfield", subdivision: "Harpers Mill",  neighborhood: "", elementary: "Winterpock", middle: "DeepCreek",    high: "Cosby"           },
+    "creekside_run_th": { county_city: "Richmond",     area: "60", zip: "23224", post_office: "Richmond",     subdivision: "Creekside Run", neighborhood: "", elementary: "Reid",        middle: "RiverCity",    high: "Huguenot"        },
+    "everstone_sf":     { county_city: "Henrico",      area: "42", zip: "23223", post_office: "Richmond",     subdivision: "None",          neighborhood: "Everstone", elementary: "Harvie", middle: "Fairfield", high: "HighlandSprings" },
+    "watermark_sf":     { county_city: "Chesterfield", area: "54", zip: "23234", post_office: "Chesterfield", subdivision: "Watermark",     neighborhood: "", elementary: "Hopkins",    middle: "FallingCreek", high: "Bird"            }
   };
 
   navigator.clipboard.readText().then(function(text) {
