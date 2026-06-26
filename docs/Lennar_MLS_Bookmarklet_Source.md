@@ -670,25 +670,28 @@ See `AAR-TC-LENNAR-BM-SRC-001-FEA` (`docs/AAR-TC-LENNAR-BM-SRC-001-FEA.md`) — 
     var d = payload.general;
     var path = payload.path || "new";
 
+    var isLennar = payload.lennar === true;
+
     // Lennar static fields — always write
-    setField('Input_94',  'N');   // Waterfront = No
-    setField('Input_249', '0');   // Model Available = No
-
-    // Assd Improvement = 0 on both paths (does not pre-populate even on Tax ID path)
-    setField('Input_246', '0');  // Assd Improvement — confirmed Input_246
-
+    setField('Input_94',  'N');    // Waterfront = No
+    setField('Input_249', 'N');    // Model Available = No
     // Disclosures = Not Required — hardcoded
     setCheck('Input_102_NOTREQ', true);
-
     // Lead Disclosure = Not Required — hardcoded
     setCheck('Input_103_NOTREQ', true);
-
-    // Acres and Legal — New path only
-    if (path === "new") {
-      setField('Input_95',  d.acres || "");  // from payload — varies per listing
-      setField('Input_100', 'TBD');          // Legal Description = TBD for Lennar new construction
+    // Assd Improvement = 0 for Lennar only — new construction never pre-populated on either path
+    // Non-Lennar: always Tax ID path; Assd Improvement pre-populated from tax record — skip
+    if (isLennar) {
+      setField('Input_248', '0');  // Assd Improvement — Input_248 confirmed on Tax ID path
     }
-    // Tax ID path: Acres pre-populated (verify against email); Legal pre-populated — skip both
+    // Tax Year, Acres, and Legal — New path only
+    // Tax Year (Input_246) pre-populated from tax record on Tax ID path — do not overwrite
+    if (path === "new") {
+      setField('Input_246', '0');           // Tax Year = 0 on New path
+      setField('Input_95',  d.acres || ""); // Acres — from payload; varies per listing
+      setField('Input_100', 'TBD');         // Legal Description = TBD for Lennar new construction
+    }
+    // Tax ID path: Tax Year, Acres, and Legal pre-populated — skip all three
 
   }).catch(function(e) {
     alert('Bookmarklet error — could not read clipboard: ' + e.message);
