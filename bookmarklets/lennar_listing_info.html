@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Lennar — Listing Info Bookmarklet</title>
+  <style>
+    body { font-family: sans-serif; padding: 40px; background: #f5f5f5; color: #222; }
+    h1 { font-size: 1.2em; margin-bottom: 4px; }
+    .subtitle { font-size: 0.9em; color: #555; margin-bottom: 28px; }
+    .install-box { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 24px 28px; max-width: 620px; margin-bottom: 32px; }
+    .install-box h2 { font-size: 1em; margin: 0 0 12px 0; }
+    .install-box ol { margin: 0; padding-left: 20px; line-height: 1.8; font-size: 0.95em; }
+    .drag-target { display: inline-block; margin: 18px 0 6px 0; padding: 10px 22px; background: #1a73e8; color: #fff; border-radius: 6px; font-size: 1em; font-weight: bold; text-decoration: none; cursor: grab; }
+    .drag-target:hover { background: #1558b0; }
+    .note { font-size: 0.82em; color: #777; margin-top: 4px; }
+    .payload-box { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 24px 28px; max-width: 620px; }
+    .payload-box h2 { font-size: 1em; margin: 0 0 12px 0; }
+    .payload-box p { font-size: 0.9em; color: #555; margin: 0 0 14px 0; }
+    details summary { cursor: pointer; font-size: 0.95em; font-weight: bold; color: #1a73e8; margin-bottom: 10px; }
+    pre { background: #f8f8f8; border: 1px solid #e0e0e0; border-radius: 4px; padding: 14px; font-size: 0.8em; overflow-x: auto; white-space: pre; }
+    .warning { background: #fff8e1; border: 1px solid #ffe082; border-radius: 6px; padding: 12px 16px; font-size: 0.88em; color: #5d4200; margin-bottom: 20px; max-width: 620px; }
+    .community-keys { font-family: monospace; font-size: 0.85em; background: #f0f0f0; border-radius: 4px; padding: 10px 14px; margin-top: 10px; line-height: 1.7; }
+  </style>
+</head>
+<body>
+
+  <h1>Lennar — Listing Info Bookmarklet</h1>
+  <p class="subtitle">Tab 1 of 12 · Cascade dropdowns · Three entry paths (New / Tax ID / Copy)</p>
+
+  <div class="warning">
+    ⚠️ <strong>Timing note:</strong> This bookmarklet fires two cascade change events with async delays (1500ms + 800ms). After clicking, wait ~3 seconds before touching the page — the dependent dropdowns (Area, ZIP, Subdivision, Schools) need time to repopulate from the server.
+  </div>
+
+  <div class="install-box">
+    <h2>Install</h2>
+    <ol>
+      <li>Show the Chrome bookmarks bar: <strong>Cmd+Shift+B</strong></li>
+      <li>Drag the button below to the correct folder on your bookmarks bar:<br>
+          <strong>Matrix — New</strong>, <strong>Matrix — Tax ID</strong>, or <strong>Matrix — Copy</strong></li>
+      <li>Name it <strong>Listing Info</strong></li>
+    </ol>
+    <a class="drag-target" href="javascript:(function()%7Bfunction%20setField(id%2Cvalue)%7Bvar%20el%3Ddocument.getElementById(id)%3Bif(el)%7Bel.value%3Dvalue%3B%7D%7D%20function%20fireChange(id)%7Bvar%20el%3Ddocument.getElementById(id)%3Bif(el)%7Bel.dispatchEvent(new%20Event('change'%2C%7Bbubbles%3Atrue%7D))%3B%7D%7D%20function%20wait(ms)%7Breturn%20new%20Promise(function(resolve)%7BsetTimeout(resolve%2Cms)%3B%7D)%3B%7D%20var%20COMMUNITIES%3D%7B%22harpers_mill_th%22%3A%7Bcounty_city%3A%22Chesterfield%22%2Carea%3A%2254%22%2Czip%3A%2223832%22%2Cpost_office%3A%22Chesterfield%22%2Csubdivision%3A%22Harpers%20Mill%22%2Cneighborhood%3A%22%22%2Celementary%3A%22Winterpock%22%2Cmiddle%3A%22DeepCreek%22%2Chigh%3A%22Cosby%22%7D%2C%22harpers_mill_sf%22%3A%7Bcounty_city%3A%22Chesterfield%22%2Carea%3A%2254%22%2Czip%3A%2223832%22%2Cpost_office%3A%22Chesterfield%22%2Csubdivision%3A%22Harpers%20Mill%22%2Cneighborhood%3A%22%22%2Celementary%3A%22Winterpock%22%2Cmiddle%3A%22DeepCreek%22%2Chigh%3A%22Cosby%22%7D%2C%22creekside_run_th%22%3A%7Bcounty_city%3A%22Richmond%22%2Carea%3A%2260%22%2Czip%3A%2223224%22%2Cpost_office%3A%22Richmond%22%2Csubdivision%3A%22Creekside%20Run%22%2Cneighborhood%3A%22%22%2Celementary%3A%22Reid%22%2Cmiddle%3A%22RiverCity%22%2Chigh%3A%22Huguenot%22%7D%2C%22everstone_sf%22%3A%7Bcounty_city%3A%22Henrico%22%2Carea%3A%2242%22%2Czip%3A%2223223%22%2Cpost_office%3A%22Richmond%22%2Csubdivision%3A%22None%22%2Cneighborhood%3A%22Everstone%22%2Celementary%3A%22Harvie%22%2Cmiddle%3A%22Fairfield%22%2Chigh%3A%22HighlandSprings%22%7D%2C%22watermark_sf%22%3A%7Bcounty_city%3A%22Chesterfield%22%2Carea%3A%2254%22%2Czip%3A%2223234%22%2Cpost_office%3A%22Chesterfield%22%2Csubdivision%3A%22Watermark%22%2Cneighborhood%3A%22%22%2Celementary%3A%22Hopkins%22%2Cmiddle%3A%22FallingCreek%22%2Chigh%3A%22Bird%22%7D%7D%3Bnavigator.clipboard.readText().then(function(text)%7Bvar%20payload%3DJSON.parse(text)%3Bvar%20d%3Dpayload.listing%3Bvar%20path%3Dpayload.path%7C%7C%22new%22%3Bvar%20comm%3DCOMMUNITIES%5Bd.community%5D%3Bif(!comm)%7Balert(%22Listing%20Info%3A%20unknown%20community%20key%20'%22%2Bd.community%2B%22'%20%E2%80%94%20fill%20location%20fields%20manually.%22)%3Breturn%3B%7D(async%20function()%7BsetField('Input_29'%2Ccomm.county_city)%3BfireChange('Input_29')%3Bawait%20wait(1500)%3BsetField('Input_30'%2Ccomm.area)%3BfireChange('Input_30')%3Bawait%20wait(800)%3BsetField('Input_635'%2Ccomm.zip)%3BsetField('Input_259'%2Ccomm.subdivision)%3BsetField('Input_236'%2Ccomm.neighborhood)%3BsetField('Input_51'%2Ccomm.elementary)%3BsetField('Input_53'%2Ccomm.middle)%3BsetField('Input_52'%2Ccomm.high)%3BsetField('Input_41'%2Ccomm.post_office)%3BsetField('Input_32'%2C'0')%3BsetField('Input_42'%2C'NVROC')%3BsetField('Input_45'%2C'UNDCON')%3BsetField('Input_162'%2C'12%2F31%2F2026')%3BsetField('Input_97'%2C'04')%3BsetField('Input_31'%2Cd.list_price)%3BsetField('Input_160'%2Cd.list_date)%3BsetField('Input_849'%2Cd.type)%3BsetField('Input_850'%2Cd.attached_yn)%3Bif(path%3D%3D%3D%22new%22)%7BsetField('Input_99'%2C'TBD')%3B%7Dif(path%3D%3D%3D%22new%22)%7BsetField('Input_34'%2Cd.street_num)%3BsetField('Input_35'%2Cd.street_dir%7C%7C%22%22)%3BsetField('Input_36'%2Cd.street_name)%3BsetField('Input_37'%2Cd.street_suffix)%3B%7DsetField('Input_44'%2Cd.year_built)%3BsetField('Input_48'%2Cd.rooms)%3BsetField('Input_49'%2Cd.levels)%3BsetField('Input_622'%2Cd.lot)%3BsetField('Input_47'%2Cd.bedrooms)%3BsetField('Input_879'%2Cd.sqft_above_finished%7C%7C%220%22)%3BsetField('Input_882'%2Cd.sqft_below_finished%7C%7C%220%22)%3BsetField('Input_880'%2Cd.sqft_above_unfinished%7C%7C%220%22)%3BsetField('Input_883'%2Cd.sqft_below_unfinished%7C%7C%220%22)%3B%7D)()%3B%7D).catch(function(e)%7Balert('Bookmarklet%20error%20%E2%80%94%20could%20not%20read%20clipboard%3A%20'%2Be.message)%3B%7D)%3B%7D)()%3B">Listing Info</a>
+    <p class="note">Drag the blue button to your bookmarks bar — do not click it here.</p>
+  </div>
+
+  <div class="payload-box">
+    <h2>Payload Reference — <code>listing</code> key</h2>
+    <p>The session outputs one full JSON object per listing. This bookmarklet reads the <code>listing</code> key. Copy the full payload once at the start of a listing session.</p>
+
+    <p><strong>Community key values:</strong></p>
+    <div class="community-keys">
+      "harpers_mill_th"<br>
+      "harpers_mill_sf"<br>
+      "creekside_run_th"<br>
+      "everstone_sf"<br>
+      "watermark_sf"
+    </div>
+
+    <details>
+      <summary>Show example payload</summary>
+      <pre>{
+  "path": "new",
+  "listing": {
+    "community":            "harpers_mill_th",
+    "list_price":           "424990",
+    "list_date":            "06/25/2026",
+    "type":                 "TOWN",
+    "attached_yn":          "1",
+    "street_num":           "8752",
+    "street_dir":           "",
+    "street_name":          "Whitman",
+    "street_suffix":        "DR",
+    "year_built":           "2026",
+    "rooms":                "6",
+    "levels":               "3",
+    "lot":                  "42",
+    "bedrooms":             "3",
+    "sqft_above_finished":  "1680",
+    "sqft_below_finished":  "0",
+    "sqft_above_unfinished":"0",
+    "sqft_below_unfinished":"0"
+  }
+}</pre>
+    </details>
+
+    <details>
+      <summary>Show fields filled by this bookmarklet</summary>
+      <pre>FROM COMMUNITY LOOKUP (hardcoded by community key):
+  Input_29  — County/City        → fires cascade
+  Input_30  — Area               → fires cascade
+  Input_635 — ZIP Code
+  Input_259 — Subdivision
+  Input_236 — Neighborhood
+  Input_51  — Elementary School
+  Input_53  — Middle School
+  Input_52  — High School
+  Input_41  — Post Office
+
+LENNAR STATIC (always hardcoded):
+  Input_32  — Delayed Show       → "0" (No)
+  Input_42  — New/Resale         → "NVROC"
+  Input_45  — Year Built Desc    → "UNDCON"
+  Input_162 — Expire Date        → "12/31/2026"
+  Input_97  — SqFt Source        → "04" (Per Builder)
+
+FROM PAYLOAD — always:
+  Input_31  — List Price
+  Input_160 — List Date
+  Input_849 — Type
+  Input_850 — Attached Y/N
+  Input_44  — Year Built
+  Input_48  — Rooms
+  Input_49  — Levels
+  Input_622 — Lot
+  Input_47  — Bedrooms
+  Input_879 — SqFt Above Finished
+  Input_882 — SqFt Below Finished
+  Input_880 — SqFt Above Unfinished
+  Input_883 — SqFt Below Unfinished
+
+FROM PAYLOAD — New path only:
+  Input_99  — PID/Tax ID         → "TBD"
+  Input_34  — Street Number
+  Input_35  — Street Direction
+  Input_36  — Street Name
+  Input_37  — Street Suffix
+
+ALWAYS MANUAL:
+  Latitude, Longitude, Directions</pre>
+    </details>
+  </div>
+
+</body>
+</html>
