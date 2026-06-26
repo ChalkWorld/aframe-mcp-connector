@@ -1,5 +1,5 @@
 # Lennar New Listing Protocol
-**Version 2.0** | *Last Updated: June 26, 2026*
+**Version 2.1** | *Last Updated: June 26, 2026*
 *Claude-facing SOP | Lennar new listing intake and lifecycle management*
 
 ---
@@ -329,9 +329,11 @@ Include at the bottom: image note from Carly's forwarding message (if any), and 
 6. Status tab is never touched by bookmarklet — Andrew activates manually
 
 **Notes when generating the payload:**
+Every Lennar payload must include `"lennar": true` as a top-level key. This flag is read by the General Info bookmarklet to gate the Assd Improvement write — non-Lennar listings omit this key and the field is skipped.
 - Set `"path"` to `"new"`, `"taxid"`, or `"copy"` based on the entry path for the community
 - Set `"community"` to the exact community name — the Fee Info and Features bookmarklets use this key for community-variable lookups
 - `"features"` key is consumed by `bookmarklets/lennar_features.html`
+- `style` — **always populate** based on property type from the Cognito form email: Townhouse → `["Input_541_19"]` (Rowhouse/Townhouse). Single Family → confirm value from Features field map (`AAR-TC-LENNAR-BM-001-FEA`) as SF plan styles come up; do not leave as `[]`
 - On Tax ID path: omit `pid`, `acres`, `legal` from payload — bookmarklet skips pre-populated fields (except Assd Improvement always writes `0`, Owner Name always overwrites to `Lennar`)
 - `"general"` key: on Tax ID path, omit `acres` from payload; on New path, include Acres value from email
 - Virtual tour: omit `"tour"` key entirely if no link provided — bookmarklet skips tab
@@ -528,6 +530,7 @@ This protocol is designed for Lennar but intended to be builder-agnostic. When o
 | 1.0 | 2026-06-?? | Initial protocol. |
 | 1.1 | 2026-06-23 | Bookmarklet system added as Step 5b (POC complete, Bath Info tab proven). Three-path entry architecture noted. Primary contact updated — Megan Cook effective June 30. |
 | 2.0 | 2026-06-26 | Full rewrite. Bookmarklet system operational — 11 of 13 Lennar launchers tested. Step 5b formalized as standard session output with payload confirmation flow. Entry path rules by community added. Confirmed Lennar-wide statics table added (Cooling = Heat Pump, Water Heater = Electric confirmed Session 012). Session review beat added as standing protocol. Planned automations section added. Lennar root Drive folder ID added. |
+| 2.1 | 2026-06-26 | Added features.style payload rule; added lennar flag requirement |
 
 ---
 
