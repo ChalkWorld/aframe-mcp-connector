@@ -833,3 +833,111 @@ Stretch goal: intelligent PDF splitting inside the endpoint (server-side Claude 
 
 ---
 *Next session: Features A + B smoke tests; payload spec (both variants); General Info path logic patch (Acres + Legal taxid skip missing).*
+
+---
+
+## Session 014 — June 26, 2026
+
+**Focus:** Lennar Features bookmarklet fix, Features schema doc, Lennar New Listing Protocol v2.0 rewrite
+
+---
+
+### What Was Done
+
+**Lennar Features bookmarklet — href bug fix**
+The orange drag-to-bookmarks button in `bookmarklets/lennar_features.html` was rendering raw JS as visible page text. Root cause: two literal `"` characters inside the `alert()` string were terminating the double-quoted `href` attribute early in the browser, exposing ~6,200 chars of JS as page content. Fixed by replacing those two `"` with `&quot;` HTML entities. JS logic unchanged. File replaced in Chrome and confirmed working. No Cursor handoff needed — file delivered directly.
+
+**Lennar Features bookmarklet — schema review and patch (Cursor handoff)**
+Live smoke test on a Matrix listing revealed the previous session had made undiscussed best-guess decisions about which fields to hardcode. Full schema review conducted with Andrew. All Features tab fields confirmed and classified. Cursor handoff `HANDOFF-2026-06-26-lennar-features-patch.md` produced covering 10 changes:
+
+- Roof: `Input_72_07` (Dimensional) → `Input_72_12` (Shingled) — HC
+- Flooring: dynamic → HC `Input_73_17` (Vinyl - Plank/Tile/Stone)
+- Attic: dynamic → HC `Input_241_09` (Access Panel)
+- Wall Type: dynamic → HC `Input_254_02` (Drywall)
+- Garage Y/N: hardcoded Yes → dynamic (`d.garage_yn`); Attached + Direct Entry conditional on Yes; Auto Door Opener payload key kept (`garage_auto_door`) but not hardcoded
+- Basement Y/N: hardcoded No → dynamic (`d.basement_yn`); Slab conditional on No, Crawl Space conditional on Yes
+- ADU Y/N: removed entirely
+- Fenced Y/N: removed entirely
+- Internet Connected: removed entirely
+- Restrictions, Disabl Equipd Y/N, Maintenance Contract Y/N, Green Cert: all removed entirely
+- Water Heater (Electric) and Cooling (Heat Pump): confirmed correct as HC — no change
+- Statics display table and payload example block in launcher HTML updated to match
+
+**Lennar Features Payload Schema — new document**
+`AAR-TC-LENNAR-BM-SCH-001` (`Lennar_Features_Payload_Schema.md`) created. Expanded from Features-only scope to cover all 11 bookmarklet tabs. Includes: field classification table per tab, community lookup table with confirmed values, payload structures for all dynamic tabs, excluded fields master list, and version history. Supersedes the Features-only v1.0 produced earlier in the session.
+
+**Lennar New Listing Protocol — full rewrite (v2.0)**
+`New_Lennar_Listing_Session_Protocol.md` deleted from repo. Replaced with `Lennar_New_Listing_Protocol.md` v2.0 (`AAR-TC-LENNAR-PROTO-001`). Key changes from v1.1:
+
+- Step 2 rebuilt as three-substep sequence: parse/verify → create Aframe transaction → generate data sheet (confirm with Andrew) → generate payload. Explicit confirmation gate between data sheet and payload — session never one-shots the payload without review.
+- Entry path rules by community documented as a named section: Harpers Mill TH/SF on Tax ID path; Creekside Run, Everstone, Watermark on New path. Reason and current status noted.
+- Community key formats clarified — two conventions exist: Features bookmarklet uses human-readable display names (`Harpers Mill TH` etc.); Listing Info bookmarklet uses lowercase underscore internal keys (`harpers_mill_th` etc.).
+- Step 9 (Transaction Desk): planned signing platform automation noted — address, price, and community name are the only inputs needed when implemented.
+- Step 10 (Photos): planned local photo sorter/renumbering automation noted (`AAR-TC-LENNAR-PHOTO-001`).
+- Community Quick Reference table updated — Wynwood removed, Cooling column added, Entry Path column added.
+- Reference docs table updated to include schema doc and bookmarklet build doc.
+
+**New path full smoke test — separate session (not captured here)**
+A full New path test was run in a parallel Claude session. A bug was found and resolved in that session. Details not captured here — see that session's handoff.
+
+---
+
+### Decisions Made
+
+- **Data sheet before payload, always** — session presents data sheet to Andrew for explicit confirmation before generating the payload; no one-shotting
+- **Lennar statics are narrow** — only fields that are truly invariant across all listings and communities are hardcoded; anything community-variable goes in the lookup table; anything listing-variable goes in the payload
+- **ADU Y/N, Fenced Y/N, Internet Connected, Restrictions, Disabl Equipd Y/N, Maintenance Contract Y/N, Green Cert** — all excluded from the Lennar Features bookmarklet entirely; not written under any circumstances
+- **Auto Door Opener** — payload key kept (`garage_auto_door`) but not hardcoded; confirm with Lennar if standard; default `false` until confirmed
+- **Basement logic** — `basement_yn` `"1"` → Crawl Space; `"0"` → Slab; all current Lennar communities are slab
+- **Garage logic** — `garage_yn` `"1"` → Attached + Direct Entry auto-checked; `"0"` → neither checked
+- **Community key conventions** — TH/SF suffix in community display names is an AAR-TC internal convention for distinguishing type; not a Matrix stored value
+- **Entry path assignments** — Harpers Mill Tax ID; Creekside Run/Everstone/Watermark New path — revisit when tax records are updated for new addresses
+- **Lennar New Listing Protocol replaces old session protocol** — `New_Lennar_Listing_Session_Protocol.md` deleted; `Lennar_New_Listing_Protocol.md` v2.0 is now the single authority
+
+---
+
+### Protocol Rules Confirmed / Added
+
+- Data sheet first, confirm, then payload — never one-shot the payload without Andrew confirming the data sheet
+- Session review beat confirmed as standing rule — recap agenda and check in before any build work begins
+
+---
+
+### Gaps Identified / Carried Forward
+
+- **Street Suffix stored values (`Input_37`)** — not yet confirmed for Listing Info; may have been surfaced in the parallel smoke test session — check that handoff
+- **Features A + B smoke tests** — not reached this session; still pending
+- **Payload generation spec** — pending Features A + B schema confirmation
+- **General Info path logic patch** — Acres + Legal Description missing `taxid` skip; pending
+- **Lennar Features bookmarklet schema patch** — Cursor handoff produced but not yet committed; Chrome bookmark not yet updated with schema patch
+
+---
+
+### Cursor Handoffs Produced This Session
+
+| Handoff | Purpose |
+|---|---|
+| `HANDOFF-2026-06-26-lennar-features-patch.md` | 10-change schema patch to `bookmarklets/lennar_features.html` |
+| This entry | Session log |
+
+---
+
+### Documents Created / Updated This Session
+
+| Document | Version | File |
+|---|---|---|
+| Lennar Features Payload Schema (all tabs) | 1.1 | `Lennar_Features_Payload_Schema.md` (`AAR-TC-LENNAR-BM-SCH-001`) |
+| Lennar New Listing Protocol | 2.0 | `Lennar_New_Listing_Protocol.md` (`AAR-TC-LENNAR-PROTO-001`) |
+| `New_Lennar_Listing_Session_Protocol.md` | — | **Deleted** — superseded by v2.0 above |
+
+---
+
+### Key References
+
+| Item | Value |
+|---|---|
+| Bookmarklet Build Doc | `AAR-TC-LENNAR-BM-001` (`docs/Lennar_MLS_Bookmarklet_Build.md`) |
+| Full Payload Schema | `AAR-TC-LENNAR-BM-SCH-001` (`Lennar_Features_Payload_Schema.md`) |
+| Lennar New Listing Protocol | `AAR-TC-LENNAR-PROTO-001` (`Lennar_New_Listing_Protocol.md`) |
+| Test file xactionId | 554560 (4821 Oakwood Drive) |
+| Bookmarklets folder | `bookmarklets/` (repo root) |
