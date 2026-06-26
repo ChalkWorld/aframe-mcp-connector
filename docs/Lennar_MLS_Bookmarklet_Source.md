@@ -569,10 +569,8 @@ Same structure. No Lennar-specific static values for Bath Info — all bath data
 **Named suffix pattern:** Some checkbox groups use named suffixes (e.g. `Input_721_CartPath`, `Input_845_FIBER`) rather than numeric. Bookmarklet must handle both patterns.
 **Non-sequential IDs:** `Input_88_13` (Geothermal in Cooling) is non-sequential — do not assume suffix order matches display order.
 
-```javascript
-// TODO: Build in next session — Features tab is the most complex
-// Field map: AAR-TC-LENNAR-BM-001-FEA (docs/Lennar_MLS_Features_Field_Map.md)
-```
+**Source addendum:** Due to the scale of this tab (~400 lines across both variants), the Features bookmarklet source lives in a separate addendum file rather than inline here.
+See `AAR-TC-LENNAR-BM-SRC-001-FEA` (`docs/AAR-TC-LENNAR-BM-SRC-001-FEA.md`) — both non-Lennar and Lennar variants complete as of Session 013.
 
 ---
 
