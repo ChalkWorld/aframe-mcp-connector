@@ -706,3 +706,58 @@ Stretch goal: intelligent PDF splitting inside the endpoint (server-side Claude 
 | Lennar Showing Instructions Launcher | — | `bookmarklets/lennar_showing_instructions.html` |
 | Lennar Virtual Tour Info Launcher | — | `bookmarklets/lennar_virtual_tour_info.html` |
 | Lennar Internet Display Info Launcher | — | `bookmarklets/lennar_internet_display_info.html` |
+
+---
+*Next session: Features bookmarklet build — dedicated session; all pre-build prep complete; go straight into JS.*
+
+---
+
+## Session 012 — June 25, 2026
+
+**Focus:** Listing Info stored value extraction, Listing Info launcher build, Features pre-build prep
+
+**Accomplished:**
+- Listing Info stored option values extracted via ES session — ran extraction prompt against one active listing per community; confirmed stored `value` attributes for County/City, Area, ZIP, Post Office, Subdivision, Neighborhood, and all three schools
+- Key extraction finding: Matrix stores multi-word school names without spaces (DeepCreek, RiverCity, FallingCreek, HighlandSprings) — would have caused silent failures if assumed otherwise
+- `LENNAR_COMMUNITIES` lookup table patched in `docs/Lennar_MLS_Bookmarklet_Source.md` — both the readable object and the inline JS object updated with confirmed values; Wynwood removed from both (community sold out, no forthcoming listings)
+- Listing Info launcher built (`bookmarklets/lennar_listing_info.html`) and tested successfully on first try — cascade timing (1500ms + 800ms) held; all fields populated correctly including Subdivision, schools, and all Lennar statics
+- Single-folder bookmarklet architecture confirmed — one set of bookmarklets; `path` key in payload drives per-tab behavior; no separate bookmark folders per entry path needed
+- Features pre-build prep completed in full — all community-specific values resolved without additional ES session work: Heating, Heat/Fuel, Pool Y/N, Pool Description, Community Amenities per community confirmed; Cooling and Water Heater confirmed as Lennar statics across all communities; Unit Placement, Interior, Exterior, Porch identified as payload-driven stubs
+- Confirmed Harpers Mill TH and SF are identical for Features — only difference between them is Fee Info tab
+- Confirmed Pool Description for Lennar is always Community/Off Site only — other pool description options are non-Lennar
+- Confirmed payload spec should cover both Lennar and non-Lennar variants in one pass — non-Lennar is canonical baseline
+
+**Community Amenities confirmed per community:**
+- Harpers Mill (TH + SF): Association, Clubhouse, Common Area, Playground, Pool
+- Creekside Run: Association, Common Area, Picnic Area, Playground
+- Everstone: Association, Common Area, Picnic Area, Playground
+- Watermark: Association (may expand as community matures)
+
+**Items closed this session:**
+- Delete test tasks 21440040 + 21442067 — confirmed done
+- Google Sheet Column A hyperlink backfill — confirmed done
+- `Lennar_New_Listing_Protocol.md` deletion — confirmed already gone from repo
+
+**Cursor Handoffs Produced This Session:**
+
+| Handoff | Purpose |
+|---|---|
+| `HANDOFF-2026-06-25-listing-info-lookup-table.md` | Patch `LENNAR_COMMUNITIES` + inline `COMMUNITIES` in source file with confirmed stored values; remove Wynwood |
+| `HANDOFF-2026-06-25-session-log.md` | This entry |
+
+**Documents Created This Session:**
+
+| Document | Version | File |
+|---|---|---|
+| Lennar Listing Info Launcher | — | `bookmarklets/lennar_listing_info.html` |
+
+**Key References:**
+
+| Item | Value |
+|---|---|
+| Bookmarklet Source File | `AAR-TC-LENNAR-BM-SRC-001` (`docs/Lennar_MLS_Bookmarklet_Source.md`) |
+| Features Field Map | `AAR-TC-LENNAR-BM-001-FEA` (`docs/Lennar_MLS_Features_Field_Map.md`) |
+| Bookmarklet Build Doc | `AAR-TC-LENNAR-BM-001` (`docs/Lennar_MLS_Bookmarklet_Build.md`) |
+| Google Sheet ID | `1fTapWU64r78Fyd8J-RM1Xh0z-fKo2y-wF9o6rtNJ5ME` |
+| Google Drive — Lennar folder | `1hIN1WhrARVrQ7Y4KCh3hlCrI0Q-JS8az` |
+| Google Drive — Properties folder | `1EypC5Ep7VRMqwWcoMvUb5juVvJKAEi7B` |
