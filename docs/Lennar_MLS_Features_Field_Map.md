@@ -936,7 +936,7 @@ Checkbox group. Dynamic for Lennar — varies by plan and community.
 | Tank | `Input_571_10` |
 | Tankless | `Input_571_11` |
 
-**Lennar use:** DYNAMIC — driven by community DB. Pulled from clipboard.
+**Lennar use:** STATIC — `Input_571_01` (Electric) always checked. Confirmed Lennar static Session 012. Hardcoded in bookmarklet.
 
 ---
 
@@ -1098,7 +1098,7 @@ Checkbox group. Dynamic for Lennar — varies by community.
 
 *Note: `Input_88_13` (Geothermal) is non-sequential — added later.*
 
-**Lennar use:** DYNAMIC — driven by community DB. Pulled from clipboard.
+**Lennar use:** STATIC — `Input_88_06` (Heat Pump) always checked. Confirmed Lennar static Session 012. Hardcoded in bookmarklet.
 
 ---
 
