@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Features A Bookmarklet Launcher</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 860px; margin: 40px auto; padding: 0 24px; background: #f5f5f5; color: #1a1a1a; }
+  h1 { font-size: 1.1rem; font-weight: 600; margin-bottom: 4px; }
+  .sub { font-size: 0.85rem; color: #555; margin-bottom: 28px; }
+  .install-box { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 20px 24px; margin-bottom: 28px; }
+  .install-box h2 { font-size: 0.9rem; font-weight: 600; margin: 0 0 10px; }
+  .install-box ol { margin: 0; padding-left: 20px; font-size: 0.88rem; line-height: 1.7; }
+  .drag-target { display: inline-block; margin-top: 14px; padding: 10px 20px; background: #1a6ef5; color: #fff; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.95rem; cursor: grab; }
+  .drag-target:active { cursor: grabbing; }
+  .payload-box { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 20px 24px; }
+  .payload-box h2 { font-size: 0.9rem; font-weight: 600; margin: 0 0 6px; }
+  .payload-box p { font-size: 0.85rem; color: #555; margin: 0 0 12px; }
+  pre { background: #f0f0f0; border-radius: 6px; padding: 14px; font-size: 0.78rem; line-height: 1.5; overflow-x: auto; white-space: pre; }
+  .scope { display: inline-block; font-size: 0.75rem; background: #e8f0fe; color: #1a6ef5; border-radius: 4px; padding: 2px 8px; margin-bottom: 16px; font-weight: 500; }
+</style>
+</head>
+<body>
+
+<h1>Features A — Non-Lennar Bookmarklet</h1>
+<div class="sub">CVRMLS Matrix · Features Tab · Chunks 1–5 (Structure through Fireplace)</div>
+<span class="scope">Non-Lennar · Chunks 1–5 of 10</span>
+
+<div class="install-box">
+  <h2>Install</h2>
+  <ol>
+    <li>Show your bookmarks bar — <strong>Cmd+Shift+B</strong> (Mac) or <strong>Ctrl+Shift+B</strong> (Windows)</li>
+    <li>Drag the button below to your bookmarks bar</li>
+    <li>To use: copy the Features A payload, navigate to the Features tab in Matrix, click the bookmark</li>
+    <li>Run Features B next to complete the remaining fields</li>
+  </ol>
+  <a class="drag-target" href="javascript:(function(){function s(id,v){var e=document.getElementById(id);if(e)e.value=v;}function c(id,v){var e=document.getElementById(id);if(e)e.checked=!!v;}function g(ids,sel){ids.forEach(function(id){c(id,false);});(sel||[]).forEach(function(id){c(id,true);});}navigator.clipboard.readText().then(function(t){var d=JSON.parse(t).features_a;g(['Input_541_27','Input_541_01','Input_541_02','Input_541_03','Input_541_04','Input_541_05','Input_541_33','Input_541_06','Input_541_07','Input_541_09','Input_541_10','Input_541_31','Input_541_30','Input_541_11','Input_541_28','Input_541_32','Input_541_12','Input_541_36','Input_541_29','Input_541_34','Input_541_14','Input_541_15','Input_541_16','Input_541_18','Input_541_19','Input_541_20','Input_541_21','Input_541_23','Input_541_24','Input_541_25','Input_541_26'],d.style);g(['Input_70_01','Input_70_02','Input_70_11','Input_70_03','Input_70_05','Input_70_06','Input_70_07','Input_70_09','Input_70_10'],d.structure);g(['Input_71_01','Input_71_02','Input_71_03','Input_71_04','Input_71_05','Input_71_06','Input_71_07','Input_71_08','Input_71_10','Input_71_11','Input_71_12','Input_71_25','Input_71_13','Input_71_14','Input_71_15','Input_71_16','Input_71_17','Input_71_18','Input_71_19','Input_71_20','Input_71_21','Input_71_22','Input_71_23'],d.siding);g(['Input_72_02','Input_72_03','Input_72_04','Input_72_05','Input_72_06','Input_72_07','Input_72_08','Input_72_09','Input_72_10','Input_72_11','Input_72_12','Input_72_13','Input_72_14','Input_72_15','Input_72_16','Input_72_17','Input_72_18'],d.roof);g(['Input_73_16','Input_73_01','Input_73_02','Input_73_03','Input_73_15','Input_73_04','Input_73_12','Input_73_05','Input_73_06','Input_73_07','Input_73_08','Input_73_09','Input_73_10','Input_73_17','Input_73_11','Input_73_13','Input_73_14'],d.flooring);s('Input_693',d.golf_frontage_yn||'');g(['Input_721_CartPath','Input_721_Fairway','Input_721_Green','Input_721_Tee','Input_721_View'],d.golf_view);g(['Input_241_09','Input_241_01','Input_241_07','Input_241_12','Input_241_02','Input_241_08','Input_241_03','Input_241_05','Input_241_06'],d.attic);g(['Input_519_01','Input_519_02','Input_519_03','Input_519_04','Input_519_05','Input_519_06','Input_519_07','Input_519_08','Input_519_09','Input_519_10','Input_519_11','Input_519_12','Input_519_13','Input_519_14','Input_519_15','Input_519_16'],d.parking);g(['Input_570_01','Input_570_02','Input_570_47','Input_570_03','Input_570_04','Input_570_05','Input_570_35','Input_570_43','Input_570_06','Input_570_07','Input_570_08','Input_570_09','Input_570_10','Input_570_11','Input_570_12','Input_570_31','Input_570_13','Input_570_36','Input_570_14','Input_570_15','Input_570_16','Input_570_44','Input_570_17','Input_570_18','Input_570_19','Input_570_20','Input_570_21','Input_570_45','Input_570_46','Input_570_23','Input_570_32','Input_570_33','Input_570_25','Input_570_26','Input_570_27','Input_570_28','Input_570_29','Input_570_22','Input_570_24'],d.exterior);g(['Input_845_ADDINFO','Input_845_CABLE','Input_845_DSL','Input_845_FIBER','Input_845_OTHER','Input_845_SATELLITE','Input_845_UNKNOWN'],d.internet_connected);s('Input_846',d.internet_desc||'');s('Input_150',d.garage_yn||'');s('Input_226',d.num_cars||'');s('Input_861',d.adu_yn||'');s('Input_153',d.basement_yn||'');s('Input_862',d.adu_desc||'');g(['Input_539_01','Input_539_02','Input_539_03','Input_539_15','Input_539_04','Input_539_05','Input_539_13','Input_539_16','Input_539_06','Input_539_08','Input_539_09','Input_539_10','Input_539_17','Input_539_21','Input_539_18','Input_539_11','Input_539_14','Input_539_12'],d.garage);g(['Input_569_01','Input_569_02','Input_569_03','Input_569_04','Input_569_05','Input_569_06','Input_569_07','Input_569_08','Input_569_09','Input_569_19','Input_569_10','Input_569_11','Input_569_20','Input_569_12','Input_569_17','Input_569_18','Input_569_13','Input_569_14','Input_569_15'],d.basement_foundation);g(['Input_568_49','Input_568_19','Input_568_50','Input_568_01','Input_568_56','Input_568_02','Input_568_03','Input_568_04','Input_568_05','Input_568_06','Input_568_07','Input_568_08','Input_568_10','Input_568_09','Input_568_11','Input_568_12','Input_568_57','Input_568_58','Input_568_59','Input_568_60','Input_568_13','Input_568_14','Input_568_15','Input_568_46','Input_568_16','Input_568_17','Input_568_55','Input_568_18','Input_568_20','Input_568_21','Input_568_62','Input_568_22','Input_568_23','Input_568_24','Input_568_48','Input_568_25','Input_568_45','Input_568_26','Input_568_28','Input_568_27','Input_568_29','Input_568_30','Input_568_47','Input_568_31','Input_568_32','Input_568_33','Input_568_61','Input_568_34','Input_568_35','Input_568_36','Input_568_37','Input_568_38','Input_568_39','Input_568_40','Input_568_41','Input_568_43','Input_568_44'],d.interior);g(['Input_676_CW','Input_676_OTHER','Input_676_PW','Input_676_WELL'],d.water);g(['Input_670_ALTSEPTC','Input_670_COSEPTC','Input_670_COMSR','Input_670_PBLCSR','Input_670_NONE','Input_670_OTHER','Input_670_UNKNOWN'],d.sewer);s('Input_695',d.fenced_yn||'');g(['Input_79_01','Input_79_02','Input_79_03','Input_79_04','Input_79_05','Input_79_06','Input_79_07','Input_79_08','Input_79_09','Input_79_10','Input_79_11','Input_79_12','Input_79_13','Input_79_14','Input_79_15','Input_79_16','Input_79_17','Input_79_20','Input_79_18','Input_79_19'],d.fenced);g(['Input_540_25','Input_540_24','Input_540_01','Input_540_02','Input_540_03','Input_540_04','Input_540_05','Input_540_06','Input_540_07','Input_540_27','Input_540_09','Input_540_10','Input_540_29','Input_540_26','Input_540_11','Input_540_13','Input_540_14','Input_540_15','Input_540_28','Input_540_16','Input_540_17','Input_540_18','Input_540_19','Input_540_21'],d.restrictions);s('Input_152',d.num_fp||'0');g(['Input_90_01','Input_90_02','Input_90_09','Input_90_03','Input_90_08','Input_90_04','Input_90_05','Input_90_06','Input_90_07'],d.fireplace);}).catch(function(e){alert('Features A error: '+e.message);});}())">⚡ Features A — Drag to Bookmarks Bar</a>
+</div>
+
+<div class="payload-box">
+  <h2>Payload — features_a key</h2>
+  <p>Copy this block into the full listing payload under the <code>features_a</code> key. Arrays take Input IDs of selected options. Leave arrays empty <code>[]</code> or omit keys that don't apply.</p>
+<pre>{
+  "features_a": {
+    "style":               [],
+    "structure":           [],
+    "siding":              [],
+    "roof":                [],
+    "flooring":            [],
+    "golf_frontage_yn":    "",
+    "golf_view":           [],
+    "attic":               [],
+    "parking":             [],
+    "exterior":            [],
+    "internet_connected":  [],
+    "internet_desc":       "",
+    "garage_yn":           "",
+    "num_cars":            "",
+    "adu_yn":              "",
+    "basement_yn":         "",
+    "adu_desc":            "",
+    "garage":              [],
+    "basement_foundation": [],
+    "interior":            [],
+    "water":               [],
+    "sewer":               [],
+    "fenced_yn":           "",
+    "fenced":              [],
+    "restrictions":        [],
+    "num_fp":              "0",
+    "fireplace":           []
+  }
+}</pre>
+</div>
+
+</body>
+</html>

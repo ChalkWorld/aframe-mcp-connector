@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Features B Bookmarklet Launcher</title>
+<style>
+  body { font-family: system-ui, sans-serif; max-width: 860px; margin: 40px auto; padding: 0 24px; background: #f5f5f5; color: #1a1a1a; }
+  h1 { font-size: 1.1rem; font-weight: 600; margin-bottom: 4px; }
+  .sub { font-size: 0.85rem; color: #555; margin-bottom: 28px; }
+  .install-box { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 20px 24px; margin-bottom: 28px; }
+  .install-box h2 { font-size: 0.9rem; font-weight: 600; margin: 0 0 10px; }
+  .install-box ol { margin: 0; padding-left: 20px; font-size: 0.88rem; line-height: 1.7; }
+  .drag-target { display: inline-block; margin-top: 14px; padding: 10px 20px; background: #1a6ef5; color: #fff; border-radius: 6px; text-decoration: none; font-weight: 600; font-size: 0.95rem; cursor: grab; }
+  .drag-target:active { cursor: grabbing; }
+  .payload-box { background: #fff; border: 1px solid #ddd; border-radius: 8px; padding: 20px 24px; }
+  .payload-box h2 { font-size: 0.9rem; font-weight: 600; margin: 0 0 6px; }
+  .payload-box p { font-size: 0.85rem; color: #555; margin: 0 0 12px; }
+  pre { background: #f0f0f0; border-radius: 6px; padding: 14px; font-size: 0.78rem; line-height: 1.5; overflow-x: auto; white-space: pre; }
+  .scope { display: inline-block; font-size: 0.75rem; background: #e8f0fe; color: #1a6ef5; border-radius: 4px; padding: 2px 8px; margin-bottom: 16px; font-weight: 500; }
+</style>
+</head>
+<body>
+
+<h1>Features B — Non-Lennar Bookmarklet</h1>
+<div class="sub">CVRMLS Matrix · Features Tab · Chunks 6–10 (Community Amenities through Irrigation Source)</div>
+<span class="scope">Non-Lennar · Chunks 6–10 of 10</span>
+
+<div class="install-box">
+  <h2>Install</h2>
+  <ol>
+    <li>Show your bookmarks bar — <strong>Cmd+Shift+B</strong> (Mac) or <strong>Ctrl+Shift+B</strong> (Windows)</li>
+    <li>Drag the button below to your bookmarks bar</li>
+    <li>To use: copy the Features B payload, stay on the Features tab in Matrix, click the bookmark</li>
+    <li>Run after Features A — both bookmarklets operate on the same Matrix tab</li>
+  </ol>
+  <a class="drag-target" href="javascript:(function(){function s(id,v){var e=document.getElementById(id);if(e)e.value=v;}function c(id,v){var e=document.getElementById(id);if(e)e.checked=!!v;}function g(ids,sel){ids.forEach(function(id){c(id,false);});(sel||[]).forEach(function(id){c(id,true);});}navigator.clipboard.readText().then(function(t){var d=JSON.parse(t).features_b;g(['Input_534_01','Input_534_02','Input_534_41','Input_534_45','Input_534_33','Input_534_03','Input_534_04','Input_534_05','Input_534_06','Input_534_07','Input_534_08','Input_534_09','Input_534_10','Input_534_11','Input_534_12','Input_534_13','Input_534_31','Input_534_14','Input_534_15','Input_534_36','Input_534_16','Input_534_17','Input_534_42','Input_534_18','Input_534_19','Input_534_29','Input_534_40','Input_534_20','Input_534_37','Input_534_21','Input_534_46','Input_534_22','Input_534_47','Input_534_23','Input_534_24','Input_534_25','Input_534_26','Input_534_43','Input_534_27','Input_534_28','Input_534_44','Input_534_32','Input_534_30','Input_534_34'],d.community_amenities);g(['Input_85_03','Input_85_06','Input_85_02','Input_85_05','Input_85_07','Input_85_01','Input_85_04'],d.green_cert);s('Input_244',d.pool_yn||'');g(['Input_91_01','Input_91_02','Input_91_03','Input_91_04','Input_91_05','Input_91_06','Input_91_07','Input_91_08','Input_91_09','Input_91_10','Input_91_11','Input_91_12','Input_91_13','Input_91_14','Input_91_15','Input_91_16','Input_91_17','Input_91_18','Input_91_19','Input_91_20'],d.pool_desc);g(['Input_81_01','Input_81_02','Input_81_03','Input_81_04','Input_81_05','Input_81_06','Input_81_07','Input_81_08','Input_81_09','Input_81_10','Input_81_39','Input_81_11','Input_81_12','Input_81_13','Input_81_14','Input_81_15','Input_81_16','Input_81_17','Input_81_18','Input_81_19','Input_81_20','Input_81_21','Input_81_22','Input_81_23','Input_81_24','Input_81_25','Input_81_26','Input_81_27','Input_81_28','Input_81_29','Input_81_30','Input_81_31','Input_81_32','Input_81_33','Input_81_34','Input_81_35','Input_81_36','Input_81_37','Input_81_38'],d.appl_equip);g(['Input_86_01','Input_86_02','Input_86_03','Input_86_04','Input_86_05','Input_86_06','Input_86_07','Input_86_19','Input_86_08','Input_86_09','Input_86_10','Input_86_11','Input_86_12','Input_86_13','Input_86_14','Input_86_15','Input_86_16','Input_86_17','Input_86_18'],d.heating);s('Input_659',d.heating_other_desc||'');g(['Input_571_12','Input_571_01','Input_571_02','Input_571_03','Input_571_04','Input_571_05','Input_571_06','Input_571_07','Input_571_08','Input_571_13','Input_571_09','Input_571_10','Input_571_11'],d.water_heater);s('Input_245',d.disabl_equipd_yn||'');g(['Input_83_18','Input_83_19','Input_83_20','Input_83_21','Input_83_03','Input_83_22','Input_83_23','Input_83_24','Input_83_04','Input_83_14','Input_83_09','Input_83_25','Input_83_13','Input_83_07','Input_83_26','Input_83_15','Input_83_16','Input_83_27','Input_83_08','Input_83_17'],d.disabl_feat);g(['Input_87_01','Input_87_02','Input_87_03','Input_87_04','Input_87_05','Input_87_06','Input_87_07','Input_87_08','Input_87_09','Input_87_10','Input_87_11'],d.heat_fuel);s('Input_660',d.heat_fuel_other_desc||'');g(['Input_92_01','Input_92_02','Input_92_03','Input_92_05','Input_92_04','Input_92_06','Input_92_07','Input_92_08','Input_92_09','Input_92_10','Input_92_11','Input_92_12','Input_92_13'],d.porch);s('Input_671',d.maintenance_contract_yn||'');g(['Input_657_01','Input_657_03','Input_657_04','Input_657_05','Input_657_06','Input_657_07','Input_657_08','Input_657_09'],d.unit_placement);g(['Input_88_01','Input_88_02','Input_88_03','Input_88_04','Input_88_05','Input_88_13','Input_88_06','Input_88_07','Input_88_08','Input_88_09','Input_88_10','Input_88_11','Input_88_12'],d.cooling);s('Input_661',d.cooling_other_desc||'');g(['Input_542_20','Input_542_02','Input_542_03','Input_542_21','Input_542_05','Input_542_06','Input_542_07','Input_542_08','Input_542_34','Input_542_33','Input_542_32','Input_542_31','Input_542_30','Input_542_26','Input_542_22','Input_542_11','Input_542_12','Input_542_13','Input_542_14','Input_542_15','Input_542_23','Input_542_17','Input_542_18','Input_542_24'],d.water_type);g(['Input_254_09','Input_254_10','Input_254_02','Input_254_07','Input_254_08','Input_254_04','Input_254_05','Input_254_03','Input_254_01','Input_254_06'],d.wall_type);g(['Input_256_24','Input_256_01','Input_256_02','Input_256_03','Input_256_04','Input_256_05','Input_256_06','Input_256_07','Input_256_08','Input_256_09','Input_256_10','Input_256_22','Input_256_23','Input_256_12','Input_256_13','Input_256_14','Input_256_15','Input_256_16','Input_256_17','Input_256_18','Input_256_19'],d.building_structure);g(['Input_257_01','Input_257_02','Input_257_03','Input_257_04','Input_257_05','Input_257_06','Input_257_07','Input_257_08','Input_257_09'],d.farm_type);g(['Input_258_05','Input_258_01','Input_258_02','Input_258_03','Input_258_04'],d.irrigation_source);}).catch(function(e){alert('Features B error: '+e.message);});}())">⚡ Features B — Drag to Bookmarks Bar</a>
+</div>
+
+<div class="payload-box">
+  <h2>Payload — features_b key</h2>
+  <p>Copy this block into the full listing payload under the <code>features_b</code> key. Arrays take Input IDs of selected options. Leave arrays empty <code>[]</code> or omit keys that don't apply.</p>
+<pre>{
+  "features_b": {
+    "community_amenities":    [],
+    "green_cert":             [],
+    "pool_yn":                "",
+    "pool_desc":              [],
+    "appl_equip":             [],
+    "heating":                [],
+    "heating_other_desc":     "",
+    "water_heater":           [],
+    "disabl_equipd_yn":       "",
+    "disabl_feat":            [],
+    "heat_fuel":              [],
+    "heat_fuel_other_desc":   "",
+    "porch":                  [],
+    "maintenance_contract_yn": "",
+    "unit_placement":         [],
+    "cooling":                [],
+    "cooling_other_desc":     "",
+    "water_type":             [],
+    "wall_type":              [],
+    "building_structure":     [],
+    "farm_type":              [],
+    "irrigation_source":      []
+  }
+}</pre>
+</div>
+
+</body>
+</html>
