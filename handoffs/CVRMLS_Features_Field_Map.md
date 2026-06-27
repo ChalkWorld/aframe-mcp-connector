@@ -1,8 +1,8 @@
-# Lennar MLS — Features Tab Field Map
-**Document ID:** AAR-TC-LENNAR-BM-001-FEA
+# CVRMLS Matrix — Features Tab Field Map
+**Document ID:** AAR-TC-CVRMLS-BM-001-FEA
 **Version:** 1.0
-**Last Updated:** June 25, 2026
-**Addendum to:** `Lennar_MLS_Bookmarklet_Build.md` (`AAR-TC-LENNAR-BM-001`)
+**Last Updated:** June 27, 2026
+**Addendum to:** `CVRMLS_Bookmarklet_Build.md` (`AAR-TC-CVRMLS-BM-001`)
 
 *Extraction complete — all 10 chunks documented. Ready for bookmarklet build.*
 
@@ -10,44 +10,24 @@
 
 ## Overview
 
-The Features tab is the most field-dense tab in CVRMLS Matrix. It contains ~49 field groups, the majority of which are checkbox groups with scrollable containers. Most fields are Lennar constants (same value on every listing); a small number are dynamic or always skipped.
+The Features tab is the most field-dense tab in CVRMLS Matrix. It contains ~49 field groups, the majority of which are checkbox groups with scrollable containers.
 
 **Extraction method:** Claude in Chrome extension — full DOM traversal per group, not visible-only.
-**Bookmarklet approach:** Static Lennar constants hardcoded; dynamic fields pulled from clipboard payload under `"features"` key.
+
+**Important patterns:**
+- Some checkbox groups use named suffixes rather than numeric (e.g. `Input_676_PW`, `Input_845_FIBER`) — both patterns must be handled in bookmarklet JS.
+- `Input_88_13` (Geothermal in Cooling) is non-sequential — do not assume suffix order matches display order.
+- Builder-specific static values and skip lists live in the builder's own field map doc. See `docs/lennar/Lennar_Features_Field_Map.md` for the Lennar implementation.
 
 ---
 
-## Lennar Static Values — Quick Reference
-
-The following are confirmed Lennar constants across all communities. These will be hardcoded in the bookmarklet and do not appear in the clipboard payload.
-
-| Field Group | Lennar Value |
-|---|---|
-| Structure | Frame |
-| Siding | Vinyl |
-| Roof | Dimensional |
-| Garage Y/N | Yes (`1`) |
-| Basement Y/N | No (`0`) |
-| ADU Y/N | No (`0`) |
-| Golf Frontage Y/N | No (`0`) |
-| Fenced Y/N | No (`0`) |
-| Water | Public Water |
-| Sewer/Septic | Sewer - Public |
-| Restrictions | Assoc Restrictions |
-| Garage | Attached, Auto Door Opener |
-| Basement/Foundation | Slab |
-
-*Additional static values to be confirmed during Session 011 extraction (Chunks 6–10) and bookmarklet build.*
+## Field Map — Chunk 1
 
 ---
 
-## Field Map — Chunks 1–5
+### Style
 
----
-
-### Style — Chunk 1
-
-Checkbox group. Dynamic for Lennar — varies by plan type (2-Story, Colonial, Transitional, etc.). Pulled from clipboard payload.
+Checkbox group.
 
 | Label | Input ID |
 |---|---|
@@ -83,13 +63,11 @@ Checkbox group. Dynamic for Lennar — varies by plan type (2-Story, Colonial, T
 | Tudor | `Input_541_25` |
 | Victorian | `Input_541_26` |
 
-**Lennar use:** DYNAMIC — select per plan (e.g. Transitional, Colonial, 2-Story). Pulled from clipboard.
-
 ---
 
-### Structure — Chunk 1
+### Structure
 
-Checkbox group. **Lennar static: Frame (`Input_70_03`) — always.**
+Checkbox group.
 
 | Label | Input ID |
 |---|---|
@@ -103,13 +81,11 @@ Checkbox group. **Lennar static: Frame (`Input_70_03`) — always.**
 | Stone | `Input_70_09` |
 | Wood | `Input_70_10` |
 
-**Lennar use:** STATIC — `Input_70_03` (Frame) always checked. Hardcoded in bookmarklet.
-
 ---
 
-### Siding — Chunk 1
+### Siding
 
-Checkbox group. **Lennar static: Vinyl (`Input_71_22`) — always.**
+Checkbox group.
 
 | Label | Input ID |
 |---|---|
@@ -137,13 +113,11 @@ Checkbox group. **Lennar static: Vinyl (`Input_71_22`) — always.**
 | Vinyl | `Input_71_22` |
 | Wood | `Input_71_23` |
 
-**Lennar use:** STATIC — `Input_71_22` (Vinyl) always checked. Hardcoded in bookmarklet.
-
 ---
 
-### Roof — Chunk 1
+### Roof
 
-Checkbox group. **Lennar static: Dimensional (`Input_72_07`) — always.**
+Checkbox group.
 
 | Label | Input ID |
 |---|---|
@@ -165,13 +139,11 @@ Checkbox group. **Lennar static: Dimensional (`Input_72_07`) — always.**
 | Tile | `Input_72_17` |
 | Wood | `Input_72_18` |
 
-**Lennar use:** STATIC — `Input_72_07` (Dimensional) always checked. Hardcoded in bookmarklet.
-
 ---
 
-### Flooring — Chunk 1
+### Flooring
 
-Checkbox group. Dynamic for Lennar — varies by plan and community. Pulled from clipboard payload.
+Checkbox group.
 
 | Label | Input ID |
 |---|---|
@@ -193,13 +165,15 @@ Checkbox group. Dynamic for Lennar — varies by plan and community. Pulled from
 | Wood-Parquet | `Input_73_13` |
 | Wood-Part | `Input_73_14` |
 
-**Lennar use:** DYNAMIC — varies by plan. Pulled from clipboard.
+---
+
+## Field Map — Chunk 2
 
 ---
 
-### Golf Frontage Y/N — Chunk 2
+### Golf Frontage Y/N
 
-Select/dropdown. **Lennar static: No (`0`) — always.**
+Select/dropdown.
 
 | Input ID | Option Value | Display Text |
 |---|---|---|
@@ -207,13 +181,11 @@ Select/dropdown. **Lennar static: No (`0`) — always.**
 | `Input_693` | `1` | Yes |
 | `Input_693` | `0` | No |
 
-**Lennar use:** STATIC — `0` (No) always. Hardcoded in bookmarklet.
-
 ---
 
-### Golf View/Frontage — Chunk 2
+### Golf View/Frontage
 
-Checkbox group. **Lennar static: none checked — always skipped.**
+Checkbox group. *Named suffixes, not numeric.*
 
 | Label | Input ID |
 |---|---|
@@ -223,15 +195,11 @@ Checkbox group. **Lennar static: none checked — always skipped.**
 | Tee | `Input_721_Tee` |
 | View | `Input_721_View` |
 
-*Note: uses named suffixes, not numeric.*
-
-**Lennar use:** SKIP — no Lennar communities have golf frontage.
-
 ---
 
-### Attic — Chunk 2
+### Attic
 
-Checkbox group. Dynamic for Lennar — varies by plan.
+Checkbox group.
 
 | Label | Input ID |
 |---|---|
@@ -245,13 +213,11 @@ Checkbox group. Dynamic for Lennar — varies by plan.
 | Walk-In | `Input_241_05` |
 | Walk-Up | `Input_241_06` |
 
-**Lennar use:** DYNAMIC — varies by plan. Pulled from clipboard.
-
 ---
 
-### Parking — Chunk 2
+### Parking
 
-Checkbox group. Dynamic for Lennar — varies by plan (Paved Driveway standard; others vary).
+Checkbox group.
 
 | Label | Input ID |
 |---|---|
@@ -272,13 +238,11 @@ Checkbox group. Dynamic for Lennar — varies by plan (Paved Driveway standard; 
 | Valet | `Input_519_15` |
 | Visitor | `Input_519_16` |
 
-**Lennar use:** DYNAMIC — Paved Driveway (`Input_519_12`) likely always checked; confirm. Pulled from clipboard.
-
 ---
 
-### Exterior — Chunk 2
+### Exterior
 
-Checkbox group. Dynamic for Lennar — varies by plan and community (39 options).
+Checkbox group (39 options).
 
 | Label | Input ID |
 |---|---|
@@ -322,13 +286,15 @@ Checkbox group. Dynamic for Lennar — varies by plan and community (39 options)
 | Waterfront | `Input_570_22` |
 | Waterview | `Input_570_24` |
 
-**Lennar use:** DYNAMIC — varies by plan. Pulled from clipboard.
+---
+
+## Field Map — Chunk 3
 
 ---
 
-### Currently Connected Internet — Chunk 3
+### Currently Connected Internet
 
-Checkbox group. Dynamic for Lennar — varies by community infrastructure.
+Checkbox group. *Named suffixes, not numeric.*
 
 | Label | Input ID |
 |---|---|
@@ -340,27 +306,19 @@ Checkbox group. Dynamic for Lennar — varies by community infrastructure.
 | Satellite | `Input_845_SATELLITE` |
 | Unknown | `Input_845_UNKNOWN` |
 
-*Note: uses named suffixes, not numeric.*
-
-**Lennar use:** DYNAMIC — varies by community. Pulled from clipboard.
-
 ---
 
-### Internet Description — Chunk 3
-
-Text input. Rarely used for Lennar.
+### Internet Description
 
 | Input ID | Type |
 |---|---|
 | `Input_846` | text |
 
-**Lennar use:** SKIP unless community has unusual internet situation.
-
 ---
 
-### Garage Y/N — Chunk 3
+### Garage Y/N
 
-Select/dropdown. **Lennar static: Yes (`1`) — always.**
+Select/dropdown.
 
 | Input ID | Option Value | Display Text |
 |---|---|---|
@@ -368,13 +326,11 @@ Select/dropdown. **Lennar static: Yes (`1`) — always.**
 | `Input_150` | `1` | Yes |
 | `Input_150` | `0` | No |
 
-**Lennar use:** STATIC — `1` (Yes) always. Hardcoded in bookmarklet.
-
 ---
 
-### # Cars — Chunk 3
+### # Cars
 
-Select/dropdown. Dynamic for Lennar — varies by plan (1, 2, or 3 car garage).
+Select/dropdown.
 
 | Input ID | Option Value | Display Text |
 |---|---|---|
@@ -386,13 +342,11 @@ Select/dropdown. Dynamic for Lennar — varies by plan (1, 2, or 3 car garage).
 | `Input_226` | `3` | 3 |
 | `Input_226` | `4plus` | 4 + |
 
-**Lennar use:** DYNAMIC — varies by plan. Pulled from clipboard.
-
 ---
 
-### ADU Y/N — Chunk 3
+### ADU Y/N
 
-Select/dropdown. **Lennar static: No (`0`) — always.**
+Select/dropdown.
 
 | Input ID | Option Value | Display Text |
 |---|---|---|
@@ -400,13 +354,11 @@ Select/dropdown. **Lennar static: No (`0`) — always.**
 | `Input_861` | `1` | Yes |
 | `Input_861` | `0` | No |
 
-**Lennar use:** STATIC — `0` (No) always. Hardcoded in bookmarklet.
-
 ---
 
-### Basement Y/N — Chunk 3
+### Basement Y/N
 
-Select/dropdown. **Lennar static: No (`0`) — always** *(Lennar builds slab foundation).*
+Select/dropdown.
 
 | Input ID | Option Value | Display Text |
 |---|---|---|
@@ -414,25 +366,23 @@ Select/dropdown. **Lennar static: No (`0`) — always** *(Lennar builds slab fou
 | `Input_153` | `1` | Yes |
 | `Input_153` | `0` | No |
 
-**Lennar use:** STATIC — `0` (No) always. Hardcoded in bookmarklet.
-
 ---
 
-### ADU Description — Chunk 3
-
-Text input. Always skipped for Lennar.
+### ADU Description
 
 | Input ID | Type |
 |---|---|
 | `Input_862` | text |
 
-**Lennar use:** SKIP — ADU Y/N is always No.
+---
+
+## Field Map — Chunk 4
 
 ---
 
-### Garage — Chunk 4
+### Garage
 
-Checkbox group. Dynamic for Lennar — Attached and Auto Door Opener always checked; others vary by plan.
+Checkbox group.
 
 | Label | Input ID |
 |---|---|
@@ -455,13 +405,11 @@ Checkbox group. Dynamic for Lennar — Attached and Auto Door Opener always chec
 | Unfinished | `Input_539_14` |
 | Workshop | `Input_539_12` |
 
-**Lennar use:** STATIC base — `Input_539_02` (Attached) and `Input_539_03` (Auto Door Opener) always checked. Additional options (e.g. Direct Entry) may vary by plan — confirm during bookmarklet build.
-
 ---
 
-### Basement/Foundation — Chunk 4
+### Basement/Foundation
 
-Checkbox group. **Lennar static: Slab (`Input_569_12`) — always.**
+Checkbox group.
 
 | Label | Input ID |
 |---|---|
@@ -485,13 +433,11 @@ Checkbox group. **Lennar static: Slab (`Input_569_12`) — always.**
 | Walk-Out | `Input_569_14` |
 | Workshop | `Input_569_15` |
 
-**Lennar use:** STATIC — `Input_569_12` (Slab) always checked. Hardcoded in bookmarklet.
-
 ---
 
-### Interior — Chunk 4
+### Interior
 
-Checkbox group. Dynamic for Lennar — varies by plan (57 options; large scrollable group).
+Checkbox group (57 options).
 
 | Label | Input ID |
 |---|---|
@@ -553,13 +499,11 @@ Checkbox group. Dynamic for Lennar — varies by plan (57 options; large scrolla
 | Window Treatment | `Input_568_43` |
 | Workshop | `Input_568_44` |
 
-**Lennar use:** DYNAMIC — varies by plan. Pulled from clipboard.
-
 ---
 
-### Water — Chunk 4
+### Water
 
-Checkbox group. **Lennar static: Public Water (`Input_676_PW`) — always.**
+Checkbox group. *Named suffixes, not numeric.*
 
 | Label | Input ID |
 |---|---|
@@ -568,15 +512,11 @@ Checkbox group. **Lennar static: Public Water (`Input_676_PW`) — always.**
 | Public Water | `Input_676_PW` |
 | Well | `Input_676_WELL` |
 
-*Note: uses named suffixes, not numeric.*
-
-**Lennar use:** STATIC — `Input_676_PW` (Public Water) always checked. Hardcoded in bookmarklet.
-
 ---
 
-### Sewer/Septic — Chunk 4
+### Sewer/Septic
 
-Checkbox group. **Lennar static: Sewer - Public (`Input_670_PBLCSR`) — always.**
+Checkbox group. *Named suffixes, not numeric.*
 
 | Label | Input ID |
 |---|---|
@@ -588,15 +528,15 @@ Checkbox group. **Lennar static: Sewer - Public (`Input_670_PBLCSR`) — always.
 | Other - See Remarks | `Input_670_OTHER` |
 | Unknown | `Input_670_UNKNOWN` |
 
-*Note: uses named suffixes, not numeric.*
+---
 
-**Lennar use:** STATIC — `Input_670_PBLCSR` (Sewer - Public) always checked. Hardcoded in bookmarklet.
+## Field Map — Chunk 5
 
 ---
 
-### Fenced Y/N — Chunk 5
+### Fenced Y/N
 
-Select/dropdown. **Lennar static: No (`0`) — always.**
+Select/dropdown.
 
 | Input ID | Option Value | Display Text |
 |---|---|---|
@@ -604,13 +544,11 @@ Select/dropdown. **Lennar static: No (`0`) — always.**
 | `Input_695` | `1` | Yes |
 | `Input_695` | `0` | No |
 
-**Lennar use:** STATIC — `0` (No) always. Hardcoded in bookmarklet.
-
 ---
 
-### Fenced — Chunk 5
+### Fenced
 
-Checkbox group. Always skipped for Lennar (Fenced Y/N is No).
+Checkbox group.
 
 | Label | Input ID |
 |---|---|
@@ -635,13 +573,11 @@ Checkbox group. Always skipped for Lennar (Fenced Y/N is No).
 | Wall | `Input_79_18` |
 | Wrought Iron | `Input_79_19` |
 
-**Lennar use:** SKIP — Fenced Y/N is always No; this group is irrelevant for Lennar. Captured for non-Lennar use.
-
 ---
 
-### Restrictions — Chunk 5
+### Restrictions
 
-Checkbox group. **Lennar static: Assoc Restrictions (`Input_540_02`) — always.**
+Checkbox group.
 
 | Label | Input ID |
 |---|---|
@@ -670,25 +606,19 @@ Checkbox group. **Lennar static: Assoc Restrictions (`Input_540_02`) — always.
 | Wetlands | `Input_540_19` |
 | Zoning Restrictions | `Input_540_21` |
 
-**Lennar use:** STATIC — `Input_540_02` (Assoc Restrictions) always checked. Hardcoded in bookmarklet.
-
 ---
 
-### #FP (Number of Fireplaces) — Chunk 5
-
-Text input. Dynamic for Lennar — varies by plan.
+### #FP (Number of Fireplaces)
 
 | Input ID | Type |
 |---|---|
 | `Input_152` | text |
 
-**Lennar use:** DYNAMIC — varies by plan (typically `0` or `1`). Pulled from clipboard.
-
 ---
 
-### Fireplace — Chunk 5
+### Fireplace
 
-Checkbox group. Dynamic for Lennar — only relevant when #FP > 0.
+Checkbox group.
 
 | Label | Input ID |
 |---|---|
@@ -702,13 +632,15 @@ Checkbox group. Dynamic for Lennar — only relevant when #FP > 0.
 | Stone | `Input_90_06` |
 | Wood Burning | `Input_90_07` |
 
-**Lennar use:** DYNAMIC — skip entirely when #FP = 0. When present, type varies by plan. Pulled from clipboard.
+---
+
+## Field Map — Chunk 6
 
 ---
 
-### Community Amenities — Chunk 6
+### Community Amenities
 
-Checkbox group. Dynamic for Lennar — varies by community (44 options).
+Checkbox group (44 options).
 
 | Label | Input ID |
 |---|---|
@@ -757,13 +689,11 @@ Checkbox group. Dynamic for Lennar — varies by community (44 options).
 | Tennis Court | `Input_534_30` |
 | Water View | `Input_534_34` |
 
-**Lennar use:** DYNAMIC — varies by community. Pulled from clipboard. Common Lennar values: Association, Clubhouse, Exercise Room, Jogging Path, Playground, Pool, Street Lights — confirm per community DB.
-
 ---
 
-### Green Cert — Chunk 6
+### Green Cert
 
-Checkbox group. Dynamic for Lennar — varies by community certification status.
+Checkbox group.
 
 | Label | Input ID |
 |---|---|
@@ -775,13 +705,11 @@ Checkbox group. Dynamic for Lennar — varies by community certification status.
 | National Green Building Standard | `Input_85_01` |
 | Other | `Input_85_04` |
 
-**Lennar use:** DYNAMIC — varies by community. Pulled from clipboard.
-
 ---
 
-### Pool Y/N — Chunk 6
+### Pool Y/N
 
-Select/dropdown. Dynamic for Lennar — varies by community.
+Select/dropdown.
 
 | Input ID | Option Value | Display Text |
 |---|---|---|
@@ -789,13 +717,11 @@ Select/dropdown. Dynamic for Lennar — varies by community.
 | `Input_244` | `1` | Yes |
 | `Input_244` | `0` | No |
 
-**Lennar use:** DYNAMIC — driven by community DB. Communities with pool: Yes (`1`); without: No (`0`).
-
 ---
 
-### Pool Description — Chunk 6
+### Pool Description
 
-Checkbox group. Only relevant when Pool Y/N = Yes.
+Checkbox group.
 
 | Label | Input ID |
 |---|---|
@@ -820,13 +746,15 @@ Checkbox group. Only relevant when Pool Y/N = Yes.
 | With Spa | `Input_91_19` |
 | Within Yard | `Input_91_20` |
 
-**Lennar use:** DYNAMIC — skip when Pool Y/N = No. When present, values vary by community. Pulled from clipboard.
+---
+
+## Field Map — Chunk 7
 
 ---
 
-### Appl/Equip — Chunk 7
+### Appl/Equip
 
-Checkbox group. Dynamic for Lennar — varies by plan and community (39 options). This is the appliance list referenced in the listing session protocol formatting rules.
+Checkbox group (39 options).
 
 | Label | Input ID |
 |---|---|
@@ -870,13 +798,11 @@ Checkbox group. Dynamic for Lennar — varies by plan and community (39 options)
 | Generator Wired | `Input_81_37` |
 | Fire Sprinkler System | `Input_81_38` |
 
-**Lennar use:** DYNAMIC — parsed from listing email per appliance formatting rules in `New_Lennar_Listing_Session_Protocol.md`. Pulled from clipboard.
-
 ---
 
-### Heating — Chunk 7
+### Heating
 
-Checkbox group. Dynamic for Lennar — varies by community (heat pump vs forced hot air).
+Checkbox group.
 
 | Label | Input ID |
 |---|---|
@@ -900,25 +826,19 @@ Checkbox group. Dynamic for Lennar — varies by community (heat pump vs forced 
 | Wall Furnace | `Input_86_17` |
 | Wood Stove | `Input_86_18` |
 
-**Lennar use:** DYNAMIC — driven by community DB. Pulled from clipboard.
-
 ---
 
-### Other Heating Description — Chunk 7
-
-Text input. Rarely used for Lennar.
+### Other Heating Description
 
 | Input ID | Type |
 |---|---|
 | `Input_659` | text |
 
-**Lennar use:** SKIP unless Heating = Other.
-
 ---
 
-### Water Heater — Chunk 7
+### Water Heater
 
-Checkbox group. Dynamic for Lennar — varies by plan and community.
+Checkbox group.
 
 | Label | Input ID |
 |---|---|
@@ -936,13 +856,15 @@ Checkbox group. Dynamic for Lennar — varies by plan and community.
 | Tank | `Input_571_10` |
 | Tankless | `Input_571_11` |
 
-**Lennar use:** STATIC — `Input_571_01` (Electric) always checked. Confirmed Lennar static Session 012. Hardcoded in bookmarklet.
+---
+
+## Field Map — Chunk 8
 
 ---
 
-### Disabl Equipd Y/N — Chunk 8
+### Disabl Equipd Y/N
 
-Select/dropdown. **Lennar static: No (`0`) — always.**
+Select/dropdown.
 
 | Input ID | Option Value | Display Text |
 |---|---|---|
@@ -950,13 +872,11 @@ Select/dropdown. **Lennar static: No (`0`) — always.**
 | `Input_245` | `1` | Yes |
 | `Input_245` | `0` | No |
 
-**Lennar use:** STATIC — `0` (No) always. Hardcoded in bookmarklet.
-
 ---
 
-### Disabl Feat — Chunk 8
+### Disabl Feat
 
-Checkbox group. Always skipped for Lennar (Disabl Equipd Y/N is No). Captured for non-Lennar use.
+Checkbox group.
 
 | Label | Input ID |
 |---|---|
@@ -981,13 +901,11 @@ Checkbox group. Always skipped for Lennar (Disabl Equipd Y/N is No). Captured fo
 | Wheelchair Adapted | `Input_83_08` |
 | Wide Doorways or Min. 32" Wide Doors | `Input_83_17` |
 
-**Lennar use:** SKIP — Disabl Equipd Y/N is always No. Captured for non-Lennar use.
-
 ---
 
-### Heat/Fuel — Chunk 8
+### Heat/Fuel
 
-Checkbox group. Dynamic for Lennar — varies by community.
+Checkbox group.
 
 | Label | Input ID |
 |---|---|
@@ -1003,25 +921,19 @@ Checkbox group. Dynamic for Lennar — varies by community.
 | Solar | `Input_87_10` |
 | Wood | `Input_87_11` |
 
-**Lennar use:** DYNAMIC — driven by community DB. Pulled from clipboard.
-
 ---
 
-### Other Heat/Fuel Description — Chunk 8
-
-Text input. Rarely used for Lennar.
+### Other Heat/Fuel Description
 
 | Input ID | Type |
 |---|---|
 | `Input_660` | text |
 
-**Lennar use:** SKIP unless Heat/Fuel = Other.
-
 ---
 
-### Porch — Chunk 8
+### Porch
 
-Checkbox group. Dynamic for Lennar — varies by plan.
+Checkbox group.
 
 | Label | Input ID |
 |---|---|
@@ -1039,13 +951,15 @@ Checkbox group. Dynamic for Lennar — varies by plan.
 | Stoop | `Input_92_12` |
 | Wrap Around | `Input_92_13` |
 
-**Lennar use:** DYNAMIC — varies by plan. Pulled from clipboard.
+---
+
+## Field Map — Chunk 9
 
 ---
 
-### Maintenance Contract Y/N — Chunk 9
+### Maintenance Contract Y/N
 
-Select/dropdown. **Lennar static: No (`0`) — always.**
+Select/dropdown.
 
 | Input ID | Option Value | Display Text |
 |---|---|---|
@@ -1053,13 +967,11 @@ Select/dropdown. **Lennar static: No (`0`) — always.**
 | `Input_671` | `1` | Yes |
 | `Input_671` | `0` | No |
 
-**Lennar use:** STATIC — `0` (No) always. Hardcoded in bookmarklet.
-
 ---
 
-### Unit Placement — Chunk 9
+### Unit Placement
 
-Checkbox group. Dynamic for Lennar — relevant for townhomes only.
+Checkbox group.
 
 | Label | Input ID |
 |---|---|
@@ -1072,13 +984,11 @@ Checkbox group. Dynamic for Lennar — relevant for townhomes only.
 | Top Level | `Input_657_08` |
 | Walkout | `Input_657_09` |
 
-**Lennar use:** DYNAMIC — townhome plans only; skip for single-family. Pulled from clipboard.
-
 ---
 
-### Cooling — Chunk 9
+### Cooling
 
-Checkbox group. Dynamic for Lennar — varies by community.
+Checkbox group. *`Input_88_13` (Geothermal) is non-sequential — do not assume suffix order matches display order.*
 
 | Label | Input ID |
 |---|---|
@@ -1096,27 +1006,23 @@ Checkbox group. Dynamic for Lennar — varies by community.
 | Timer Thermostat | `Input_88_11` |
 | Whole House Fan | `Input_88_12` |
 
-*Note: `Input_88_13` (Geothermal) is non-sequential — added later.*
-
-**Lennar use:** STATIC — `Input_88_06` (Heat Pump) always checked. Confirmed Lennar static Session 012. Hardcoded in bookmarklet.
-
 ---
 
-### Other Cooling Description — Chunk 9
-
-Text input. Rarely used for Lennar.
+### Other Cooling Description
 
 | Input ID | Type |
 |---|---|
 | `Input_661` | text |
 
-**Lennar use:** SKIP unless Cooling = Other.
+---
+
+## Field Map — Chunk 10
 
 ---
 
-### Water Type — Chunk 10
+### Water Type
 
-Checkbox group. **Lennar static: none checked — always skipped.** Lennar communities are not waterfront. Captured for non-Lennar use.
+Checkbox group.
 
 | Label | Input ID |
 |---|---|
@@ -1145,13 +1051,11 @@ Checkbox group. **Lennar static: none checked — always skipped.** Lennar commu
 | Water Access | `Input_542_18` |
 | Whitewater | `Input_542_24` |
 
-**Lennar use:** SKIP — no Lennar communities are waterfront. Captured for non-Lennar use.
-
 ---
 
-### Wall Type — Chunk 10
+### Wall Type
 
-Checkbox group. Dynamic for Lennar — varies by plan. Drywall standard.
+Checkbox group.
 
 | Label | Input ID |
 |---|---|
@@ -1166,13 +1070,11 @@ Checkbox group. Dynamic for Lennar — varies by plan. Drywall standard.
 | Plaster | `Input_254_01` |
 | Wood | `Input_254_06` |
 
-**Lennar use:** DYNAMIC — Drywall (`Input_254_02`) likely always checked; confirm during bookmarklet build. Pulled from clipboard.
-
 ---
 
-### Building/Structure — Chunk 10
+### Building/Structure
 
-Checkbox group. **Lennar static: none checked — always skipped.** Lennar new construction does not include outbuildings. Captured for non-Lennar use.
+Checkbox group.
 
 | Label | Input ID |
 |---|---|
@@ -1198,13 +1100,11 @@ Checkbox group. **Lennar static: none checked — always skipped.** Lennar new c
 | Tobacco Building | `Input_256_18` |
 | Utility Building | `Input_256_19` |
 
-**Lennar use:** SKIP — Lennar new construction does not include outbuildings. Captured for non-Lennar use.
-
 ---
 
-### Farm Type — Chunk 10
+### Farm Type
 
-Checkbox group. **Lennar static: none checked — always skipped.**
+Checkbox group.
 
 | Label | Input ID |
 |---|---|
@@ -1218,13 +1118,11 @@ Checkbox group. **Lennar static: none checked — always skipped.**
 | Poultry | `Input_257_08` |
 | Tree | `Input_257_09` |
 
-**Lennar use:** SKIP — not applicable to Lennar new construction. Captured for non-Lennar use.
-
 ---
 
-### Irrigation Source — Chunk 10
+### Irrigation Source
 
-Checkbox group. **Lennar static: none checked — always skipped.**
+Checkbox group.
 
 | Label | Input ID |
 |---|---|
@@ -1233,8 +1131,6 @@ Checkbox group. **Lennar static: none checked — always skipped.**
 | Lake | `Input_258_02` |
 | Pond | `Input_258_03` |
 | River | `Input_258_04` |
-
-**Lennar use:** SKIP — not applicable to Lennar new construction. Captured for non-Lennar use.
 
 ---
 
@@ -1255,5 +1151,7 @@ Checkbox group. **Lennar static: none checked — always skipped.**
 
 ---
 
-*AAR-TC Transaction Services | Addendum to AAR-TC-LENNAR-BM-001*
-*Version 1.0 — extraction complete June 25, 2026. Next step: bookmarklet build.*
+*CVRMLS Matrix Features tab field map — universal reference. Extraction complete June 25, 2026.*
+*Addendum to `docs/cvrmls/CVRMLS_Bookmarklet_Build.md` (AAR-TC-CVRMLS-BM-001).*
+*Builder-specific field use: see the builder's own Features field map. Lennar: `docs/lennar/Lennar_Features_Field_Map.md`.*
+*Features JS source: `docs/cvrmls/CVRMLS_Features_Bookmarklet_Source.md` (AAR-TC-CVRMLS-BM-SRC-001-FEA).*
