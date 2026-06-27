@@ -1,4 +1,4 @@
-# Lennar MLS Bookmarklet — Full Payload Schema
+# Lennar MLS Bookmarklet — Payload Schema
 **Document ID:** AAR-TC-LENNAR-BM-SCH-001
 **Version:** 1.1
 **Date:** 2026-06-26
@@ -9,7 +9,7 @@
 
 ## Purpose
 
-This document defines the complete payload schema for the AAR-TC Lennar MLS bookmarklet set. It covers every tab across all launchers — Lennar variant, non-Lennar variant, or shared — and is the authority for what is hardcoded, what comes from the community lookup table, what comes from the clipboard payload, and what is excluded entirely.
+This document defines the Lennar-specific payload schema for the AAR-TC CVRMLS Matrix bookmarklet set. It is the authority for what is hardcoded, what comes from the community lookup table, what comes from the clipboard payload, and what is excluded entirely for Lennar listings. For the universal CVRMLS baseline schema, see `docs/cvrmls/CVRMLS_Payload_Schema.md` (AAR-TC-CVRMLS-PL-001).
 
 The Lennar Features section reflects confirmed values established through live bookmarklet testing on 2026-06-26. All other tab sections are stubbed to the confirmed field map and will be finalized as each bookmarklet is built and tested.
 
@@ -481,4 +481,7 @@ Never written under any circumstances. Fill manually in Matrix if applicable or 
 ---
 
 *AAR-TC Transaction Services | agentandrewrich@gmail.com | www.aar-tc.com*
-*This document is the authority for the Lennar MLS bookmarklet payload schema. Update version history with each revision.*
+*Lennar payload schema — authority for all Lennar bookmarklet field classifications.*
+*Universal CVRMLS baseline: `docs/cvrmls/CVRMLS_Payload_Schema.md` (AAR-TC-CVRMLS-PL-001).*
+*Source JS: `docs/cvrmls/CVRMLS_Bookmarklet_Source.md` (AAR-TC-CVRMLS-BM-SRC-001).*
+*This is a living document. Update version history and version_date with each revision.*
