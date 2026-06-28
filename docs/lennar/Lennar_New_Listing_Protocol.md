@@ -140,21 +140,17 @@ The following are confirmed Lennar constants across all communities. These are h
 | Limited Rep | `1` (Yes) | Agent/Office Info |
 | Structure | Frame (`Input_70_03`) | Features |
 | Siding | Vinyl (`Input_71_22`) | Features |
-| Roof | Dimensional (`Input_72_07`) | Features |
-| Garage Y/N | Yes (`1`) | Features |
-| Basement Y/N | No (`0`) | Features |
-| ADU Y/N | No (`0`) | Features |
+| Roof | Shingled (`Input_72_12`) | Features |
+| Flooring | Vinyl - Plank/Tile/Stone (`Input_73_17`) | Features |
+| Attic | Access Panel (`Input_241_09`) | Features |
 | Golf Frontage Y/N | No (`0`) | Features |
-| Fenced Y/N | No (`0`) | Features |
 | Water | Public Water (`Input_676_PW`) | Features |
 | Sewer/Septic | Sewer - Public (`Input_670_PBLCSR`) | Features |
-| Basement/Foundation | Slab (`Input_569_12`) | Features |
-| Restrictions | Assoc Restrictions (`Input_540_02`) | Features |
-| Garage (base) | Attached + Auto Door Opener | Features |
 | Water Heater | Electric (`Input_571_01`) | Features |
 | Cooling | Heat Pump (`Input_88_06`) | Features |
-| Disabl Equipd Y/N | No (`0`) | Features |
-| Maintenance Contract Y/N | No (`0`) | Features |
+| Wall Type | Drywall (`Input_254_02`) | Features |
+
+*Note: Garage Y/N, Basement Y/N, and Garage Auto Door Opener are payload-driven (DYN), not hardcoded. ADU Y/N, Fenced Y/N, Restrictions, Disabl Equipd Y/N, and Maintenance Contract Y/N are EXCL — not written by the bookmarklet. Basement/Foundation (Slab/Crawl Space) is conditional on Basement Y/N value. See `Lennar_Features_Payload_Schema.md` (AAR-TC-LENNAR-BM-SCH-001) for full classification.*
 | New/Resale | `NVROC` (New, never occupied) | Listing Info |
 | Year Built Description | `UNDCON` (Under Construction) | Listing Info |
 | Delayed Show | `0` (No) | Listing Info |
@@ -186,7 +182,7 @@ The following are confirmed Lennar constants across all communities. These are h
 | Model Available | `0` (No) | General Info |
 | Annual Taxes (New path) | `0` | General Info |
 | Assd Land (New path) | `0` | General Info |
-| Assd Improvement | `0` (both paths) | General Info |
+| Assd Improvement | `0` — both paths; `Input_248`; gated by `isLennar` flag | General Info |
 | Legal Description (New path) | `TBD` | General Info |
 | Tax Year (New path) | `2026` | General Info |
 
@@ -515,10 +511,13 @@ This protocol is designed for Lennar but intended to be builder-agnostic. When o
 | Google Drive — Properties folder | `1EypC5Ep7VRMqwWcoMvUb5juVvJKAEi7B` |
 | Community Reference Database | AAR-TC-LENNAR-DB-001 |
 | MLS Data Sheet Template | AAR-TC-LENNAR-DS-TPL-001 |
-| Bookmarklet Build Doc | AAR-TC-LENNAR-BM-001 (`docs/Lennar_MLS_Bookmarklet_Build.md`) |
-| Features Field Map | AAR-TC-LENNAR-BM-001-FEA (`docs/Lennar_MLS_Features_Field_Map.md`) |
-| Bookmarklet Source File | AAR-TC-LENNAR-BM-SRC-001 (`docs/Lennar_MLS_Bookmarklet_Source.md`) |
-| Features Source Addendum | AAR-TC-LENNAR-BM-SRC-001-FEA (`docs/AAR-TC-LENNAR-BM-SRC-001-FEA.md`) |
+| CVRMLS Bookmarklet Build | AAR-TC-CVRMLS-BM-001 (`docs/cvrmls/CVRMLS_Bookmarklet_Build.md`) |
+| CVRMLS Features Field Map | AAR-TC-CVRMLS-BM-001-FEA (`docs/cvrmls/CVRMLS_Features_Field_Map.md`) |
+| CVRMLS Bookmarklet Source | AAR-TC-CVRMLS-BM-SRC-001 (`docs/cvrmls/CVRMLS_Bookmarklet_Source.md`) |
+| Lennar Bookmarklet Customization | AAR-TC-LENNAR-BM-CUST-001 (`docs/lennar/Lennar_Bookmarklet_Customization.md`) |
+| Lennar Bookmarklet Build Notes | AAR-TC-LENNAR-BM-NOTES-001 (`docs/lennar/Lennar_Bookmarklet_Build_Notes.md`) |
+| Lennar Features Payload Schema | AAR-TC-LENNAR-BM-SCH-001 (`docs/lennar/Lennar_Features_Payload_Schema.md`) |
+| Features Source Addendum | AAR-TC-LENNAR-BM-SRC-001-FEA (`docs/lennar/Lennar_Features_Bookmarklet_Source.md`) |
 | Aframe — Gary Martin agent ID | *(confirm via Aframe at session start)* |
 
 ---
@@ -531,6 +530,7 @@ This protocol is designed for Lennar but intended to be builder-agnostic. When o
 | 1.1 | 2026-06-23 | Bookmarklet system added as Step 5b (POC complete, Bath Info tab proven). Three-path entry architecture noted. Primary contact updated — Megan Cook effective June 30. |
 | 2.0 | 2026-06-26 | Full rewrite. Bookmarklet system operational — 11 of 13 Lennar launchers tested. Step 5b formalized as standard session output with payload confirmation flow. Entry path rules by community added. Confirmed Lennar-wide statics table added (Cooling = Heat Pump, Water Heater = Electric confirmed Session 012). Session review beat added as standing protocol. Planned automations section added. Lennar root Drive folder ID added. |
 | 2.1 | 2026-06-26 | Added features.style payload rule; added lennar flag requirement |
+| 2.2 | 2026-06-27 | Confirmed Lennar-Wide Statics table — Features rows corrected: Roof updated to Shingled; Flooring, Attic, Wall Type added; Garage Y/N, Basement Y/N, ADU Y/N, Fenced Y/N, Restrictions, Disabl Equipd Y/N, Maintenance Contract Y/N removed (DYN or EXCL, not HC); Assd Improvement field ID corrected to Input_248 with isLennar gate note; Key IDs section updated to post-Session 017 restructured paths |
 
 ---
 

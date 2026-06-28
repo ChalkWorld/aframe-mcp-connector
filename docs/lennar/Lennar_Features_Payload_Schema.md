@@ -34,6 +34,7 @@ The full clipboard payload is a single JSON object. Each bookmarklet reads only 
 
 ```json
 {
+  "lennar": true,
   "community": "",
   "listing": { ... },
   "bath": { ... },
@@ -265,19 +266,27 @@ Pool Description is always Community/Off Site (`Input_91_02`) when Pool Y/N = Ye
 
 | Field | Input ID | Class | Value / Notes |
 |---|---|---|---|
-| Acres | `Input_43` | DYN | `general.acres` — New path only; skip on Tax ID path |
-| Legal Description | `Input_44` | HC | `TBD` — New path only; skip on Tax ID path |
-| Assd Improvement | `Input_246` | EXCL | Not written for Lennar |
+| Waterfront | `Input_94` | HC | `N` (No) — always |
+| Model Available | `Input_249` | HC | `0` (No) — always |
+| Disclosures | `Input_102_NOTREQ` | HC | Checked — always |
+| Lead Disclosure | `Input_103_NOTREQ` | HC | Checked — always |
+| Acres | `Input_95` | DYN | `general.acres` — New path only; Tax ID path pre-populated, skip |
+| Tax Year | `Input_246` | HC | `0` — New path only; Tax ID path pre-populated, skip |
+| Annual Taxes | `Input_105` | HC | `0` — New path only; Tax ID path pre-populated, skip |
+| Assd Land | `Input_247` | HC | `0` — New path only; Tax ID path pre-populated, skip |
+| Assd Improvement | `Input_248` | HC | `0` — both paths; gated by `isLennar` flag. Confirmed `Input_248` on Tax ID path (Session 016 live test). Non-Lennar: always Tax ID path, pre-populated from tax record — must not overwrite. |
+| Legal Description | `Input_100` | HC | `TBD` — New path only; Tax ID path pre-populated, skip |
 | AICUZ | `Input_102_*` | EXCL | Not written |
-| Lead Disclosure | `Input_103_*` | EXCL | Not written |
 
 ### Payload Structure
 
 ```json
 "general": {
-  "acres": ""
+  "acres": ""   // New path only; omit on Tax ID path
 }
 ```
+
+*All other General Info fields for Lennar are hardcoded statics — never in the payload. See Lennar Statics Reference in `Lennar_Bookmarklet_Customization.md` (AAR-TC-LENNAR-BM-CUST-001).*
 
 ---
 
@@ -477,6 +486,7 @@ Never written under any circumstances. Fill manually in Matrix if applicable or 
 |---|---|---|---|
 | 1.0 | 2026-06-26 | Andrew Rich / Claude | Initial document — Lennar Features schema confirmed through live testing |
 | 1.1 | 2026-06-26 | Andrew Rich / Claude | Expanded to full payload schema covering all tabs; non-Features sections stubbed from confirmed field maps |
+| 1.2 | 2026-06-27 | Andrew Rich / Claude | TAB 4 General Info corrected — field IDs fixed (Input_95 Acres, Input_100 Legal, Input_248 Assd Improvement); Assd Improvement reclassified from EXCL to HC/isLennar-gated; Tax Year, Annual Taxes, Assd Land rows added; top-level `"lennar": true` key added to payload block |
 
 ---
 

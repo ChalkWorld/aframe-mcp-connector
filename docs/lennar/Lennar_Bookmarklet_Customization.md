@@ -327,9 +327,11 @@ No Lennar-specific static values for Bath Info. All bath data is listing-specifi
 
 **Source addendum:** Lennar Features variant lives in `AAR-TC-LENNAR-BM-SRC-001-FEA` (`docs/lennar/Lennar_Features_Bookmarklet_Source.md`). See that file for the full Lennar Features JS.
 
-**Lennar static fields hardcoded in that file:** Structure, Siding, Roof, Garage Y/N, Basement Y/N, ADU Y/N, Golf Frontage Y/N, Fenced Y/N, Water, Sewer/Septic, Restrictions, Basement/Foundation, Disabl Equipd Y/N, Maintenance Contract Y/N, Garage (Attached + Auto Door Opener), Cooling (Heat Pump), Water Heater (Electric).
+**Lennar static fields hardcoded in that file:** Structure, Siding, Roof (Shingled — `Input_72_12`), Flooring (Vinyl - Plank/Tile/Stone), Attic (Access Panel), Wall Type (Drywall), Golf Frontage Y/N, Water (Public Water), Sewer/Septic (Sewer - Public), Basement/Foundation (conditional — Slab when Basement Y/N = No, Crawl Space when Yes), Water Heater (Electric), Cooling (Heat Pump).
 
-**Skip entirely for Lennar:** Golf View/Frontage, Internet Description, ADU Description, Fenced, Water Type, Building/Structure, Farm Type, Irrigation Source, Disabl Feat, Other Heating/Heat/Fuel/Cooling Description fields.
+**Dynamic fields (Garage Y/N and Basement Y/N):** These are payload-driven, not hardcoded — `features.garage_yn` and `features.basement_yn`. Garage Attached + Direct Entry auto-check when garage_yn = `"1"`; Slab/Crawl Space auto-check based on basement_yn value. Garage Auto Door Opener is also dynamic (`features.garage_auto_door`).
+
+**Skip entirely for Lennar (EXCL — not written):** ADU Y/N, Fenced Y/N, Restrictions, Disabl Equipd Y/N, Maintenance Contract Y/N, Golf View/Frontage description, Internet Connected/Description, ADU Description, Fenced description, Water Type, Building/Structure type, Farm Type, Irrigation Source, Disabl Feat, Other Heating/Heat/Fuel/Cooling Description fields.
 
 ---
 
