@@ -1062,6 +1062,101 @@ Result: Tax Year held pre-populated value (2026), Assd Improvement correctly wro
 
 ---
 
+## Session 018 — June 27, 2026
+
+**Focus:** Doc cleanup — stale Features statics patch across three Lennar docs; Street Suffix full extraction; County/City + Area + school extraction for 11 jurisdictions; new CVRMLS County/City Reference doc
+
+---
+
+### Accomplished
+
+**1. Lennar Features statics patch — three documents**
+
+Three docs had stale or incorrect content left over from the Session 017 doc split. All three patched via Cursor handoffs committed in sequence:
+
+- `Lennar_Bookmarklet_Customization.md` (AAR-TC-LENNAR-BM-CUST-001) — TAB 4 Features prose block corrected: stale HC statics list replaced with confirmed list (Structure, Siding, Roof/Shingled, Flooring, Attic, Wall Type, Golf Frontage Y/N, Water, Sewer/Septic, Water Heater, Cooling); Garage Y/N and Basement Y/N correctly noted as DYN; ADU Y/N, Fenced Y/N, Restrictions, Disabl Equipd Y/N, Maintenance Contract Y/N moved to EXCL skip list
+- `Lennar_Features_Payload_Schema.md` (AAR-TC-LENNAR-BM-SCH-001) — TAB 4 General Info corrected: field IDs fixed (`Input_95` Acres, `Input_100` Legal Description, `Input_248` Assd Improvement); Assd Improvement reclassified from EXCL to HC/isLennar-gated; Tax Year, Annual Taxes, Assd Land rows added; `"lennar": true` added to top-level payload block. Version → 1.2
+- `Lennar_New_Listing_Protocol.md` (AAR-TC-LENNAR-PROTO-001) — Confirmed Statics table corrected: Features rows updated to match confirmed schema; Assd Improvement field ID corrected to `Input_248` with isLennar gate note; Key IDs section updated from pre-restructure paths to current `docs/cvrmls/` and `docs/lennar/` paths. Version → 2.2
+
+Root cause: the Session 017 doc split extracted universal vs Lennar content but linked details (field IDs confirmed in Session 016, classification changes from schema v1.1) did not propagate to all affected docs. Found and corrected in Session 018 before any dependent build work.
+
+**2. Street Suffix full extraction — `CVRMLS_Bookmarklet_Build.md`**
+
+All 94 Street Suffix option values confirmed via live ES extraction against `Input_37`. Full semantic list added to `CVRMLS_Bookmarklet_Build.md` under the Listing Info field map. Open question item closed. Version → 1.1.
+
+**3. County/City extraction — new `CVRMLS_County_City_Reference.md`**
+
+County/City (`Input_29`) stored values, Area (`Input_30`) options, and Elementary/Middle/High school options confirmed for 11 jurisdictions via live ES extraction. Scope decision: ZIP, Post Office, and Subdivision not extracted — payload-driven best-effort, falls back to manual.
+
+New document created: `CVRMLS_County_City_Reference.md` (AAR-TC-CVRMLS-CC-001, `docs/cvrmls/`). Covers Chesterfield, Colonial Heights, Dinwiddie, Goochland, Hanover, Henrico, Hopewell, New Kent, Petersburg, Powhatan, Richmond City.
+
+Key findings:
+- Multi-word stored values have no space: `NewKent`, `ColonialHeights`
+- Richmond City stored value is `Richmond` (not `RichmondCity`)
+- Hanover has two rename mismatches — stored value does not match current display name: `StonewallJackson` → "Bell Creek Middle"; `LeeDavis` → "Mechanicsville"
+- Ashland confirmed as a school name under Hanover County — not a separate County/City entry
+- CVRMLS_Bookmarklet_Source.md TODO notes removed; payload schema comments updated. Version → 0.2
+
+---
+
+### Gaps Identified / Carried Forward
+
+- **Listing Info bookmarklet update** — now unblocked: Street Suffix stored values confirmed, New path logic needed, non-Lennar variant needed. Carry to Session 019 as first agenda item.
+- All other open items from Session 017 carried forward unchanged
+
+---
+
+### Cursor Handoffs Produced This Session
+
+**Batch 1 — Lennar Features statics patch:**
+
+| Handoff | Target | Purpose |
+|---|---|---|
+| `HANDOFF-2026-06-27-lennar-bm-cust-001.md` | `docs/lennar/Lennar_Bookmarklet_Customization.md` | TAB 4 stale statics list corrected |
+| `HANDOFF-2026-06-27-lennar-bm-sch-001.md` | `docs/lennar/Lennar_Features_Payload_Schema.md` | TAB 4 General Info field IDs + classification corrected; `"lennar": true` added |
+| `HANDOFF-2026-06-27-lennar-proto-001.md` | `docs/lennar/Lennar_New_Listing_Protocol.md` | Statics table + Key IDs corrected |
+
+**Batch 2 — Extraction results:**
+
+| Handoff | Target | Purpose |
+|---|---|---|
+| `HANDOFF-2026-06-27-cvrmls-bm-001-suffixes.md` | `docs/cvrmls/CVRMLS_Bookmarklet_Build.md` | Street Suffix full value list added |
+| `HANDOFF-2026-06-27-cvrmls-cc-001.md` | `docs/cvrmls/CVRMLS_County_City_Reference.md` | New file — 11-jurisdiction County/City reference |
+| `HANDOFF-2026-06-27-cvrmls-bm-src-001.md` | `docs/cvrmls/CVRMLS_Bookmarklet_Source.md` | TODO notes removed; payload schema comments updated |
+
+---
+
+### Documents Created This Session
+
+| Document | ID | Version | Location |
+|---|---|---|---|
+| `CVRMLS_County_City_Reference.md` | `AAR-TC-CVRMLS-CC-001` | 1.0 | `docs/cvrmls/` |
+
+### Documents Updated This Session
+
+| Document | ID | Version | Notes |
+|---|---|---|---|
+| `Lennar_Bookmarklet_Customization.md` | `AAR-TC-LENNAR-BM-CUST-001` | 1.1 | TAB 4 Features prose corrected |
+| `Lennar_Features_Payload_Schema.md` | `AAR-TC-LENNAR-BM-SCH-001` | 1.2 | TAB 4 General Info corrected; `"lennar": true` added |
+| `Lennar_New_Listing_Protocol.md` | `AAR-TC-LENNAR-PROTO-001` | 2.2 | Statics table + Key IDs corrected |
+| `CVRMLS_Bookmarklet_Build.md` | `AAR-TC-CVRMLS-BM-001` | 1.1 | Street Suffix full value list added |
+| `CVRMLS_Bookmarklet_Source.md` | `AAR-TC-CVRMLS-BM-SRC-001` | 0.2 | TODO notes removed |
+
+---
+
+### Key References
+
+| Item | Value |
+|---|---|
+| CVRMLS County/City Reference | `AAR-TC-CVRMLS-CC-001` (`docs/cvrmls/CVRMLS_County_City_Reference.md`) |
+| CVRMLS Bookmarklet Build | `AAR-TC-CVRMLS-BM-001` (`docs/cvrmls/CVRMLS_Bookmarklet_Build.md`) |
+| CVRMLS Bookmarklet Source | `AAR-TC-CVRMLS-BM-SRC-001` (`docs/cvrmls/CVRMLS_Bookmarklet_Source.md`) |
+| Lennar Features Payload Schema | `AAR-TC-LENNAR-BM-SCH-001` (`docs/lennar/Lennar_Features_Payload_Schema.md`) |
+| Lennar Bookmarklet Customization | `AAR-TC-LENNAR-BM-CUST-001` (`docs/lennar/Lennar_Bookmarklet_Customization.md`) |
+| Lennar New Listing Protocol | `AAR-TC-LENNAR-PROTO-001` (`docs/lennar/Lennar_New_Listing_Protocol.md`) |
+
+---
+
 ## Session 017 — June 27, 2026
 
 **Focus:** Repo restructure — universal CVRMLS / Lennar implementation layer separation; doc splits across all major bookmarklet docs
