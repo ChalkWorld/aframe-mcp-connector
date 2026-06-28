@@ -11,6 +11,7 @@
 | Version | Date | Author | Notes |
 |---|---|---|---|
 | 0.1 | 2026-06-25 | Andrew Rich / Claude | Initial file. Listing Info tab — non-Lennar and Lennar variants. Structure established for all subsequent tabs. |
+| 0.2 | 2026-06-27 | Andrew Rich / Claude | TODO notes removed — County/City, Area, and school stored values confirmed for 11 jurisdictions; documented in CVRMLS_County_City_Reference.md (AAR-TC-CVRMLS-CC-001). Payload schema county_city and area comments updated. |
 
 ---
 
@@ -42,13 +43,13 @@ The session outputs one JSON object per listing. All tab keys are present; each 
 ```json
 {
   "listing": {
-    "county_city": "",        // Input_29 stored option value — e.g. "CHESTVA" (TODO: confirm per community)
+    "county_city": "",        // Input_29 stored option value — e.g. "Chesterfield", "Henrico", "Richmond". See CVRMLS_County_City_Reference.md (AAR-TC-CVRMLS-CC-001) for confirmed values per jurisdiction
     "list_price": "",         // e.g. "524990"
     "list_date": "",          // today's date — e.g. "06/25/2026"
     "type": "",               // "SFR" or "TOWN"
     "attached_yn": "",        // "1" (Yes) for TH, "0" (No) for SF
     "pid": "",                // Tax ID — skip key on Tax ID path (pre-filled); write "TBD" on New path
-    "area": "",               // Input_30 stored option value (TODO: confirm per community)
+    "area": "",               // Input_30 stored option value — e.g. "54", "42", "60". See CVRMLS_County_City_Reference.md (AAR-TC-CVRMLS-CC-001) for confirmed values per jurisdiction
     "expire_date": "",        // Non-Lennar only — e.g. "12/31/2027"; Lennar hardcodes "12/31/2026"
     "street_num": "",         // e.g. "15912"
     "street_dir": "",         // e.g. "" or "N" — most Lennar addresses blank
@@ -177,11 +178,11 @@ function wait(ms) {
 **Cascade dependency:** County/City → Area → ZIP → Subdivision → Schools. Must execute in sequence with await between each cascade step.
 **Map fields (always manual):** Latitude, Longitude, Directions
 
-**Known gap:** Stored option values for County/City (`Input_29`), Area (`Input_30`), ZIP (`Input_635`), Post Office (`Input_41`), Subdivision (`Input_259`), and Schools (`Input_51`, `Input_53`, `Input_52`) have not been confirmed per community. A second extraction pass is required with County/City pre-selected in a live Matrix session. All community value lookups below are marked `TODO` until that pass is complete.
+**County/City, Area, and school stored values** confirmed for 11 jurisdictions (2026-06-27) — see `docs/cvrmls/CVRMLS_County_City_Reference.md` (AAR-TC-CVRMLS-CC-001). ZIP, Post Office, and Subdivision not extracted — payload-driven best-effort; falls back to manual if option not present in DOM.
 
 ---
 
-### Community Value Lookup Table (TODO — pending extraction pass)
+### Community Value Lookup Table
 
 Used by the Lennar variant to map community name → correct stored option values for cascade dropdowns.
 

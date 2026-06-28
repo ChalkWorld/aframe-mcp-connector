@@ -10,6 +10,7 @@
 | Version | Date | Author | Notes |
 |---|---|---|---|
 | 1.0 | 2026-06-27 | Andrew Rich / Claude | Split from `Lennar_MLS_Bookmarklet_Build.md` (AAR-TC-LENNAR-BM-001 v1.3). Universal CVRMLS content extracted; Lennar-specific build notes moved to `Lennar_Bookmarklet_Build_Notes.md`. Field map "Lennar Value" columns generalized to "Notes / Builder Use". |
+| 1.1 | 2026-06-27 | Andrew Rich / Claude | Street Suffix full value list added (94 options confirmed via live extraction). County/City open question updated — see CVRMLS_County_City_Reference.md (AAR-TC-CVRMLS-CC-001). |
 
 ---
 
@@ -125,7 +126,7 @@ Field map columns:
 | Street # | `Input_34` | text | DYNAMIC | From listing source |
 | Street Direction | `Input_35` | select (9 options) | DYNAMIC | From address — blank if none |
 | Street Name | `Input_36` | text | DYNAMIC | From listing source |
-| Street Suffix | `Input_37` | select (95 options) | DYNAMIC | Stored values — e.g. `DR`, `WAY`, `RD`; extraction pass required to confirm all used values |
+| Street Suffix | `Input_37` | select (95 options) | DYNAMIC | Stored values confirmed — see Street Suffix value list below |
 | Unit # | `Input_515` | text | SKIP | Leave blank unless unit number present |
 | Unit/Level | `Input_771` | select | SKIP | Leave blank |
 | ZIP Code | `Input_635` | select (dynamic) | DYNAMIC | Populated after County/City — varies by jurisdiction |
@@ -162,6 +163,110 @@ Field map columns:
 | SqFt Source | `Input_97` | select | DYNAMIC | e.g. `04` (Per Builder), `01` (Per Owner). Lennar: always `04` |
 | Fin SqFt Source Desc | `Input_98` | text | SKIP | Leave blank |
 
+#### Street Suffix — Full Value List (`Input_37`)
+
+94 options confirmed via live ES extraction (2026-06-27). Blank default option included.
+
+| Value | Display Text |
+|---|---|
+| *(blank)* | *(blank)* |
+| `ALY` | Alley |
+| `ANX` | Annex |
+| `ARC` | Arcade |
+| `AVE` | Avenue |
+| `BCH` | Beach |
+| `BND` | Bend |
+| `BLF` | Bluff |
+| `BLVD` | Boulevard |
+| `BR` | Branch |
+| `BRG` | Bridge |
+| `BYP` | Bypass |
+| `CYN` | Canyon |
+| `CPE` | Cape |
+| `CSW` | Causeway |
+| `CTR` | Center |
+| `CHSE` | Chase |
+| `CIR` | Circle |
+| `CLOSE` | Close |
+| `COR` | Corner |
+| `CT` | Court |
+| `CV` | Cove |
+| `CRK` | Creek |
+| `CRES` | Crescent |
+| `CREST` | Crest |
+| `XING` | Crossing |
+| `CRV` | Curve |
+| `DR` | Drive |
+| `EST` | Estates |
+| `EXPY` | Expressway |
+| `EXT` | Extension |
+| `FRST` | Forest |
+| `FRK` | Fork |
+| `FT` | Fort |
+| `FWY` | Freeway |
+| `GDNS` | Gardens |
+| `GTWY` | Gateway |
+| `GLN` | Glen |
+| `GRN` | Green |
+| `HBR` | Harbor |
+| `HTS` | Heights |
+| `HWY` | Highway |
+| `HL` | Hill |
+| `HOLW` | Hollow |
+| `INLT` | Inlet |
+| `ISS` | Island(s) |
+| `ISLE` | Isle |
+| `JCT` | Junction |
+| `KY` | Key(s) |
+| `KNLS` | Knolls |
+| `LK` | Lake |
+| `LNDG` | Landing |
+| `LN` | Lane |
+| `LOOP` | Loop |
+| `MALL` | Mall |
+| `MANOR` | Manor |
+| `MEWS` | Mews |
+| `MT` | Mount |
+| `MTN` | Mountain |
+| `OVAL` | Oval |
+| `PARK` | Park |
+| `PKY` | Parkway |
+| `PASS` | Pass |
+| `PATH` | Path |
+| `PIKE` | Pike |
+| `PNES` | Pines |
+| `PL` | Place |
+| `PLZ` | Plaza |
+| `PT` | Point |
+| `RDG` | Ridge |
+| `RIV` | River |
+| `RD` | Road |
+| `RT` | Route |
+| `ROW` | Row |
+| `RUN` | Run |
+| `SHR` | Shore |
+| `SKWY` | Skyway |
+| `SLOPE` | Slope |
+| `SQ` | Square |
+| `STA` | Station |
+| `ST` | Street |
+| `TER` | Terrace |
+| `TRWY` | Throughway |
+| `TRCE` | Trace |
+| `TRFY` | Trafficway |
+| `TRL` | Trail |
+| `TUN` | Tunnel |
+| `TURN` | Turn |
+| `TPKE` | Turnpike |
+| `VLY` | Valley |
+| `VIEW` | View |
+| `VLG` | Village |
+| `VIS` | Vista |
+| `WALK` | Walk |
+| `WAY` | Way |
+
+---
+
 #### Listing Info — Bookmarklet Sequencing
 
 Must execute in this order due to dynamic dropdown dependencies:
@@ -176,8 +281,8 @@ Must execute in this order due to dynamic dropdown dependencies:
 #### Listing Info — Open Questions
 
 - [ ] Confirm `change` event alone triggers cascade or whether Matrix requires additional events (`input`, `blur`)
-- [ ] Street Suffix (`Input_37`) stored values — extraction pass required for all suffixes in use
-- [ ] County/City, Area, ZIP, Post Office, Subdivision, school stored values — confirm per jurisdiction via live extraction session
+- [x] Street Suffix (`Input_37`) stored values — confirmed 2026-06-27; full list above
+- [x] County/City and Area stored values, school dropdown options — confirmed for 11 jurisdictions 2026-06-27; see `docs/cvrmls/CVRMLS_County_City_Reference.md` (AAR-TC-CVRMLS-CC-001). ZIP, Post Office, and Subdivision not extracted — payload-driven best-effort; falls back to manual.
 
 ---
 
