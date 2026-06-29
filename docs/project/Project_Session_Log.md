@@ -1285,3 +1285,87 @@ The Lennar New Listing Protocol references Features statics that don't match the
 - Lennar Features Payload Schema (`AAR-TC-LENNAR-BM-SCH-001`) is the Lennar Features authority — separate Lennar Features field map is redundant; dropped
 - `Non_Lennar_Payload_Schema.md` was always the universal baseline — correctly renamed `CVRMLS_Payload_Schema.md`
 - Cross-reference debt from the restructure is known and accepted — sweep when approaching external sharing milestone
+
+---
+
+## Session 019 — June 29, 2026
+
+### Focus
+Standard listing (non-Lennar) protocol definition — MLS data input workflow, data source mapping, payload scope, Tax ID path behavior confirmation via live Matrix entry.
+
+### What Was Done
+- Reviewed Session 018 handoff and confirmed Session 019 agenda
+- Deferred Listing Info bookmarklet build — correctly identified that standard listing protocol must be defined before any build work
+- Defined non-Lennar standard listing data source model: Tier 1 (Realist tax record), Tier 2 (old MLS sheet), Tier 3 (supplemental — seller/agent notes, photos), Tier 4 (Cognito intake form — session trigger / Aframe only, not payload source)
+- Defined three listing modes: Full, Coming Soon, Investor/Minimal
+- Defined two-phase payload model: Phase 1 (initial MLS creation to Incomplete status), Phase 2 (Features-only update when supplemental data arrives)
+- Confirmed service tiers: $100 Data Input Only / $200 Full Listing Management — payload workflow identical; difference is surrounding coordination and remarks
+- Confirmed Tax ID path as the always-used entry path for standard listings
+- Confirmed Cognito intake form (Form ID 11) role: session trigger and Aframe creation only; list price is the only MLS-payload-adjacent field and is non-blocking
+- Confirmed old MLS sheet field usage: structural and feature content used; seller names, remarks, showing instructions, agent/office info, sold data never carried forward
+- Confirmed showing instruction defaults: Appt. Required always; Sentrilock lockbox always; NLCS default / LBGD if vacant (read from Cognito form)
+- Confirmed Agent/Office Info tab rules: List Agent Code pre-filled — never touch; co-list agent code from agent profile; confirm co-list applicability at session start before payload; ask if ambiguous
+- Ran live Tax ID path Matrix entry (4508 Ridgecrest Ln, Colonial Heights) to confirm pre-populated fields
+- Confirmed pre-populated on Tax ID path: County/City, street number + name, street suffix, ZIP, State, Year Built, Rooms, Levels, Bedrooms, Lot, PID, Acres, Total Assessment, Annual Taxes, Legal Description, Basement/Found, Owner Name, Owner Name 2
+- Confirmed blank on Tax ID path (bookmarklet writes): Area, Schools, Sqft fields (all four), Sqft Source, List Price, List Date, Type, Attached Y/N, New/Resale, Delayed Show, Expire Date, Year Built Desc, Street Direction
+- Confirmed Subdivision and Post Office always manual — too many options to map; not in bookmarklet
+- Confirmed Sqft Source always `Per Tax` for standard listings
+- Confirmed standard listing Agent/Office Info: Type = ER (Exclusive Right), Limited Rep = No
+- Added Kelly Painschab MLS co-list code: Lance Taylor `82685` — added to Agent Profiles and co-list protocol rule documented
+- Discussed productized LLM-ready MLS automation package concept — flagged for Project Vision doc update
+- Created New Seller Side Session Protocol (AAR-TC-SELLER-PROTO-001) v0.3
+
+### Decisions Made
+- **Protocol before build** — standard listing protocol must be defined before Listing Info bookmarklet is updated; session correctly redirected
+- **Tax ID path always** — standard listings always use Tax ID path; New path does not apply
+- **Two-phase payload** — Phase 1 covers stable structural data to Incomplete status; Phase 2 is Features-only when supplemental input arrives; minor corrections stay manual
+- **Automation scope boundary** — bookmarklet handles bulk entry only; showing instructions, remarks, photos, status changes remain manual; this is intentional
+- **Phase 1 landing status** — always Incomplete; never goes Active or Coming Soon from a session automatically
+- **Sqft source** — always `Per Tax` for standard listings; write only fields present in tax record
+- **Subdivision and Post Office** — permanently manual; not in bookmarklet scope
+- **Showing Instructions defaults** — Appt. Required + Sentrilock always; NLCS default; LBGD if vacant per Cognito form
+- **Co-list agent rule** — confirm at session start before payload; ask if ambiguous; MLS co-list code lives in agent profile
+- **Standard listing service strategic context** — maintained for existing agents; growth focus is builder new construction; standard listing automation is additive not core
+- **Productized package concept** — future doc: standardized protocol + field maps + bookmarklet sources + Chrome extension = LLM-ready MLS automation package for CVRMLS; to be added to Project Vision doc
+
+### Protocol Rules Established
+- Confirm listing mode and agent profile before any data work begins
+- Confirmation gate before payload — data sheet presented and confirmed; no exceptions
+- Phase 2 scope is Features tab only; one-field corrections stay manual
+- Co-list agent: always confirm at session start; always ask if ambiguous
+- Old MLS sheet remarks never carried forward verbatim — reference material only for drafting new remarks
+
+### Gaps Cleared
+- Tax ID path pre-populated field list — now confirmed via live Matrix entry; no longer inferred
+- Standard listing entry path — Tax ID path confirmed as always-used
+- Showing instruction defaults for non-Lennar listings — now locked and documented
+- Co-list agent protocol and Kelly's MLS co-list code — now documented
+
+### Gaps Identified / Carried Forward
+- **Listing Info bookmarklet update** — original Session 019 Item 1; now properly unblocked; build next session
+- **Non-Lennar Phase 1 payload JSON schema** — scope locked; ready to write next session
+- **Project Vision doc** — productized MLS automation package concept to be added
+- **All Session 018 open items** — carried forward unchanged
+
+### Cursor Handoffs Produced This Session
+
+| Handoff | Target File | Purpose |
+|---|---|---|
+| `HANDOFF-2026-06-29-seller-proto-001.md` | `docs/protocols/New_Seller_Side_Session_Protocol.md` | Add new doc — AAR-TC-SELLER-PROTO-001 v0.3 |
+| `HANDOFF-2026-06-29-agent-profiles-colist.md` | `docs/project/Agent_Profiles.md` | Add MLS co-list code to Kelly's profile; add co-list protocol note |
+| `HANDOFF-2026-06-29-session-log-019.md` | `docs/project/Project_Session_Log.md` | This entry |
+
+### Documents Created This Session
+
+| Document | ID | Version | Location |
+|---|---|---|---|
+| New Seller Side Session Protocol | AAR-TC-SELLER-PROTO-001 | 0.3 | `docs/protocols/New_Seller_Side_Session_Protocol.md` |
+
+### Documents Updated This Session
+
+| Document | ID | Version | Changes |
+|---|---|---|---|
+| Agent Profiles | — | 1.4 | Kelly Painschab — MLS co-list code added for Lance Taylor (`82685`); co-list protocol note added |
+
+---
+*Next session: Listing Info bookmarklet update (Item 1 from Session 019 agenda); non-Lennar Phase 1 payload JSON schema; Project Vision doc update.*
