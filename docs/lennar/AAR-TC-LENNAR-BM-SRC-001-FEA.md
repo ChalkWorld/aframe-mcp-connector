@@ -390,346 +390,61 @@ All fields payload-driven. No hardcoded constants. Checkbox groups: uncheck all 
 
 ---
 
-### Features — Lennar Variant
+### Features — Lennar Resolution
+
+**No separate Lennar bookmarklet.** `bookmarklets/lennar_features.html` is deleted (see companion deletion handoff). `bookmarklets/features_a.html` and `bookmarklets/features_b.html` are the only Features launchers, used for every listing regardless of builder. Confirmed this session: every checkbox-group field shared between the former Lennar launcher and Features A/B was byte-identical — same Input IDs, same order, across all twelve shared groups (style, parking, exterior, interior, fireplace, community_amenities, pool_desc, appl_equip, heating, heat_fuel, porch, unit_placement). Features A/B were already correctly built as the canonical universal source; the Lennar launcher was a correct derivation of it, just kept as a separate file unnecessarily.
+
+The session resolves every Lennar-specific value below into the `features_a` / `features_b` payload keys before generating the payload. The bookmarklet has no builder awareness anywhere in this tab.
+
+#### Pure statics (11 fields) — session resolves to a fixed value; no bookmarklet logic involved
+
+| Field | Payload key | Lennar value |
+|---|---|---|
+| Structure | `features_a.structure` | `["Input_70_03"]` (Frame) |
+| Siding | `features_a.siding` | `["Input_71_22"]` (Vinyl) |
+| Roof | `features_a.roof` | `["Input_72_12"]` (Shingled) |
+| Flooring | `features_a.flooring` | `["Input_73_17"]` (Vinyl - Plank/Tile/Stone) |
+| Attic | `features_a.attic` | `["Input_241_09"]` (Access Panel) |
+| Golf Frontage Y/N | `features_a.golf_frontage_yn` | `"0"` |
+| Water | `features_a.water` | `["Input_676_PW"]` (Public Water) |
+| Sewer/Septic | `features_a.sewer` | `["Input_670_PBLCSR"]` (Sewer - Public) |
+| Water Heater | `features_b.water_heater` | `["Input_571_01"]` (Electric) |
+| Cooling | `features_b.cooling` | `["Input_88_06"]` (Heat Pump) |
+| Wall Type | `features_b.wall_type` | `["Input_254_02"]` (Drywall) |
+
+#### Community-lookup (5 fields) — session resolves via the community table below
+
+| Field | Payload key |
+|---|---|
+| Heating | `features_b.heating` |
+| Heat Fuel | `features_b.heat_fuel` |
+| Pool Y/N | `features_b.pool_yn` |
+| Pool Description | `features_b.pool_desc` (conditional on Pool Y/N = `"1"`) |
+| Community Amenities | `features_b.community_amenities` |
+
+**Confirmed community table** (matches the five community keys in `Lennar_Bookmarklet_Customization.md`):
 
-Three-tier design:
-- **Truly static** → hardcoded; never in payload
-- **Community-variable** → looked up from `COMMUNITIES[d.community]`
-- **Payload-driven** → read from `payload.features`
-
-Community lookup provides: `heating`, `heat_fuel`, `pool_yn`, `pool_desc`, `community_amenities`
-Cooling is a Lennar static (Heat Pump — all communities). Water Heater is a Lennar static (Electric — all communities).
-Unit Placement is TH plans only — stub in; Lennar has not started specifying yet.
-
-```javascript
-(function() {
-
-  function setField(id, value) {
-    var el = document.getElementById(id);
-    if (el) { el.value = value; }
-  }
-
-  function setCheck(id, checked) {
-    var el = document.getElementById(id);
-    if (el) { el.checked = !!checked; }
-  }
-
-  function setCheckGroup(ids, selected) {
-    ids.forEach(function(id) { setCheck(id, false); });
-    (selected || []).forEach(function(id) { setCheck(id, true); });
-  }
-
-  navigator.clipboard.readText().then(function(text) {
-
-    var payload = JSON.parse(text);
-    var d = payload.features;
-    var community = payload.community;
-
-    // Community lookup table
-    var COMMUNITIES = {
-      'Harpers Mill TH': {
-        heating:             ['Input_86_07'],          // Forced Hot Air
-        heat_fuel:           ['Input_87_05'],          // Natural Gas
-        pool_yn:             '1',
-        pool_desc:           ['Input_91_02'],          // Community/Off Site
-        community_amenities: ['Input_534_01','Input_534_03','Input_534_04','Input_534_22','Input_534_47']
-        // Association, Clubhouse, Common Area, Playground, Pool
-      },
-      'Harpers Mill SF': {
-        heating:             ['Input_86_07'],          // Forced Hot Air
-        heat_fuel:           ['Input_87_05'],          // Natural Gas
-        pool_yn:             '1',
-        pool_desc:           ['Input_91_02'],          // Community/Off Site
-        community_amenities: ['Input_534_01','Input_534_03','Input_534_04','Input_534_22','Input_534_47']
-        // Association, Clubhouse, Common Area, Playground, Pool
-      },
-      'Creekside Run': {
-        heating:             ['Input_86_08'],          // Heat Pump
-        heat_fuel:           ['Input_87_02'],          // Electric
-        pool_yn:             '0',
-        pool_desc:           [],
-        community_amenities: ['Input_534_01','Input_534_04','Input_534_46','Input_534_22']
-        // Association, Common Area, Picnic Area, Playground
-      },
-      'Everstone': {
-        heating:             ['Input_86_08'],          // Heat Pump
-        heat_fuel:           ['Input_87_02'],          // Electric
-        pool_yn:             '0',
-        pool_desc:           [],
-        community_amenities: ['Input_534_01','Input_534_04','Input_534_46','Input_534_22']
-        // Association, Common Area, Picnic Area, Playground
-      },
-      'Watermark': {
-        heating:             ['Input_86_07'],          // Forced Hot Air
-        heat_fuel:           ['Input_87_05'],          // Natural Gas
-        pool_yn:             '1',
-        pool_desc:           ['Input_91_02'],          // Community/Off Site
-        community_amenities: ['Input_534_01']
-        // Association (may expand as community matures)
-      }
-    };
-
-    var c = COMMUNITIES[community];
-    if (!c) {
-      alert('Features bookmarklet — unknown community: "' + community + '". Fill tab manually.');
-      return;
-    }
-
-    // ── CHUNK 1 — STATIC + DYNAMIC ─────────────────────────────────────────
-
-    // Style — payload-driven
-    setCheckGroup([
-      'Input_541_27','Input_541_01','Input_541_02','Input_541_03','Input_541_04',
-      'Input_541_05','Input_541_33','Input_541_06','Input_541_07','Input_541_09',
-      'Input_541_10','Input_541_31','Input_541_30','Input_541_11','Input_541_28',
-      'Input_541_32','Input_541_12','Input_541_36','Input_541_29','Input_541_34',
-      'Input_541_14','Input_541_15','Input_541_16','Input_541_18','Input_541_19',
-      'Input_541_20','Input_541_21','Input_541_23','Input_541_24','Input_541_25',
-      'Input_541_26'
-    ], d.style);
-
-    // Structure — STATIC: Frame
-    setCheck('Input_70_03', true);
-
-    // Siding — STATIC: Vinyl
-    setCheck('Input_71_22', true);
-
-    // Roof — STATIC: Dimensional
-    setCheck('Input_72_07', true);
-
-    // Flooring — payload-driven
-    setCheckGroup([
-      'Input_73_16','Input_73_01','Input_73_02','Input_73_03','Input_73_15',
-      'Input_73_04','Input_73_12','Input_73_05','Input_73_06','Input_73_07',
-      'Input_73_08','Input_73_09','Input_73_10','Input_73_17','Input_73_11',
-      'Input_73_13','Input_73_14'
-    ], d.flooring);
-
-    // ── CHUNK 2 — STATIC + DYNAMIC ─────────────────────────────────────────
-
-    // Golf Frontage Y/N — STATIC: No
-    setField('Input_693', '0');
-
-    // Golf View/Frontage — SKIP (no Lennar communities have golf frontage)
-
-    // Attic — payload-driven
-    setCheckGroup([
-      'Input_241_09','Input_241_01','Input_241_07','Input_241_12','Input_241_02',
-      'Input_241_08','Input_241_03','Input_241_05','Input_241_06'
-    ], d.attic);
-
-    // Parking — payload-driven
-    setCheckGroup([
-      'Input_519_01','Input_519_02','Input_519_03','Input_519_04','Input_519_05',
-      'Input_519_06','Input_519_07','Input_519_08','Input_519_09','Input_519_10',
-      'Input_519_11','Input_519_12','Input_519_13','Input_519_14','Input_519_15',
-      'Input_519_16'
-    ], d.parking);
-
-    // Exterior — payload-driven
-    setCheckGroup([
-      'Input_570_01','Input_570_02','Input_570_47','Input_570_03','Input_570_04',
-      'Input_570_05','Input_570_35','Input_570_43','Input_570_06','Input_570_07',
-      'Input_570_08','Input_570_09','Input_570_10','Input_570_11','Input_570_12',
-      'Input_570_31','Input_570_13','Input_570_36','Input_570_14','Input_570_15',
-      'Input_570_16','Input_570_44','Input_570_17','Input_570_18','Input_570_19',
-      'Input_570_20','Input_570_21','Input_570_45','Input_570_46','Input_570_23',
-      'Input_570_32','Input_570_33','Input_570_25','Input_570_26','Input_570_27',
-      'Input_570_28','Input_570_29','Input_570_22','Input_570_24'
-    ], d.exterior);
-
-    // ── CHUNK 3 — STATIC ───────────────────────────────────────────────────
-
-    // Currently Connected Internet — payload-driven
-    setCheckGroup([
-      'Input_845_ADDINFO','Input_845_CABLE','Input_845_DSL','Input_845_FIBER',
-      'Input_845_OTHER','Input_845_SATELLITE','Input_845_UNKNOWN'
-    ], d.internet_connected);
-
-    // Internet Description — SKIP (Lennar)
-
-    // Garage Y/N — STATIC: Yes
-    setField('Input_150', '1');
-
-    // # Cars — payload-driven
-    setField('Input_226', d.num_cars || '');
-
-    // ADU Y/N — STATIC: No
-    setField('Input_861', '0');
-
-    // Basement Y/N — STATIC: No
-    setField('Input_153', '0');
-
-    // ADU Description — SKIP (ADU Y/N always No)
-
-    // ── CHUNK 4 — STATIC + DYNAMIC ─────────────────────────────────────────
-
-    // Garage — STATIC base: Attached + Auto Door Opener; payload may add more
-    setCheck('Input_539_02', true);   // Attached
-    setCheck('Input_539_03', true);   // Auto Door Opener
-    (d.garage_extra || []).forEach(function(id) { setCheck(id, true); });
-
-    // Basement/Foundation — STATIC: Slab
-    setCheck('Input_569_12', true);
-
-    // Interior — payload-driven
-    setCheckGroup([
-      'Input_568_49','Input_568_19','Input_568_50','Input_568_01','Input_568_56',
-      'Input_568_02','Input_568_03','Input_568_04','Input_568_05','Input_568_06',
-      'Input_568_07','Input_568_08','Input_568_10','Input_568_09','Input_568_11',
-      'Input_568_12','Input_568_57','Input_568_58','Input_568_59','Input_568_60',
-      'Input_568_13','Input_568_14','Input_568_15','Input_568_46','Input_568_16',
-      'Input_568_17','Input_568_55','Input_568_18','Input_568_20','Input_568_21',
-      'Input_568_62','Input_568_22','Input_568_23','Input_568_24','Input_568_48',
-      'Input_568_25','Input_568_45','Input_568_26','Input_568_28','Input_568_27',
-      'Input_568_29','Input_568_30','Input_568_47','Input_568_31','Input_568_32',
-      'Input_568_33','Input_568_61','Input_568_34','Input_568_35','Input_568_36',
-      'Input_568_37','Input_568_38','Input_568_39','Input_568_40','Input_568_41',
-      'Input_568_43','Input_568_44'
-    ], d.interior);
-
-    // Water — STATIC: Public Water (named suffix)
-    setCheck('Input_676_PW', true);
-
-    // Sewer/Septic — STATIC: Sewer - Public (named suffix)
-    setCheck('Input_670_PBLCSR', true);
-
-    // ── CHUNK 5 — STATIC + DYNAMIC ─────────────────────────────────────────
-
-    // Fenced Y/N — STATIC: No
-    setField('Input_695', '0');
-
-    // Fenced — SKIP (Fenced Y/N always No)
-
-    // Restrictions — STATIC: Assoc Restrictions
-    setCheck('Input_540_02', true);
-
-    // #FP — payload-driven
-    setField('Input_152', d.num_fp || '0');
-
-    // Fireplace — payload-driven (skip when num_fp = 0)
-    if (d.num_fp && parseInt(d.num_fp) > 0) {
-      setCheckGroup([
-        'Input_90_01','Input_90_02','Input_90_09','Input_90_03','Input_90_08',
-        'Input_90_04','Input_90_05','Input_90_06','Input_90_07'
-      ], d.fireplace);
-    }
-
-    // ── CHUNK 6 — COMMUNITY LOOKUP ─────────────────────────────────────────
-
-    // Community Amenities — from community lookup
-    setCheckGroup([
-      'Input_534_01','Input_534_02','Input_534_41','Input_534_45','Input_534_33',
-      'Input_534_03','Input_534_04','Input_534_05','Input_534_06','Input_534_07',
-      'Input_534_08','Input_534_09','Input_534_10','Input_534_11','Input_534_12',
-      'Input_534_13','Input_534_31','Input_534_14','Input_534_15','Input_534_36',
-      'Input_534_16','Input_534_17','Input_534_42','Input_534_18','Input_534_19',
-      'Input_534_29','Input_534_40','Input_534_20','Input_534_37','Input_534_21',
-      'Input_534_46','Input_534_22','Input_534_47','Input_534_23','Input_534_24',
-      'Input_534_25','Input_534_26','Input_534_43','Input_534_27','Input_534_28',
-      'Input_534_44','Input_534_32','Input_534_30','Input_534_34'
-    ], c.community_amenities);
-
-    // Green Cert — payload-driven
-    setCheckGroup([
-      'Input_85_03','Input_85_06','Input_85_02','Input_85_05',
-      'Input_85_07','Input_85_01','Input_85_04'
-    ], d.green_cert);
-
-    // Pool Y/N — from community lookup
-    setField('Input_244', c.pool_yn);
-
-    // Pool Description — from community lookup (skip when pool_yn = 0)
-    if (c.pool_yn === '1') {
-      setCheckGroup([
-        'Input_91_01','Input_91_02','Input_91_03','Input_91_04','Input_91_05',
-        'Input_91_06','Input_91_07','Input_91_08','Input_91_09','Input_91_10',
-        'Input_91_11','Input_91_12','Input_91_13','Input_91_14','Input_91_15',
-        'Input_91_16','Input_91_17','Input_91_18','Input_91_19','Input_91_20'
-      ], c.pool_desc);
-    }
-
-    // ── CHUNK 7 — DYNAMIC + STATIC ─────────────────────────────────────────
-
-    // Appl/Equip — payload-driven
-    setCheckGroup([
-      'Input_81_01','Input_81_02','Input_81_03','Input_81_04','Input_81_05',
-      'Input_81_06','Input_81_07','Input_81_08','Input_81_09','Input_81_10',
-      'Input_81_39','Input_81_11','Input_81_12','Input_81_13','Input_81_14',
-      'Input_81_15','Input_81_16','Input_81_17','Input_81_18','Input_81_19',
-      'Input_81_20','Input_81_21','Input_81_22','Input_81_23','Input_81_24',
-      'Input_81_25','Input_81_26','Input_81_27','Input_81_28','Input_81_29',
-      'Input_81_30','Input_81_31','Input_81_32','Input_81_33','Input_81_34',
-      'Input_81_35','Input_81_36','Input_81_37','Input_81_38'
-    ], d.appl_equip);
-
-    // Heating — from community lookup
-    setCheckGroup([
-      'Input_86_01','Input_86_02','Input_86_03','Input_86_04','Input_86_05',
-      'Input_86_06','Input_86_07','Input_86_19','Input_86_08','Input_86_09',
-      'Input_86_10','Input_86_11','Input_86_12','Input_86_13','Input_86_14',
-      'Input_86_15','Input_86_16','Input_86_17','Input_86_18'
-    ], c.heating);
-
-    // Water Heater — STATIC: Electric (all communities)
-    setCheck('Input_571_01', true);
-
-    // ── CHUNK 8 — STATIC + DYNAMIC ─────────────────────────────────────────
-
-    // Disabl Equipd Y/N — STATIC: No
-    setField('Input_245', '0');
-
-    // Disabl Feat — SKIP (Disabl Equipd Y/N always No)
-
-    // Heat/Fuel — from community lookup
-    setCheckGroup([
-      'Input_87_01','Input_87_02','Input_87_03','Input_87_04','Input_87_05',
-      'Input_87_06','Input_87_07','Input_87_08','Input_87_09','Input_87_10',
-      'Input_87_11'
-    ], c.heat_fuel);
-
-    // Porch — payload-driven
-    setCheckGroup([
-      'Input_92_01','Input_92_02','Input_92_03','Input_92_05','Input_92_04',
-      'Input_92_06','Input_92_07','Input_92_08','Input_92_09','Input_92_10',
-      'Input_92_11','Input_92_12','Input_92_13'
-    ], d.porch);
-
-    // ── CHUNK 9 — STATIC + DYNAMIC ─────────────────────────────────────────
-
-    // Maintenance Contract Y/N — STATIC: No
-    setField('Input_671', '0');
-
-    // Unit Placement — payload-driven; TH plans only; stub in for future use
-    if (d.unit_placement && d.unit_placement.length > 0) {
-      setCheckGroup([
-        'Input_657_01','Input_657_03','Input_657_04','Input_657_05',
-        'Input_657_06','Input_657_07','Input_657_08','Input_657_09'
-      ], d.unit_placement);
-    }
-
-    // Cooling — STATIC: Heat Pump (all communities)
-    setCheck('Input_88_06', true);
-
-    // ── CHUNK 10 — DYNAMIC ─────────────────────────────────────────────────
-
-    // Water Type — SKIP (no Lennar communities are waterfront)
-
-    // Wall Type — payload-driven
-    setCheckGroup([
-      'Input_254_09','Input_254_10','Input_254_02','Input_254_07','Input_254_08',
-      'Input_254_04','Input_254_05','Input_254_03','Input_254_01','Input_254_06'
-    ], d.wall_type);
-
-    // Building/Structure — SKIP (Lennar new construction has no outbuildings)
-
-    // Farm Type — SKIP (not applicable to Lennar new construction)
-
-    // Irrigation Source — SKIP (not applicable to Lennar new construction)
-
-  }).catch(function(e) {
-    alert('Bookmarklet error — could not read clipboard: ' + e.message);
-  });
-
-})();
 ```
+Harpers Mill TH:  heating ["Input_86_07"], heat_fuel ["Input_87_05"], pool_yn "1",
+                  pool_desc ["Input_91_02"],
+                  community_amenities ["Input_534_01","Input_534_03","Input_534_04","Input_534_22","Input_534_47"]
+Harpers Mill SF:  identical to Harpers Mill TH
+Creekside Run:    heating ["Input_86_08"], heat_fuel ["Input_87_02"], pool_yn "0", pool_desc [],
+                  community_amenities ["Input_534_01","Input_534_04","Input_534_46","Input_534_22"]
+Everstone:        identical to Creekside Run
+Watermark:        heating ["Input_86_07"], heat_fuel ["Input_87_05"], pool_yn "1",
+                  pool_desc ["Input_91_02"], community_amenities ["Input_534_01"]
+```
+
+#### Conditional-on-payload-value (not builder-specific — no bookmarklet change needed)
+
+| Field | Payload key | Resolution |
+|---|---|---|
+| Garage | `features_a.garage` | Session resolves to `["Input_539_02","Input_539_05"]` (Attached + Direct Entry) when `garage_yn === "1"`, plus `"Input_539_03"` (Auto Door Opener) if applicable, or `[]` if no garage. Features A's existing `setCheckGroup(ids, d.garage)` already accepts any array — no new payload key, no bookmarklet conditional logic needed. |
+| Basement/Foundation | `features_a.basement_foundation` | Session resolves to `["Input_569_03"]` (Crawl Space) if `basement_yn === "1"`, else `["Input_569_12"]` (Slab). |
+
+#### Already shared, no resolution needed — listing-specific regardless of builder
+
+Style, Parking, Exterior, Interior, Appl/Equip, Porch, Num Cars, Num Fp, Fireplace (Features A already implements the conditional-on-`num_fp > 0` check for this field).
+
+**Net effect: zero changes to `bookmarklets/features_a.html` or `bookmarklets/features_b.html`.** The entire merge is session-side payload resolution.

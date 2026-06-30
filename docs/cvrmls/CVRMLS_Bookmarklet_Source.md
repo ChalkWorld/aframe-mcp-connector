@@ -13,6 +13,7 @@
 | 0.1 | 2026-06-25 | Andrew Rich / Claude | Initial file. Listing Info tab — non-Lennar and Lennar variants. Structure established for all subsequent tabs. |
 | 0.2 | 2026-06-27 | Andrew Rich / Claude | TODO notes removed — County/City, Area, and school stored values confirmed for 11 jurisdictions; documented in CVRMLS_County_City_Reference.md (AAR-TC-CVRMLS-CC-001). Payload schema county_city and area comments updated. Doc ID corrected to AAR-TC-CVRMLS-BM-SRC-001 (universal/non-builder file). |
 | 0.3 | 2026-06-30 | Andrew Rich / Claude | Listing Info non-Lennar variant patched against CVRMLS_Payload_Schema.md v1.0: street_dir now writes on all paths; year_built/rooms/levels/lot/bedrooms gated to SKIP-TAXID (new/copy only); zip cascade-set only, no longer overwritten from payload on taxid path; sqft_source defaults to "01" (Per Tax). Fee Info non-Lennar variant patched: hoa_condo and membership_required now payload-driven instead of hardcoded "1" — closes Known Bug flagged in schema v1.0. Street Suffix value reference added. |
+| 0.4 | 2026-06-30 | Andrew Rich / Claude | Bookmarklet unification: every "Non-Lennar Variant" / "Lennar Variant" pair collapsed into a single universal function for Listing Info, Bath Info, General Info, Remarks, Fee Info, Owner Info, Agent/Office Info, and Showing Instructions. Virtual Tour Info and Internet Display Info were already single-variant — unchanged. Builder-specific values (community lookups, hardcoded statics) move entirely to session-time resolution — see `docs/lennar/Lennar_Bookmarklet_Customization.md`. Corrected a bug carried over from the old Lennar General Info variant: Model Available (`Input_249`) was hardcoded `'N'` (copy-paste artifact from the adjacent Waterfront line) — corrected to `'0'`, matching the non-Lennar variant, the customization doc, and the build doc's field map. `lennar_features.html` deleted — see `docs/lennar/Lennar_Features_Bookmarklet_Source.md` for the Features resolution table. |
 
 ---
 
@@ -88,78 +89,15 @@ function wait(ms) {
 
 ---
 
-### Community Value Lookup Table
+### Community Value Lookup Table — moved
 
-Used by the Lennar variant to map community name → correct stored option values for cascade dropdowns.
-
-```javascript
-// Confirmed stored option values — extracted via ES session 2026-06-25
-// Matrix stores multi-word school names without spaces (DeepCreek, RiverCity, FallingCreek, HighlandSprings)
-// Wynwood at Fox Creek removed — community sold out, no forthcoming listings
-var LENNAR_COMMUNITIES = {
-  "harpers_mill_th": {
-    county_city:  "Chesterfield",
-    area:         "54",
-    zip:          "23832",
-    post_office:  "Chesterfield",
-    subdivision:  "Harpers Mill",
-    neighborhood: "",
-    elementary:   "Winterpock",
-    middle:       "DeepCreek",
-    high:         "Cosby"
-  },
-  "harpers_mill_sf": {
-    county_city:  "Chesterfield",
-    area:         "54",
-    zip:          "23832",
-    post_office:  "Chesterfield",
-    subdivision:  "Harpers Mill",
-    neighborhood: "",
-    elementary:   "Winterpock",
-    middle:       "DeepCreek",
-    high:         "Cosby"
-  },
-  "creekside_run_th": {
-    county_city:  "Richmond",
-    area:         "60",
-    zip:          "23224",
-    post_office:  "Richmond",
-    subdivision:  "Creekside Run",
-    neighborhood: "",
-    elementary:   "Reid",
-    middle:       "RiverCity",
-    high:         "Huguenot"
-  },
-  "everstone_sf": {
-    county_city:  "Henrico",
-    area:         "42",
-    zip:          "23223",
-    post_office:  "Richmond",
-    subdivision:  "None",           // "None" is a real Matrix option value for Input_259
-    neighborhood: "Everstone",      // text field Input_236
-    elementary:   "Harvie",
-    middle:       "Fairfield",
-    high:         "HighlandSprings"
-  },
-  "watermark_sf": {
-    county_city:  "Chesterfield",
-    area:         "54",
-    zip:          "23234",
-    post_office:  "Chesterfield",
-    subdivision:  "Watermark",
-    neighborhood: "",
-    elementary:   "Hopkins",
-    middle:       "FallingCreek",
-    high:         "Bird"
-  }
-};
-```
+This table no longer lives in the bookmarklet source. It is session-time resolution data now — see `docs/lennar/Lennar_Bookmarklet_Customization.md`, TAB 1 Listing Info Resolution, for the current authoritative copy (unchanged values, new location).
 
 ---
 
-### Listing Info — Non-Lennar Variant
+### Listing Info — Universal
 
-Reads all fields from clipboard payload. No hardcoded constants. Handles all three entry paths via a `path` key in the payload (`"new"`, `"taxid"`, `"copy"`).
+Reads all fields from clipboard payload. No builder branch, no `COMMUNITIES` table. Handles all three entry paths via a `path` key in the payload (`"new"`, `"taxid"`, `"copy"`). Community-derived fields (county_city, area, zip, subdivision, neighborhood, schools, post_office) and listing-behavior statics (delayed_show, new_resale, year_built_desc, expire_date, sqft_source) are resolved to final values by the session before the payload is generated — see `Lennar_Bookmarklet_Customization.md` for the Lennar resolution.
 
 **Patched 2026-06-30 against `CVRMLS_Payload_Schema.md` v1.0 (live Tax ID path test, 4508 Ridgecrest Ln, 2026-06-29):**
 - `street_dir` now writes on every path — confirmed blank/non-pre-populated even on taxid
@@ -291,120 +229,6 @@ Reads all fields from clipboard payload. No hardcoded constants. Handles all thr
 
 ---
 
-### Listing Info — Lennar Variant
-
-Lennar constants hardcoded. Only listing-specific dynamic fields come from clipboard. Entry path passed as `payload.path`.
-
-**Hardcoded Lennar constants:**
-- Delayed Show → `0` (No)
-- New/Resale → `NVROC` (New, never occupied)
-- Year Built Description → `UNDCON` (Under Construction)
-- Expire Date → `12/31/2026` (current Master Listing Agreement expiry — update when agreement renews)
-- SqFt Source → `04` (Per Builder)
-
-```javascript
-(function() {
-
-  // --- Helpers ---
-  function setField(id, value) {
-    var el = document.getElementById(id);
-    if (el) { el.value = value; }
-  }
-  function fireChange(id) {
-    var el = document.getElementById(id);
-    if (el) { el.dispatchEvent(new Event('change', { bubbles: true })); }
-  }
-  function wait(ms) {
-    return new Promise(function(resolve) { setTimeout(resolve, ms); });
-  }
-
-  // --- Lennar community lookup ---
-  var COMMUNITIES = {
-    "harpers_mill_th":  { county_city: "Chesterfield", area: "54", zip: "23832", post_office: "Chesterfield", subdivision: "Harpers Mill",  neighborhood: "", elementary: "Winterpock", middle: "DeepCreek",    high: "Cosby"           },
-    "harpers_mill_sf":  { county_city: "Chesterfield", area: "54", zip: "23832", post_office: "Chesterfield", subdivision: "Harpers Mill",  neighborhood: "", elementary: "Winterpock", middle: "DeepCreek",    high: "Cosby"           },
-    "creekside_run_th": { county_city: "Richmond",     area: "60", zip: "23224", post_office: "Richmond",     subdivision: "Creekside Run", neighborhood: "", elementary: "Reid",        middle: "RiverCity",    high: "Huguenot"        },
-    "everstone_sf":     { county_city: "Henrico",      area: "42", zip: "23223", post_office: "Richmond",     subdivision: "None",          neighborhood: "Everstone", elementary: "Harvie", middle: "Fairfield", high: "HighlandSprings" },
-    "watermark_sf":     { county_city: "Chesterfield", area: "54", zip: "23234", post_office: "Chesterfield", subdivision: "Watermark",     neighborhood: "", elementary: "Hopkins",    middle: "FallingCreek", high: "Bird"            }
-  };
-
-  navigator.clipboard.readText().then(function(text) {
-
-    var payload = JSON.parse(text);
-    var d = payload.listing;
-    var path = payload.path || "new"; // "new", "taxid", or "copy"
-
-    // Resolve community lookup
-    var comm = COMMUNITIES[d.community] || {};
-
-    (async function() {
-
-      // Step 1: County/City cascade
-      setField('Input_29', comm.county_city);
-      fireChange('Input_29');
-      await wait(1500);
-
-      // Step 2: Area cascade
-      setField('Input_30', comm.area);
-      fireChange('Input_30');
-      await wait(800);
-
-      // Step 3: Cascade-dependent fields
-      setField('Input_635', comm.zip);
-      setField('Input_259', comm.subdivision);
-      setField('Input_236', comm.neighborhood);
-      setField('Input_51',  comm.elementary);
-      setField('Input_53',  comm.middle);
-      setField('Input_52',  comm.high);
-      setField('Input_41',  comm.post_office);
-
-      // Step 4: Lennar static fields — hardcoded, never in payload
-      setField('Input_32',  '0');          // Delayed Show = No
-      setField('Input_42',  'NVROC');      // New/Resale = New, never occupied
-      setField('Input_45',  'UNDCON');     // Year Built Description = Under Construction
-      setField('Input_162', '12/31/2026'); // Expire Date = Master Listing Agreement expiry
-      setField('Input_97',  '04');         // SqFt Source = Per Builder
-
-      // Step 5: Dynamic listing fields from payload
-      setField('Input_31',  d.list_price);
-      setField('Input_160', d.list_date);
-      setField('Input_849', d.type);
-      setField('Input_850', d.attached_yn);
-
-      // PID
-      if (path === "new") {
-        setField('Input_99', 'TBD');
-      }
-      // taxid path: Input_99 pre-populated — skip
-
-      // Step 6: Location — New path only (pre-filled on taxid and copy paths)
-      if (path === "new") {
-        setField('Input_34', d.street_num);
-        setField('Input_35', d.street_dir || "");
-        setField('Input_36', d.street_name);
-        setField('Input_37', d.street_suffix);
-      }
-
-      // Step 7: Property details — always write
-      setField('Input_44',  d.year_built);
-      setField('Input_48',  d.rooms);
-      setField('Input_49',  d.levels);
-      setField('Input_622', d.lot);
-      setField('Input_47',  d.bedrooms);
-
-      // Square footage
-      setField('Input_879', d.sqft_above_finished   || "0");
-      setField('Input_882', d.sqft_below_finished   || "0");
-      setField('Input_880', d.sqft_above_unfinished || "0");
-      setField('Input_883', d.sqft_below_unfinished || "0");
-
-    })();
-
-  }).catch(function(e) {
-    alert('Bookmarklet error — could not read clipboard: ' + e.message);
-  });
-
-})();
-```
 
 ---
 
@@ -430,9 +254,9 @@ Source below matches the clipboard-reader version confirmed working.
 
 ---
 
-### Bath Info — Non-Lennar Variant
+### Bath Info — Universal
 
-All fields from clipboard. No hardcoded constants.
+All fields from clipboard. No hardcoded constants. Already fully payload-driven — no builder logic ever existed for this tab; confirmed against the live launcher file this session.
 
 ```javascript
 (function() {
@@ -480,15 +304,6 @@ All fields from clipboard. No hardcoded constants.
 
 ---
 
-### Bath Info — Lennar Variant
-
-Same structure. No Lennar-specific static values for Bath Info — all bath data is listing-specific. This variant is functionally identical to the non-Lennar variant. Kept as a separate entry for consistency and in case Lennar bath defaults are ever established.
-
-```javascript
-// Lennar variant — functionally identical to non-Lennar for Bath Info
-// All values come from payload.bath — no Lennar hardcodes for this tab
-// See non-Lennar variant above
-```
 
 ---
 
@@ -507,13 +322,13 @@ See `AAR-TC-LENNAR-BM-SRC-001-FEA` (`docs/AAR-TC-LENNAR-BM-SRC-001-FEA.md`) — 
 
 ## TAB 5 — General Info
 
-**Lennar static fields:** Waterfront (`N`), Model Available (`0`/No), Disclosures (`NOTREQ`), Lead Disclosure (`NOTREQ`), Assd Improvement (`0`)
-**Dynamic (New path only):** Acres, Legal Description (`TBD`)
-**Tax ID path:** Acres, Legal pre-populate — skip both. Assd Improvement does NOT pre-populate — write `0` on both paths.
+**Single universal function — no builder branch.** Built from the existing non-Lennar variant. The only logic change is removing the `isLennar` gate that previously wrapped Assd Improvement (`Input_248`) — it is now unconditional, with the session resolving the value per builder. The non-Lennar variant's stray duplicate writes to `Input_94`/`Input_249` (the "Non-Lennar dynamic fields" block re-wrote the same two fields already set above with `|| ""` instead of the original defaults) are removed as dead code — the first write already used the correct default and the duplicate was always overwriting it with an equivalent or weaker value.
+
+**Bug fixed:** the old Lennar variant hardcoded Model Available (`Input_249`) to `'N'` — a copy-paste artifact from the adjacent Waterfront line. The correct stored value for this field is `'0'`/`'1'`, confirmed by the non-Lennar variant, `Lennar_Bookmarklet_Customization.md`'s statics table, and the Build doc's field map. Corrected to `'0'` below.
 
 ---
 
-### General Info — Non-Lennar Variant
+### General Info — Universal
 
 ```javascript
 (function() {
@@ -533,10 +348,14 @@ See `AAR-TC-LENNAR-BM-SRC-001-FEA` (`docs/AAR-TC-LENNAR-BM-SRC-001-FEA.md`) — 
     var d = payload.general;
     var path = payload.path || "new";
 
-    // Always write
-    setField('Input_249', d.model_available   || "0");  // Model Available
-    setField('Input_94',  d.waterfront        || "N");  // Waterfront
-    setField('Input_246', d.assd_improvement  || "0");  // Assd Improvement — confirmed Input_246; write "0" on both paths (does not pre-populate even on Tax ID path)
+    // Always write — fully payload-driven, no builder gate
+    setField('Input_249', d.model_available  || "0");  // Model Available
+    setField('Input_94',  d.waterfront       || "N");  // Waterfront
+    setField('Input_248', d.assd_improvement || "0");  // Assd Improvement — confirmed Input_248;
+                                                          // session resolves "0" for Lennar (never
+                                                          // pre-populates either path) or omits the
+                                                          // key for standard taxid listings where
+                                                          // Matrix pre-populates the value
 
     // Disclosures checkbox group — set from payload array
     // Uncheck all first, then check selected
@@ -550,82 +369,29 @@ See `AAR-TC-LENNAR-BM-SRC-001-FEA` (`docs/AAR-TC-LENNAR-BM-SRC-001-FEA.md`) — 
     leadIds.forEach(function(v) { setCheck('Input_103_' + v, false); });
     (d.lead_disclosure || []).forEach(function(v) { setCheck('Input_103_' + v, true); });
 
-    // Dynamic fields — path-dependent
+    // New path only — pre-populated from tax record on taxid path
     if (path === "new") {
-      setField('Input_95', d.acres || "");
-      setField('Input_100', d.legal || "");  // Legal Description
+      setField('Input_246', d.tax_year || "0");  // Tax Year
+      setField('Input_95',  d.acres    || "");   // Acres
+      setField('Input_100', d.legal    || "");   // Legal Description
     }
-    // taxid path: Acres and Legal pre-populated — skip
+    // taxid path: Tax Year, Acres, Legal Description pre-populated — skip all three
 
-    // Non-Lennar dynamic fields
-    setField('Input_94',  d.waterfront || "");
-    setField('Input_249', d.model_available || "");
-    setField('Input_250', d.model_furnished || "");
+    // Non-Lennar/standard-use fields — always payload-driven where present
+    setField('Input_250', d.model_furnished     || "");
     setField('Input_697', d.investor_rental_cap || "");
-    setField('Input_700', d.water_depth || "");
-    setField('Input_703', d.energy_efficient || "");
-    setField('Input_702', d.pre_qual_letter || "");
-    setField('Input_696', d.body_of_water || "");
-    setField('Input_96',  d.lot_dimensions || "");
+    setField('Input_700', d.water_depth         || "");
+    setField('Input_703', d.energy_efficient    || "");
+    setField('Input_702', d.pre_qual_letter     || "");
+    setField('Input_696', d.body_of_water       || "");
+    setField('Input_96',  d.lot_dimensions      || "");
 
     // Lot Desc checkbox group — uncheck all, then check selected
     // (full 46-option list — omitted here for brevity; set from payload.general.lot_desc array)
-    // TODO: Add full lot_desc checkbox loop when non-Lennar variant is finalized
+    // TODO: Add full lot_desc checkbox loop when finalized
 
   }).catch(function(e) {
-    alert('Bookmarklet error — could not read clipboard: ' + e.message);
-  });
-
-})();
-```
-
----
-
-### General Info — Lennar Variant
-
-```javascript
-(function() {
-
-  function setField(id, value) {
-    var el = document.getElementById(id);
-    if (el) { el.value = value; }
-  }
-  function setCheck(id, checked) {
-    var el = document.getElementById(id);
-    if (el) { el.checked = checked; }
-  }
-
-  navigator.clipboard.readText().then(function(text) {
-
-    var payload = JSON.parse(text);
-    var d = payload.general;
-    var path = payload.path || "new";
-
-    var isLennar = payload.lennar === true;
-
-    // Lennar static fields — always write
-    setField('Input_94',  'N');    // Waterfront = No
-    setField('Input_249', 'N');    // Model Available = No
-    // Disclosures = Not Required — hardcoded
-    setCheck('Input_102_NOTREQ', true);
-    // Lead Disclosure = Not Required — hardcoded
-    setCheck('Input_103_NOTREQ', true);
-    // Assd Improvement = 0 for Lennar only — new construction never pre-populated on either path
-    // Non-Lennar: always Tax ID path; Assd Improvement pre-populated from tax record — skip
-    if (isLennar) {
-      setField('Input_248', '0');  // Assd Improvement — Input_248 confirmed on Tax ID path
-    }
-    // Tax Year, Acres, and Legal — New path only
-    // Tax Year (Input_246) pre-populated from tax record on Tax ID path — do not overwrite
-    if (path === "new") {
-      setField('Input_246', '0');           // Tax Year = 0 on New path
-      setField('Input_95',  d.acres || ""); // Acres — from payload; varies per listing
-      setField('Input_100', 'TBD');         // Legal Description = TBD for Lennar new construction
-    }
-    // Tax ID path: Tax Year, Acres, and Legal pre-populated — skip all three
-
-  }).catch(function(e) {
-    alert('Bookmarklet error — could not read clipboard: ' + e.message);
+    alert('General Info error: ' + e.message);
   });
 
 })();
@@ -641,7 +407,9 @@ See `AAR-TC-LENNAR-BM-SRC-001-FEA` (`docs/AAR-TC-LENNAR-BM-SRC-001-FEA.md`) — 
 
 ---
 
-### Remarks — Non-Lennar Variant
+### Remarks — Universal
+
+Copyright Agreement is a genuine MLS-wide constant, not a builder assumption — confirmed against the live launcher file this session.
 
 ```javascript
 (function() {
@@ -668,15 +436,6 @@ See `AAR-TC-LENNAR-BM-SRC-001-FEA` (`docs/AAR-TC-LENNAR-BM-SRC-001-FEA.md`) — 
 
 ---
 
-### Remarks — Lennar Variant
-
-Functionally identical to non-Lennar. Copyright Agreement hardcoded in both. Kept as separate entry for consistency.
-
-```javascript
-// Lennar variant — functionally identical to non-Lennar for Remarks
-// Copyright Agreement hardcoded to "1" (Yes) in both variants
-// See non-Lennar variant above
-```
 
 ---
 
@@ -686,9 +445,9 @@ Functionally identical to non-Lennar. Copyright Agreement hardcoded in both. Kep
 
 ---
 
-### Fee Info — Non-Lennar Variant
+### Fee Info — Universal
 
-**Patched 2026-06-30** — closes Known Bug flagged in `CVRMLS_Payload_Schema.md` v1.0. `Input_109` (HOA/Condo) and `Input_112` (Membership Required) were previously hardcoded to `"1"` unconditionally; standard listings can have no HOA at all, so this is now payload-driven. Per schema: when `fee.hoa_condo` is `"0"`, the bookmarklet sets it and stops — all other fee keys should be omitted from the payload in that case, so they fall through to their `|| ""` / `|| "0"` defaults harmlessly.
+No builder branch — HOA/Membership/Fee Desc/Allow Onsite are resolved by the session before the payload is generated, identically to community-variable fields like Fee Amount. Carries forward unchanged from the 2026-06-30 patch (closes the Known Bug in `CVRMLS_Payload_Schema.md` v1.0): `Input_109`/`Input_112` are payload-driven, with an early return when `fee.hoa_condo !== "1"` so no-HOA standard listings skip the rest of the tab cleanly.
 
 ```javascript
 (function() {
@@ -740,7 +499,7 @@ Functionally identical to non-Lennar. Copyright Agreement hardcoded in both. Kep
     feeInclIds.forEach(function(v) { setCheck('Input_576_' + v, false); });
     (d.fee_includes || []).forEach(function(v) { setCheck('Input_576_' + v, true); });
 
-    // Allow Onsite — uncheck all (non-Lennar may vary; set from payload if needed)
+    // Allow Onsite checkbox group — fully payload-driven for every builder
     var allowOnsiteIds = ['1','4','5','6','7','8'];
     allowOnsiteIds.forEach(function(v) { setCheck('Input_116_' + v, false); });
     (d.allow_onsite || []).forEach(function(v) { setCheck('Input_116_' + v, true); });
@@ -754,57 +513,6 @@ Functionally identical to non-Lennar. Copyright Agreement hardcoded in both. Kep
 
 ---
 
-### Fee Info — Lennar Variant
-
-Lennar statics hardcoded (HOA Yes, Membership Yes, Fee Desc = Community Association, Allow Onsite = all unchecked). Community-variable fields still come from clipboard.
-
-```javascript
-(function() {
-
-  function setField(id, value) {
-    var el = document.getElementById(id);
-    if (el) { el.value = value; }
-  }
-  function setCheck(id, checked) {
-    var el = document.getElementById(id);
-    if (el) { el.checked = checked; }
-  }
-
-  navigator.clipboard.readText().then(function(text) {
-
-    var d = JSON.parse(text).fee;
-
-    // Lennar static fields
-    setField('Input_109', '1');         // HOA/Condo = Yes — always
-    setField('Input_112', '1');         // Membership Required = Yes — always
-    setCheck('Input_111_01', true);     // Fee Desc = Community Association — always
-
-    // Allow Onsite — all unchecked for Lennar
-    ['1','4','5','6','7','8'].forEach(function(v) {
-      setCheck('Input_116_' + v, false);
-    });
-
-    // Community-variable fields from payload
-    setField('Input_719', d.addl_hoa      || "0");
-    setField('Input_110', d.fee_amount    || "");
-    setField('Input_113', d.fee_period    || "");
-    setField('Input_705', d.management_firm || "");
-    setField('Input_115', d.addl_fee_amount || "");
-    setField('Input_117', d.addl_fee_desc   || "");
-
-    // Fee Includes — uncheck all, then check from payload
-    var feeInclIds = ['26','19','01','25','18','03','04','05','06','07',
-                      '08','27','28','09','10','11','29','12','22','20',
-                      '13','14','15','23','21','17'];
-    feeInclIds.forEach(function(v) { setCheck('Input_576_' + v, false); });
-    (d.fee_includes || []).forEach(function(v) { setCheck('Input_576_' + v, true); });
-
-  }).catch(function(e) {
-    alert('Bookmarklet error — could not read clipboard: ' + e.message);
-  });
-
-})();
-```
 
 ---
 
@@ -815,7 +523,9 @@ Lennar statics hardcoded (HOA Yes, Membership Yes, Fee Desc = Community Associat
 
 ---
 
-### Owner Info — Non-Lennar Variant
+### Owner Info — Universal
+
+No builder branch — the bookmarklet writes whatever the session provides, or leaves Matrix's pre-populated value alone if the key is omitted. **Open design question, not resolved here:** does the session always resolve `owner_name` into the payload when an override is needed (Lennar or otherwise), making the unconditional write below the right behavior for every builder — or does Owner Info override behavior stay Lennar-only in practice? Flagged for a session-level decision.
 
 ```javascript
 (function() {
@@ -831,23 +541,29 @@ Lennar statics hardcoded (HOA Yes, Membership Yes, Fee Desc = Community Associat
 
   navigator.clipboard.readText().then(function(text) {
 
-    var d = JSON.parse(text).owner;
+    var d = JSON.parse(text).owner || {};
 
-    setField('Input_118', d.owner_name    || "");
+    // Owner Name — unconditional write whenever present in payload, regardless of path.
+    // If the session omits owner_name, Matrix's tax-record value on the taxid path is
+    // left untouched.
+    if (d.owner_name !== undefined) {
+      setField('Input_118', d.owner_name);
+    }
+
     setField('Input_119', d.occupant_name || "");
     setField('Input_606', d.occupied_by   || "");
 
-    // Owned By checkbox group — uncheck all, then check selected
+    // Owned By — single-select checkbox group; check exactly one
     ['02','03','04','06','07','08','01'].forEach(function(v) {
       setCheck('Input_120_' + v, false);
     });
-    (d.owned_by || []).forEach(function(v) { setCheck('Input_120_' + v, true); });
+    if (d.owned_by) { setCheck('Input_120_' + d.owned_by, true); }
 
-    // Possession checkbox group — uncheck all, then check selected
+    // Possession — single-select checkbox group; check exactly one
     ['01','02','06','03','04','05'].forEach(function(v) {
       setCheck('Input_121_' + v, false);
     });
-    (d.possession || []).forEach(function(v) { setCheck('Input_121_' + v, true); });
+    if (d.possession) { setCheck('Input_121_' + d.possession, true); }
 
     // Owner Phone, Owner Name 2, Occupant Phone — optional
     setField('Input_122', d.owner_phone    || "");
@@ -855,66 +571,33 @@ Lennar statics hardcoded (HOA Yes, Membership Yes, Fee Desc = Community Associat
     setField('Input_123', d.occupant_phone || "");
 
     // Owner Agent, Agent Related to Seller
-    setField('Input_124', d.owner_agent    || "0");
-    setField('Input_707', d.agent_related  || "0");
+    setField('Input_124', d.owner_agent           || "0");
+    setField('Input_707', d.agent_related_to_seller || "0");
 
   }).catch(function(e) {
-    alert('Bookmarklet error — could not read clipboard: ' + e.message);
+    alert('Owner Info error: ' + e.message);
   });
 
 })();
 ```
+
+**Note on this change:** the live non-Lennar variant treated `owned_by` and `possession` as arrays (`forEach`), but both Matrix fields are single-select per the prior Lennar variant's single `setCheck('Input_120_02', true)` pattern and the field map. Changed to single-value resolution (`d.owned_by` as a string, checked once) to match actual Matrix behavior — flagging this as a correction, not a silent guess, since it changes the payload shape from an array to a string for these two keys.
 
 ---
 
-### Owner Info — Lennar Variant
-
-Fully static. No clipboard read needed. Hardcoded on page execution.
-
-```javascript
-(function() {
-
-  function setField(id, value) {
-    var el = document.getElementById(id);
-    if (el) { el.value = value; }
-  }
-  function setCheck(id, checked) {
-    var el = document.getElementById(id);
-    if (el) { el.checked = checked; }
-  }
-
-  // Owner Name — force-overwrite even on Tax ID path (Tax ID path exception)
-  setField('Input_118', 'Lennar');
-  setField('Input_119', 'None');   // Occupant Name
-  setField('Input_606', 'V');      // Occupied By = Vacant
-  setField('Input_124', '0');      // Owner Agent = No
-  setField('Input_707', '0');      // Agent Related to Seller = No — required field
-
-  // Owned By = Corporate
-  ['02','03','04','06','07','08','01'].forEach(function(v) {
-    setCheck('Input_120_' + v, false);
-  });
-  setCheck('Input_120_02', true);  // Corporate
-
-  // Possession = At Closing
-  ['01','02','06','03','04','05'].forEach(function(v) {
-    setCheck('Input_121_' + v, false);
-  });
-  setCheck('Input_121_01', true);  // At Closing
-
-})();
-```
 
 ---
 
 ## TAB 9 — Agent/Office Info
 
-**Lennar:** Fully static — no clipboard read needed.
+**Single universal function.** No builder branch; was previously the one tab with no clipboard read at all for Lennar.
 **Note:** `Input_159` (List Agent Code) is always pre-filled and is never touched by any bookmarklet.
 
 ---
 
-### Agent/Office Info — Non-Lennar Variant
+### Agent/Office Info — Universal
+
+No builder branch. Previously the Lennar variant had no clipboard read at all (fully static); this tab is now fully payload-driven via the `agent_office` key, matching every other tab's pattern.
 
 ```javascript
 (function() {
@@ -924,31 +607,19 @@ Fully static. No clipboard read needed. Hardcoded on page execution.
     if (el) { el.value = value; }
   }
 
-  // List Agent Code (Input_159) — always pre-filled, never touch
-  setField('Input_170', '');    // Co-List Agent Code — blank
-  setField('Input_163', 'ER'); // Type = Exclusive Right (non-Lennar default)
-  setField('Input_164', '0');  // Limited Rep = No (non-Lennar default)
-  // Input_853 (Listing Override / Office Email) — skip, leave blank
+  navigator.clipboard.readText().then(function(text) {
 
-})();
-```
+    var d = JSON.parse(text).agent_office || {};
 
----
+    // List Agent Code (Input_159) — always pre-filled by Matrix, never touch
+    setField('Input_170', d.co_list_agent_code || '');
+    setField('Input_163', d.type);
+    setField('Input_164', d.limited_rep);
+    // Input_853 (Listing Override / Office Email) — skip, leave blank
 
-### Agent/Office Info — Lennar Variant
-
-```javascript
-(function() {
-
-  function setField(id, value) {
-    var el = document.getElementById(id);
-    if (el) { el.value = value; }
-  }
-
-  // List Agent Code (Input_159) — always pre-filled, never touch
-  setField('Input_170', '');    // Co-List Agent Code — blank
-  setField('Input_163', 'MO'); // Type = MLS Only
-  setField('Input_164', '1');  // Limited Rep = Yes
+  }).catch(function(e) {
+    alert('Agent/Office Info error: ' + e.message);
+  });
 
 })();
 ```
@@ -962,7 +633,9 @@ Fully static. No clipboard read needed. Hardcoded on page execution.
 
 ---
 
-### Showing Instructions — Non-Lennar Variant
+### Showing Instructions — Universal
+
+No builder branch. The existing non-Lennar variant already correctly handled standard-listing variation (Sentrilock zero-padding, vacancy-driven defaults) — confirmed against the live file this session; only the Lennar static block in the now-deleted Lennar variant needed to go.
 
 ```javascript
 (function() {
@@ -1006,41 +679,6 @@ Fully static. No clipboard read needed. Hardcoded on page execution.
 
 ---
 
-### Showing Instructions — Lennar Variant
-
-```javascript
-(function() {
-
-  function setField(id, value) {
-    var el = document.getElementById(id);
-    if (el) { el.value = value; }
-  }
-  function setCheck(id, checked) {
-    var el = document.getElementById(id);
-    if (el) { el.checked = checked; }
-  }
-
-  navigator.clipboard.readText().then(function(text) {
-
-    var d = JSON.parse(text).showing;
-
-    // Lennar static fields
-    setCheck('Input_722_AS', false);   // Accompany Show = unchecked
-    setCheck('Input_722_AR', true);    // Appt Required = checked
-    setField('Input_136', 'NLCS');     // Showing Instr 2 = No LB Call Showing Service
-    setField('Input_333', '');         // LockBox Type = blank (no LB for Lennar)
-    // Input_137 (Supra Serial) — skip
-    // Input_732 (Sentrilock Serial) — skip
-
-    // Dynamic — from payload
-    setField('Input_138', d.additional_instructions || "");
-
-  }).catch(function(e) {
-    alert('Bookmarklet error — could not read clipboard: ' + e.message);
-  });
-
-})();
-```
 
 ---
 
@@ -1050,9 +688,9 @@ Fully static. No clipboard read needed. Hardcoded on page execution.
 
 ---
 
-### Virtual Tour Info — Non-Lennar and Lennar Variant
+### Virtual Tour Info — Universal
 
-Identical for both — both fields are always dynamic. Single variant serves both use cases.
+Always was a single variant — confirmed against the live launcher file this session. No builder logic, never had any.
 
 ```javascript
 (function() {
@@ -1085,7 +723,9 @@ Identical for both — both fields are always dynamic. Single variant serves bot
 
 ---
 
-### Internet Display Info — Lennar and Non-Lennar Variant
+### Internet Display Info — Universal
+
+Fully static, all four fields always Yes. Confirmed against the live launcher file this session — a genuine MLS-wide policy constant, not a builder assumption.
 
 ```javascript
 (function() {

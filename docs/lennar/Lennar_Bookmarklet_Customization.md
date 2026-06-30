@@ -17,22 +17,22 @@
 
 ## Purpose
 
-This file contains every Lennar-specific customization on top of the universal CVRMLS bookmarklet source. It is not a standalone document — it is read alongside `CVRMLS_Bookmarklet_Source.md`. The universal source defines the field structure and universal variant JS; this file defines what changes for Lennar.
+This file contains every Lennar-specific value that the session resolves into the payload before a listing's bookmarklets are run. It is not a standalone document — it is read alongside `CVRMLS_Bookmarklet_Source.md`, which defines the universal, builder-agnostic bookmarklet JS. As of this session, no bookmarklet contains any Lennar-aware branching, lookup table, or hardcoded static — every value in this file is resolved by the session at listing intake and written directly into the payload as a final value. The bookmarklet's job is unchanged regardless of where a value came from: read `payload.<tab>.<field>`, write it to the Matrix field.
 
-**When building a Lennar launcher:** start from the universal variant in the CVRMLS source, then apply the overrides documented here.
+**When generating a Lennar payload:** look up every value this doc specifies for the relevant tabs, resolve it (community lookup or static), and write the resolved value into the payload JSON before handing it to Andrew to copy.
 
 ---
 
 ## How Lennar Customization Works
 
-**The `lennar` flag:** All Lennar payloads include a top-level `"lennar": true` key. Bookmarklets read `payload.lennar === true` as `isLennar` to gate Lennar-specific field writes. Non-Lennar payloads omit the key entirely — never include `"lennar": false`.
+**No flag, no bookmarklet-side branching.** Bookmarklets contain zero builder-specific logic — no `isLennar` check, no `COMMUNITIES` table, no `payload.lennar` read. A `lennar` or `builder` key may still be useful as an informational header on the payload (so a future session or tooling can tell what kind of payload it's looking at), but no bookmarklet's field-writing logic reads it.
 
-**Three tiers of Lennar field behavior:**
-- **Static** — hardcoded value, fires automatically every run, same for all Lennar listings
-- **Community lookup** — driven by `payload.listing.community` key; values resolved from the `COMMUNITIES` table inside the bookmarklet JS
-- **Dynamic** — read from the clipboard payload; varies by listing (same as universal)
+**Three tiers of Lennar field behavior — now all resolved session-side:**
+- **Static** — the session writes the same hardcoded value into every Lennar payload; the bookmarklet just sees it as a normal payload value, same as anything listing-specific
+- **Community lookup** — the session resolves `community` against the table in this doc and writes the resolved value(s) directly into the payload; the bookmarklet never sees a community key or a lookup table
+- **Dynamic** — read from the clipboard payload; varies by listing (unchanged)
 
-**Builder flag pattern is extensible.** Any future builder uses the same pattern with its own flag key. The `isLennar` check is the template.
+**Builder pattern is extensible.** Any future builder uses the same pattern: a reference doc the session consults at listing intake, resolving values into the payload before generation. No bookmarklet changes are ever needed to onboard a new builder.
 
 ---
 
@@ -323,248 +323,108 @@ No Lennar-specific static values for Bath Info. All bath data is listing-specifi
 
 ---
 
-## TAB 4 — Features — Lennar Variant
+## TAB 4 — Features — Lennar Resolution
 
-**Source addendum:** Lennar Features variant lives in `AAR-TC-LENNAR-BM-SRC-001-FEA` (`docs/lennar/Lennar_Features_Bookmarklet_Source.md`). See that file for the full Lennar Features JS.
+**`bookmarklets/lennar_features.html` is deleted.** It is not merged into a new file — `bookmarklets/features_a.html` and `bookmarklets/features_b.html` were confirmed this session to already be fully universal, payload-driven, and syntax-valid. Every checkbox-group field shared between the old Lennar launcher and Features A/B was confirmed byte-identical (same Input IDs, same order) — Features A/B were already correctly built as the canonical source the Lennar launcher was derived from.
 
-**Lennar static fields hardcoded in that file:** Structure, Siding, Roof (Shingled — `Input_72_12`), Flooring (Vinyl - Plank/Tile/Stone), Attic (Access Panel), Wall Type (Drywall), Golf Frontage Y/N, Water (Public Water), Sewer/Septic (Sewer - Public), Basement/Foundation (conditional — Slab when Basement Y/N = No, Crawl Space when Yes), Water Heater (Electric), Cooling (Heat Pump).
+**Full field-by-field classification and the per-community lookup table now live in `docs/lennar/Lennar_Features_Bookmarklet_Source.md`** — see that file's companion handoff for the resolution table covering all 49 field groups: 11 pure statics, 5 community-lookup fields, the garage/basement conditional resolution, and the fields requiring no resolution at all (already shared, listing-specific regardless of builder).
 
-**Dynamic fields (Garage Y/N and Basement Y/N):** These are payload-driven, not hardcoded — `features.garage_yn` and `features.basement_yn`. Garage Attached + Direct Entry auto-check when garage_yn = `"1"`; Slab/Crawl Space auto-check based on basement_yn value. Garage Auto Door Opener is also dynamic (`features.garage_auto_door`).
-
-**Skip entirely for Lennar (EXCL — not written):** ADU Y/N, Fenced Y/N, Restrictions, Disabl Equipd Y/N, Maintenance Contract Y/N, Golf View/Frontage description, Internet Connected/Description, ADU Description, Fenced description, Water Type, Building/Structure type, Farm Type, Irrigation Source, Disabl Feat, Other Heating/Heat/Fuel/Cooling Description fields.
+No bookmarklet-side conditional logic (garage_yn-driven checkbox sets, basement_yn-driven Slab/Crawl Space selection) survives — Features A's existing `setCheckGroup(ids, d.garage)` / `setCheckGroup(ids, d.basement_foundation)` pattern already accepts any array. The session resolves the correct array for Lennar and writes it directly; no new payload keys or bookmarklet changes were needed.
 
 ---
 
-## TAB 5 — General Info — Lennar Variant
+## TAB 5 — General Info — Lennar Resolution
 
-**Lennar statics hardcoded:** Waterfront (`N`), Model Available (`0`), Disclosures (`NOTREQ`), Lead Disclosure (`NOTREQ`), Assd Improvement (`0` via `isLennar` flag).
-**Path-dependent:** Tax Year (`Input_246`) and Acres written on new path only; taxid path pre-populates both — skip.
-**isLennar flag:** Assd Improvement write gated behind `payload.lennar === true` — non-Lennar listings have this pre-populated from tax record on taxid path; must not overwrite.
+**Session resolves these values into the `general` payload key for every Lennar listing.** The bookmarklet (now universal — see `CVRMLS_Bookmarklet_Source.md`) has no builder awareness; it just writes whatever is in the payload.
 
-```javascript
-(function() {
-
-  function setField(id, value) {
-    var el = document.getElementById(id);
-    if (el) { el.value = value; }
-  }
-  function setCheck(id, checked) {
-    var el = document.getElementById(id);
-    if (el) { el.checked = checked; }
-  }
-
-  navigator.clipboard.readText().then(function(text) {
-
-    var payload = JSON.parse(text);
-    var d = payload.general || {};
-    var path = payload.path || "new";
-    var isLennar = payload.lennar === true;
-
-    // Lennar static fields — always write
-    setField('Input_94',  'N');   // Waterfront = No
-    setField('Input_249', '0');   // Model Available = No
-
-    // Disclosures = Not Required
-    setCheck('Input_102_NOTREQ', true);
-    // Lead Disclosure = Not Required
-    setCheck('Input_103_NOTREQ', true);
-
-    // Assd Improvement — Lennar only
-    // Non-Lennar: always taxid path; pre-populated from tax record — must not overwrite
-    if (isLennar) {
-      setField('Input_248', '0'); // Assd Improvement = 0; Input_248 confirmed on taxid path
-    }
-
-    // New path only
-    if (path === "new") {
-      setField('Input_246', '0');           // Tax Year = 0 on new path
-      setField('Input_95',  d.acres || ""); // Acres — from payload
-      setField('Input_100', 'TBD');         // Legal Description = TBD for Lennar new construction
-    }
-    // taxid path: Tax Year, Acres, and Legal pre-populated — skip all three
-
-  }).catch(function(e) {
-    alert('Bookmarklet error — could not read clipboard: ' + e.message);
-  });
-
-})();
-```
+| Field | Payload key | Lennar value | Notes |
+|---|---|---|---|
+| Waterfront | `general.waterfront` | `"N"` | Always |
+| Model Available | `general.model_available` | `"0"` | Always |
+| Disclosures | `general.disclosures` | `["NOTREQ"]` | Always |
+| Lead Disclosure | `general.lead_disclosure` | `["NOTREQ"]` | Always |
+| Assd Improvement | `general.assd_improvement` | `"0"` | Always — Lennar never pre-populates on either path, unlike standard listings |
+| Tax Year | `general.tax_year` | `"0"` | New path only — omit on taxid path (Matrix pre-populates) |
+| Acres | `general.acres` | from email/listing data | New path only — omit on taxid path |
+| Legal Description | `general.legal` | `"TBD"` | New path only — omit on taxid path |
 
 ---
 
-## TAB 6 — Remarks — Lennar
+## TAB 6 — Remarks
 
-No Lennar-specific behavior. **Use the universal variant** from `CVRMLS_Bookmarklet_Source.md`. Copyright Agreement is hardcoded to `1` (Yes) in the universal variant — no override needed.
+No Lennar-specific resolution needed. This tab is fully universal — see `CVRMLS_Bookmarklet_Source.md`. Copyright Agreement is a genuine MLS-wide constant, confirmed against the live file this session, not a Lennar-only assumption.
 
 ---
 
-## TAB 7 — Fee Info — Lennar Variant
+## TAB 7 — Fee Info — Lennar Resolution
 
-**Lennar statics hardcoded:** HOA/Condo (`1`), Membership Required (`1`), Fee Desc = Community Association (`01`), Allow Onsite = all unchecked.
-**Community-variable fields still come from payload** — fee amounts, period, management firm, fee includes, and additional fee data differ by community.
+**Session resolves these values into the `fee` payload key for every Lennar listing**, alongside the per-community values from the Fee Info table below. The bookmarklet treats every field on this tab identically — no special casing.
 
-```javascript
-(function() {
+| Field | Payload key | Lennar value |
+|---|---|---|
+| HOA/Condo | `fee.hoa_condo` | `"1"` — always |
+| Membership Required | `fee.membership_required` | `"1"` — always |
+| Fee Desc | `fee.fee_desc` | `["01"]` (Community Association) — always |
+| Allow Onsite | `fee.allow_onsite` | `[]` (all unchecked) — always |
 
-  function setField(id, value) {
-    var el = document.getElementById(id);
-    if (el) { el.value = value; }
-  }
-  function setCheck(id, checked) {
-    var el = document.getElementById(id);
-    if (el) { el.checked = checked; }
-  }
-
-  navigator.clipboard.readText().then(function(text) {
-
-    var d = JSON.parse(text).fee;
-
-    // Lennar static fields
-    setField('Input_109', '1');         // HOA/Condo = Yes — always
-    setField('Input_112', '1');         // Membership Required = Yes — always
-    setCheck('Input_111_01', true);     // Fee Desc = Community Association — always
-
-    // Allow Onsite — all unchecked for Lennar
-    ['1','4','5','6','7','8'].forEach(function(v) {
-      setCheck('Input_116_' + v, false);
-    });
-
-    // Community-variable fields from payload
-    setField('Input_719', d.addl_hoa       || "0");
-    setField('Input_110', d.fee_amount     || "");
-    setField('Input_113', d.fee_period     || "");
-    setField('Input_705', d.management_firm || "");
-    setField('Input_115', d.addl_fee_amount || "");
-    setField('Input_117', d.addl_fee_desc   || "");
-
-    // Fee Includes — uncheck all, then check from payload
-    var feeInclIds = ['26','19','01','25','18','03','04','05','06','07',
-                      '08','27','28','09','10','11','29','12','22','20',
-                      '13','14','15','23','21','17'];
-    feeInclIds.forEach(function(v) { setCheck('Input_576_' + v, false); });
-    (d.fee_includes || []).forEach(function(v) { setCheck('Input_576_' + v, true); });
-
-  }).catch(function(e) {
-    alert('Bookmarklet error — could not read clipboard: ' + e.message);
-  });
-
-})();
-```
+Community-variable fields (`addl_hoa`, `fee_amount`, `fee_period`, `management_firm`, `addl_fee_amount`, `addl_fee_desc`, `fee_includes`) are resolved per-community from the Fee Info table in `Lennar_Bookmarklet_Build_Notes.md`, same as before.
 
 ---
 
 ## TAB 8 — Owner Info — Lennar Variant
 
 **Fully static — no clipboard payload needed.**
-**Tax ID path exception:** `Input_118` (Owner Name) will be pre-filled with tax record data on taxid path. Force-overwrite to `Lennar` regardless — this is the one field that always overwrites even on taxid path.
+**Open design question, not resolved here:** does the session always resolve `owner_name` into the payload when an override is needed (Lennar or otherwise), or does this override behavior stay Lennar-only in practice? Flagged for a session-level decision — see `CVRMLS_Bookmarklet_Source.md` TAB 8 for the unconditional-write side of this that the bookmarklet now implements.
 
-```javascript
-(function() {
+**Session resolves these values into the `owner` payload key for every Lennar listing:**
 
-  function setField(id, value) {
-    var el = document.getElementById(id);
-    if (el) { el.value = value; }
-  }
-  function setCheck(id, checked) {
-    var el = document.getElementById(id);
-    if (el) { el.checked = checked; }
-  }
-
-  // Owner Name — force-overwrite even on taxid path
-  setField('Input_118', 'Lennar');
-  setField('Input_119', 'None');   // Occupant Name
-  setField('Input_606', 'V');      // Occupied By = Vacant
-  setField('Input_124', '0');      // Owner Agent = No
-  setField('Input_707', '0');      // Agent Related to Seller = No — required field
-
-  // Owned By = Corporate
-  ['02','03','04','06','07','08','01'].forEach(function(v) {
-    setCheck('Input_120_' + v, false);
-  });
-  setCheck('Input_120_02', true);  // Corporate
-
-  // Possession = At Closing
-  ['01','02','06','03','04','05'].forEach(function(v) {
-    setCheck('Input_121_' + v, false);
-  });
-  setCheck('Input_121_01', true);  // At Closing
-
-})();
-```
+| Field | Payload key | Lennar value |
+|---|---|---|
+| Owner Name | `owner.owner_name` | `"Lennar"` — written unconditionally (force-overwrite even on taxid path) |
+| Occupant Name | `owner.occupant_name` | `"None"` |
+| Occupied By | `owner.occupied_by` | `"V"` (Vacant) |
+| Owner Agent | `owner.owner_agent` | `"0"` (No) |
+| Agent Related to Seller | `owner.agent_related_to_seller` | `"0"` (No) |
+| Owned By | `owner.owned_by` | `"02"` (Corporate) |
+| Possession | `owner.possession` | `"01"` (At Closing) |
 
 ---
 
-## TAB 9 — Agent/Office Info — Lennar Variant
+## TAB 9 — Agent/Office Info — Lennar Resolution
 
-**Fully static — no clipboard payload needed.**
-**Lennar difference from universal:** Type = `MO` (MLS Only), Limited Rep = `1` (Yes).
+**Session resolves these values into the `agent_office` payload key for every Lennar listing.** This tab previously had no clipboard read at all (fully static); the bookmarklet is now fully payload-driven, matching every other tab.
 
-```javascript
-(function() {
+| Field | Payload key | Lennar value |
+|---|---|---|
+| Type | `agent_office.type` | `"MO"` (MLS Only) |
+| Limited Rep | `agent_office.limited_rep` | `"1"` (Yes) |
 
-  function setField(id, value) {
-    var el = document.getElementById(id);
-    if (el) { el.value = value; }
-  }
-
-  // List Agent Code (Input_159) — always pre-filled, never touch
-  setField('Input_170', '');    // Co-List Agent Code — blank
-  setField('Input_163', 'MO'); // Type = MLS Only (Lennar-specific)
-  setField('Input_164', '1');  // Limited Rep = Yes (Lennar-specific)
-
-})();
-```
+`co_list_agent_code` is not builder-specific — it comes from the agent profile regardless of builder; see `New_Seller_Side_Session_Protocol.md`.
 
 ---
 
-## TAB 10 — Showing Instructions — Lennar Variant
+## TAB 10 — Showing Instructions — Lennar Resolution
 
-**Lennar statics hardcoded:** Accompany Show (unchecked), Appt Required (checked), Showing Instr 2 = `NLCS`, LockBox Type = blank.
-**Dynamic from payload:** Additional Instructions only.
+**Session resolves these values into the `showing` payload key for every Lennar listing.**
 
-```javascript
-(function() {
+| Field | Payload key | Lennar value |
+|---|---|---|
+| Accompany Show | `showing.accompany_show` | `false` — always |
+| Appt Required | `showing.appt_required` | `true` — always |
+| Showing Instr 2 | `showing.showing_instr_2` | `"NLCS"` — always |
+| LockBox Type | `showing.lockbox_type` | `""` (blank) — always |
 
-  function setField(id, value) {
-    var el = document.getElementById(id);
-    if (el) { el.value = value; }
-  }
-  function setCheck(id, checked) {
-    var el = document.getElementById(id);
-    if (el) { el.checked = checked; }
-  }
-
-  navigator.clipboard.readText().then(function(text) {
-
-    var d = JSON.parse(text).showing;
-
-    // Lennar static fields
-    setCheck('Input_722_AS', false);  // Accompany Show = unchecked
-    setCheck('Input_722_AR', true);   // Appt Required = checked
-    setField('Input_136', 'NLCS');    // Showing Instr 2 = No LB Call Showing Service
-    setField('Input_333', '');        // LockBox Type = blank (no lockbox for Lennar)
-    // Input_137 (Supra Serial) — skip
-    // Input_732 (Sentrilock Serial) — skip
-
-    // Dynamic from payload
-    setField('Input_138', d.additional_instructions || "");
-
-  }).catch(function(e) {
-    alert('Bookmarklet error — could not read clipboard: ' + e.message);
-  });
-
-})();
-```
+`additional_instructions` is always listing-specific and comes from the email regardless of builder. Compare against standard listings, where `showing_instr_2` defaults to `"NLCS"` but switches to `"LBGD"` if vacant — see `New_Seller_Side_Session_Protocol.md`.
 
 ---
 
 ## TAB 11 — Virtual Tour Info — Lennar
 
-No Lennar-specific behavior. **Use the universal variant** from `CVRMLS_Bookmarklet_Source.md`.
+No Lennar-specific behavior. **Use the universal variant** from `CVRMLS_Bookmarklet_Source.md`. Confirmed against the live launcher file this session — already fully builder-agnostic.
 
 ---
 
-## TAB 12 — Internet Display Info — Lennar
+## TAB 12 — Internet Display Info
 
 No Lennar-specific behavior. **Use the universal variant** from `CVRMLS_Bookmarklet_Source.md`.
 
