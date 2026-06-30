@@ -1,7 +1,7 @@
 ---
 title: New Seller Side Session Protocol
 document_id: AAR-TC-SELLER-PROTO-001
-version: 0.3
+version: 0.4
 version_date: 2026-06-29
 status: Draft — MLS Data Input section only; remaining sections pending
 author: Andrew Rich, AAR-TC Transaction Services
@@ -22,6 +22,7 @@ project: AAR-TC Transaction Services
 | 0.1 | 2026-06-29 | Andrew Rich / Claude | Initial draft — MLS Data Input section scoped; land listing stub added; remaining protocol sections placeholder only |
 | 0.2 | 2026-06-29 | Andrew Rich / Claude | Service tiers added; Incomplete status as Phase 1 landing point; two-payload model clarified; automation scope boundary documented; strategic context note added |
 | 0.3 | 2026-06-29 | Andrew Rich / Claude | Showing instruction defaults locked in; co-list agent rule and current assignments added; Tax ID path pre-populated fields confirmed via live Matrix entry; sqft confirmed blank on Tax ID path — bookmarklet writes from tax record; street suffix confirmed pre-populated; subdivision and post office confirmed manual-only |
+| 0.4 | 2026-06-29 | Andrew Rich / Claude | Seller name verification check added to Step 2 — session surfaces tax record owner names and confirms accuracy before payload; covers LLC/investor overrides and unexpected deed names; aligns with existing Aframe verification task |
 
 ---
 
@@ -163,6 +164,7 @@ Parse all available sources and present a clean MLS data sheet for review before
 - Any field that cannot be populated from available sources (mark as pending)
 - Year built discrepancies between sources
 - Whether a co-list agent applies — if unclear, ask before proceeding
+- **Seller name verification (every listing):** Surface the owner names from the tax record and confirm with the agent — *"The deed shows [Name 1] and [Name 2] — does this look correct, or does the seller name need to be updated?"* This catches LLC/investor overrides (e.g. a client whose properties are held in a business name) and unexpected names on the deed the agent may not be aware of (spouse, family member, estate). Seller name verification is also an Aframe task; the session surfaces it here so it is caught before payload generation rather than after MLS entry. If confirmed correct, owner names are left as pre-filled by Matrix from the tax record and omitted from the payload. If an override is needed, the corrected names go into the payload and the bookmarklet writes them.
 
 **Confirmation gate:** Andrew reviews and confirms the data sheet before any payload is generated. No exceptions.
 
