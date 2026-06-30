@@ -1,8 +1,8 @@
 # CVRMLS Matrix Bookmarklet Source
-**Document ID:** AAR-TC-LENNAR-BM-SRC-001
-**Version:** 0.1 — Listing Info tab only
-**Last Updated:** 2026-06-25
-**Status:** In Progress — Listing Info complete; remaining tabs pending
+**Document ID:** AAR-TC-CVRMLS-BM-SRC-001
+**Version:** 0.3 — Listing Info taxid skip logic + Fee Info HOA bug patched
+**Last Updated:** 2026-06-30
+**Status:** In Progress — Listing Info and Fee Info reconciled against CVRMLS_Payload_Schema.md v1.0; remaining tabs pending same pass
 
 ---
 
@@ -11,7 +11,8 @@
 | Version | Date | Author | Notes |
 |---|---|---|---|
 | 0.1 | 2026-06-25 | Andrew Rich / Claude | Initial file. Listing Info tab — non-Lennar and Lennar variants. Structure established for all subsequent tabs. |
-| 0.2 | 2026-06-27 | Andrew Rich / Claude | TODO notes removed — County/City, Area, and school stored values confirmed for 11 jurisdictions; documented in CVRMLS_County_City_Reference.md (AAR-TC-CVRMLS-CC-001). Payload schema county_city and area comments updated. |
+| 0.2 | 2026-06-27 | Andrew Rich / Claude | TODO notes removed — County/City, Area, and school stored values confirmed for 11 jurisdictions; documented in CVRMLS_County_City_Reference.md (AAR-TC-CVRMLS-CC-001). Payload schema county_city and area comments updated. Doc ID corrected to AAR-TC-CVRMLS-BM-SRC-001 (universal/non-builder file). |
+| 0.3 | 2026-06-30 | Andrew Rich / Claude | Listing Info non-Lennar variant patched against CVRMLS_Payload_Schema.md v1.0: street_dir now writes on all paths; year_built/rooms/levels/lot/bedrooms gated to SKIP-TAXID (new/copy only); zip cascade-set only, no longer overwritten from payload on taxid path; sqft_source defaults to "01" (Per Tax). Fee Info non-Lennar variant patched: hoa_condo and membership_required now payload-driven instead of hardcoded "1" — closes Known Bug flagged in schema v1.0. Street Suffix value reference added. |
 
 ---
 
@@ -38,106 +39,11 @@
 
 ## Canonical Payload Schema
 
-The session outputs one JSON object per listing. All tab keys are present; each bookmarklet reads only its own key and ignores the rest.
+**Superseded 2026-06-30.** The schema previously embedded here was a mixed draft (written before the universal/Lennar doc split and before the Phase 1 standard-listing schema was finalized) and is now stale — it predates the confirmed SKIP-TAXID classifications, the MANUAL classification for Subdivision/Post Office, and several other corrections folded into the Listing Info and Fee Info variants below.
 
-```json
-{
-  "listing": {
-    "county_city": "",        // Input_29 stored option value — e.g. "Chesterfield", "Henrico", "Richmond". See CVRMLS_County_City_Reference.md (AAR-TC-CVRMLS-CC-001) for confirmed values per jurisdiction
-    "list_price": "",         // e.g. "524990"
-    "list_date": "",          // today's date — e.g. "06/25/2026"
-    "type": "",               // "SFR" or "TOWN"
-    "attached_yn": "",        // "1" (Yes) for TH, "0" (No) for SF
-    "pid": "",                // Tax ID — skip key on Tax ID path (pre-filled); write "TBD" on New path
-    "area": "",               // Input_30 stored option value — e.g. "54", "42", "60". See CVRMLS_County_City_Reference.md (AAR-TC-CVRMLS-CC-001) for confirmed values per jurisdiction
-    "expire_date": "",        // Non-Lennar only — e.g. "12/31/2027"; Lennar hardcodes "12/31/2026"
-    "street_num": "",         // e.g. "15912"
-    "street_dir": "",         // e.g. "" or "N" — most Lennar addresses blank
-    "street_name": "",        // e.g. "Greenhart"
-    "street_suffix": "",      // Input_37 stored value — e.g. "DR", "WAY", "RD" (TODO: confirm stored values)
-    "zip": "",                // Input_635 stored option value (TODO: confirm per community)
-    "post_office": "",        // Input_41 stored option value (TODO: confirm per community)
-    "subdivision": "",        // Input_259 stored option value (TODO: confirm per community); Everstone = "None"
-    "neighborhood": "",       // blank for all communities except Everstone — use "Everstone"
-    "year_built": "",         // e.g. "2026"
-    "rooms": "",              // e.g. "6"
-    "levels": "",             // e.g. "2"
-    "lot": "",                // homesite/lot number from email — e.g. "42"
-    "bedrooms": "",           // e.g. "3"
-    "elementary": "",         // Input_51 stored option value (TODO: confirm per community)
-    "middle": "",             // Input_53 stored option value (TODO: confirm per community)
-    "high": "",               // Input_52 stored option value (TODO: confirm per community)
-    "sqft_above_finished": "",
-    "sqft_below_finished": "", // 0 if no basement
-    "sqft_above_unfinished": "",
-    "sqft_below_unfinished": "",
-    // Non-Lennar only fields:
-    "delayed_show": "",       // "0" (No) or "1" (Yes)
-    "new_resale": "",         // e.g. "NVROC", "EXIST"
-    "sqft_source": "",        // e.g. "04" (Per Builder), "01" (Per Owner)
-    "lockbox_type": "",       // stored option value for Input_333
-    "sentrilock_serial": ""   // 7-digit number — bookmarklet zero-pads to 8 chars
-  },
-  "room": [
-    // Non-Lennar only — Lennar skips Room Info tab entirely
-    { "type": "", "length": 0, "width": 0, "level": "", "desc": "" }
-  ],
-  "bath": {
-    "basement": { "desc": "", "full": "0", "half": "0" },
-    "level1":   { "desc": "", "full": "0", "half": "0" },
-    "level2":   { "desc": "", "full": "0", "half": "0" },
-    "level3":   { "desc": "", "full": "0", "half": "0" },
-    "level4":   { "desc": "", "full": "0", "half": "0" }
-  },
-  "features": {
-    // TODO: schema to be defined during Features bookmarklet build
-    // Dynamic fields: style, flooring, attic, parking, exterior, internet_connected,
-    //   num_cars, interior, community_amenities, green_cert, pool_yn, pool_desc,
-    //   appl_equip, heating, heat_fuel, water_heater, porch, unit_placement,
-    //   cooling, wall_type, num_fp, fireplace
-  },
-  "general": {
-    "acres": "",              // from email — New path only; skip on Tax ID path
-    "legal": ""               // Non-Lennar only; Lennar hardcodes "TBD" on New, skips on Tax ID
-  },
-  "remarks": {
-    "remarks": "",            // public remarks — 2048 char max
-    "agent_comments": ""      // agent only comments — 1000 char max
-  },
-  "fee": {
-    "addl_hoa": "",           // "1" (Yes) for Harpers Mill TH only / "0" (No) for all others
-    "fee_amount": "",         // e.g. "800.00"
-    "fee_period": "",         // "MO", "QU", or "YR"
-    "management_firm": "",    // blank if none
-    "fee_desc": [],           // checkbox values — e.g. ["01"] for Community Association
-    "fee_includes": [],       // checkbox values — e.g. ["19","01","25","10","14","15"]
-    "addl_fee_amount": "",    // Harpers Mill TH: "70.00" / blank for all others
-    "addl_fee_desc": ""       // Capital Contribution string — e.g. "Initial Working Capital Contribution: $350"
-  },
-  "owner": {
-    // Non-Lennar only — Lennar Owner Info is fully static, no payload key needed
-    "owner_name": "",
-    "occupant_name": "",
-    "occupied_by": "",        // stored option value
-    "owned_by": [],           // checkbox values
-    "possession": []          // checkbox values
-  },
-  "showing": {
-    "additional_instructions": "", // verbatim from email
-    // Non-Lennar only fields:
-    "accompany_show": false,  // true/false
-    "appt_required": false,   // true/false
-    "showing_instr_2": "",    // stored option value — e.g. "NLCS"
-    "lockbox_type": "",       // stored option value
-    "sentrilock_serial": ""   // 7-digit number — bookmarklet zero-pads to 8 chars
-  },
-  "tour": {
-    "virtual_tour": "",
-    "additional_virtual_tour": ""
-  }
-  // internet: no payload key — fully static, no clipboard data needed
-}
-```
+**The authoritative payload schema is `CVRMLS_Payload_Schema.md` (`AAR-TC-CVRMLS-PL-001`), v1.0.** It is the only schema reference this file should be checked against going forward — see its "Complete Phase 1 Payload" section for the full JSON structure, and its per-tab field tables for classification (DYN / SKIP-TAXID / MANUAL / EXCL) of every key.
+
+This file (source JS) is patched against that schema incrementally, tab by tab, as each tab's build work comes up. Tabs not yet reconciled against schema v1.0 may still reflect older assumptions — check the schema doc directly rather than this file's prose notes when in doubt.
 
 ---
 
@@ -255,6 +161,12 @@ var LENNAR_COMMUNITIES = {
 
 Reads all fields from clipboard payload. No hardcoded constants. Handles all three entry paths via a `path` key in the payload (`"new"`, `"taxid"`, `"copy"`).
 
+**Patched 2026-06-30 against `CVRMLS_Payload_Schema.md` v1.0 (live Tax ID path test, 4508 Ridgecrest Ln, 2026-06-29):**
+- `street_dir` now writes on every path — confirmed blank/non-pre-populated even on taxid
+- `year_built`, `rooms`, `levels`, `lot`, `bedrooms` now gated to `new`/`copy` paths only — confirmed pre-populated by Matrix from the tax record on taxid path
+- `zip` (`Input_635`) is set only to settle the cascade now — payload value is still written, but only on `new`/`copy`; on taxid path the cascade-populated value is left alone
+- `sqft_source` now defaults to `"01"` (Per Tax) when the key is absent — standard listings always use Per Tax per protocol
+
 ```javascript
 (function() {
 
@@ -285,6 +197,8 @@ Reads all fields from clipboard payload. No hardcoded constants. Handles all thr
     (async function() {
 
       // Step 1: County/City — must fire first; triggers Area, ZIP, Subdivision, Schools
+      // Always fires regardless of path — even on taxid, downstream dropdowns (Area, Schools)
+      // do not populate unless this change event fires.
       setField('Input_29', d.county_city);
       fireChange('Input_29');
       await wait(1500); // allow DOM to repopulate
@@ -294,14 +208,21 @@ Reads all fields from clipboard payload. No hardcoded constants. Handles all thr
       fireChange('Input_30');
       await wait(800);
 
-      // Step 3: ZIP, Subdivision, Schools — set after cascade settles
-      setField('Input_635', d.zip);
-      setField('Input_259', d.subdivision);
+      // Step 3: Schools — set after cascade settles
+      // ZIP is SKIP-TAXID: on taxid path the cascade has already populated it from the tax
+      // record; only write the payload value on new/copy to avoid clobbering a correct value
+      // with a stale or blank payload field.
+      if (path !== "taxid") {
+        setField('Input_635', d.zip);
+      }
+      // Subdivision (Input_259) and Post Office (Input_41) are MANUAL per schema v1.0 —
+      // permanently out of bookmarklet scope (too many dropdown options to map reliably).
+      // Not written here. Neighborhood (Input_236) is the one location text field still
+      // bookmarklet-driven — used for communities like Everstone where Subdivision = "None".
       setField('Input_236', d.neighborhood || "");
       setField('Input_51',  d.elementary);
       setField('Input_53',  d.middle);
       setField('Input_52',  d.high);
-      setField('Input_41',  d.post_office);
 
       // Step 4: Remaining Listing Information fields
       setField('Input_31',  d.list_price);
@@ -319,32 +240,39 @@ Reads all fields from clipboard payload. No hardcoded constants. Handles all thr
       // Year Built Description — from payload (Lennar variant hardcodes UNDCON)
       setField('Input_45', d.year_built_desc || "");
 
-      // PID / Tax ID
+      // PID / Tax ID — SKIP-TAXID
       if (path !== "taxid") {
         setField('Input_99', d.pid || "");
       }
       // On taxid path: Input_99 is pre-populated — skip
 
-      // Step 5: Location fields
-      // On taxid and copy paths, location fields are pre-populated — skip
+      // Step 5: Street number/name/suffix — SKIP-TAXID
+      // On taxid and copy paths, location fields are pre-populated — skip.
+      // street_dir is the one location field NOT pre-populated by Matrix on any path —
+      // confirmed blank on taxid live test (4508 Ridgecrest Ln, 2026-06-29) — so it always writes.
       if (path === "new") {
         setField('Input_34', d.street_num);
-        setField('Input_35', d.street_dir || "");
         setField('Input_36', d.street_name);
         setField('Input_37', d.street_suffix);
       }
+      setField('Input_35', d.street_dir || "");
 
-      // Step 6: Property detail fields — always write regardless of path
-      setField('Input_44', d.year_built);
-      setField('Input_48', d.rooms);
-      setField('Input_49', d.levels);
-      setField('Input_622', d.lot);
-      setField('Input_47', d.bedrooms);
+      // Step 6: Property detail fields — SKIP-TAXID
+      // Confirmed pre-populated by Matrix from the tax record on taxid path
+      // (live test, 4508 Ridgecrest Ln, 2026-06-29). Write only on new/copy.
+      if (path !== "taxid") {
+        setField('Input_44',  d.year_built);
+        setField('Input_48',  d.rooms);
+        setField('Input_49',  d.levels);
+        setField('Input_622', d.lot);
+        setField('Input_47',  d.bedrooms);
+      }
 
-      // SqFt Source — from payload
-      setField('Input_97', d.sqft_source || "");
+      // SqFt Source — defaults to Per Tax ("01") for standard listings.
+      // Confirmed blank on taxid path; bookmarklet always writes this field.
+      setField('Input_97', d.sqft_source || "01");
 
-      // Square footage
+      // Square footage — confirmed blank on taxid path; bookmarklet always writes from tax record data
       setField('Input_879', d.sqft_above_finished   || "0");
       setField('Input_882', d.sqft_below_finished   || "0");
       setField('Input_880', d.sqft_above_unfinished || "0");
@@ -358,6 +286,8 @@ Reads all fields from clipboard payload. No hardcoded constants. Handles all thr
 
 })();
 ```
+
+**Street Suffix (`Input_37`) stored values:** 94 confirmed options — see full table in `CVRMLS_Bookmarklet_Build.md` (AAR-TC-CVRMLS-BM-001), Listing Info section. Not duplicated here to avoid drift between the two docs; Build doc is the authority for the value list.
 
 ---
 
@@ -758,6 +688,8 @@ Functionally identical to non-Lennar. Copyright Agreement hardcoded in both. Kep
 
 ### Fee Info — Non-Lennar Variant
 
+**Patched 2026-06-30** — closes Known Bug flagged in `CVRMLS_Payload_Schema.md` v1.0. `Input_109` (HOA/Condo) and `Input_112` (Membership Required) were previously hardcoded to `"1"` unconditionally; standard listings can have no HOA at all, so this is now payload-driven. Per schema: when `fee.hoa_condo` is `"0"`, the bookmarklet sets it and stops — all other fee keys should be omitted from the payload in that case, so they fall through to their `|| ""` / `|| "0"` defaults harmlessly.
+
 ```javascript
 (function() {
 
@@ -774,9 +706,15 @@ Functionally identical to non-Lennar. Copyright Agreement hardcoded in both. Kep
 
     var d = JSON.parse(text).fee;
 
-    // HOA and Membership — always Yes for properties with HOA
-    setField('Input_109', '1');  // HOA/Condo = Yes
-    setField('Input_112', '1');  // Membership Required = Yes
+    // HOA and Membership — payload-driven. fee.hoa_condo is required by schema.
+    setField('Input_109', d.hoa_condo || "0");  // HOA/Condo — "1" Yes / "0" No
+    setField('Input_112', d.membership_required || "0");  // Membership Required — only meaningful when hoa_condo = "1"
+
+    // No-HOA case: stop here. Remaining fields are irrelevant when hoa_condo = "0";
+    // payload should omit them, and the defaults below leave Matrix fields blank/unchecked.
+    if (d.hoa_condo !== "1") {
+      return;
+    }
 
     // Additional HOA
     setField('Input_719', d.addl_hoa || "0");
