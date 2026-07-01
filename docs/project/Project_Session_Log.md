@@ -1528,3 +1528,58 @@ Separate session ran immediately after this one to execute the unification. Resu
 
 ---
 *Next session: Run the new listing file through the patched Listing Info bookmarklet (standard Tax ID path). Then: Owner Info `owner_name` design question; stale Remarks field ID fix in `Lennar_Features_Payload_Schema.md`; Project Vision doc update.*
+
+---
+
+## Session 022 — June 30, 2026
+
+### Focus
+Gemini cross-audit triage and remediation; first live Tax ID path test of the patched Listing Info bookmarklet on a real standard listing (107 S Jefferson St, Petersburg, VA).
+
+### What Was Done
+- Triaged an independent Gemini Pro audit of live bookmarklet files (pulled fresh from GitHub) against project docs. Corrected one false positive (PID gating was already correct in `listing_info.html`); identified one bug Gemini missed (Subdivision/Post Office still being written by the deployed launcher despite the MANUAL architecture decision); confirmed three low-risk doc-cleanup items
+- Shipped a 4-file Cursor handoff batch: `listing_info.html` synced to current source (ZIP SKIP-TAXID restored, Subdivision/Post Office writes removed), stale Fee Info Known Bug note removed from `CVRMLS_Payload_Schema.md`, stale pre-unification comment removed from `CVRMLS_Bookmarklet_Source.md`, `Lennar_New_Listing_Protocol.md` launcher table updated to universal filenames
+- Ran the first live Tax ID path test of the Listing Info bookmarklet against a real listing. List Price, Area, and Schools populated correctly. New/Resale, SqFt Source, and Owned By did not — traced to unconfirmed stored-value assumptions carried in project docs without a live extraction behind them, corrected manually in Matrix
+- Built a Features A/B payload as a mechanics-only test (all checkbox arrays empty, only Y/N and static fields populated) rather than guessing at unconfirmed checkbox stored values; not executed — Andrew updated the Features tab manually instead
+
+### Key Decisions
+- Values presented as protocol defaults without a live Matrix extraction behind them must be flagged as unconfirmed, not presented at the same confidence level as genuinely extracted values (County/City, Area, Schools, Street Suffix)
+- Occupant Name, non-Lennar vacant listings: literal string `"Vacant"` — required field, distinct from Lennar's `"None"` convention for the same case
+- Confirmed: Lance Taylor co-lists this listing (Kelly's standing default co-agent applied)
+
+### Gaps Identified / Carried Forward
+- **`Input_42` New/Resale stored values** — not confirmed; needs a live extraction pass, same as County/City and Street Suffix received
+- **`Input_97` SqFt Source stored values** — not confirmed; `"01"` maps to "Per Appraiser," not "Per Tax" as assumed
+- **Owned By checkbox group stored values** — not confirmed; `"01"` maps to "REO," not "Individual" as assumed
+- **Occupant Name = "Vacant" default** — decided this session, not yet written into `CVRMLS_Payload_Schema.md` Owner Info section
+- **Agent/Office Info co-list payload key** — unresolved contradiction between `CVRMLS_Payload_Schema.md` (no payload key, fully hardcoded) and `Lennar_Bookmarklet_Customization.md` (co-list code flows through payload); whether `82685` actually populated `Input_170` in today's live test was not confirmed
+- **Features A/B mechanics smoke test — still not executed live.** Oldest open item, carried since Session 013
+- **Bath Info field map** — not confirmed; tab skipped this session
+- **Owner Info `agent_related` vs `agent_related_to_seller`** — hedged with both keys in today's payload; still not confirmed which the source actually reads
+- **`Lennar_Features_Payload_Schema.md` rewrite claim (Gemini finding)** — still unverified against the live field map
+- **Session 022 agenda Item 3 (stale Remarks field ID fix)** — not executed this session
+- **Version history not updated on today's doc-only fixes** — `CVRMLS_Payload_Schema.md`, `CVRMLS_Bookmarklet_Source.md`, and `Lennar_New_Listing_Protocol.md` all changed today via Cursor handoff without a version bump or version-history row, inconsistent with this project's established convention of tracking every doc revision
+
+All Session 021 carried-forward items not addressed above remain open unchanged.
+
+### Cursor Handoffs Produced This Session
+
+| Handoff | Target File | Purpose |
+|---|---|---|
+| `HANDOFF-2026-06-30-listing-info-html.md` | `bookmarklets/listing_info.html` | Sync TAB 1 JS to current source — ZIP SKIP-TAXID, Subdivision/Post Office removed |
+| `HANDOFF-2026-06-30-cvrmls-payload-schema.md` | `docs/cvrmls/CVRMLS_Payload_Schema.md` | Remove resolved Fee Info Known Bug note |
+| `HANDOFF-2026-06-30-cvrmls-bookmarklet-source.md` | `docs/cvrmls/CVRMLS_Bookmarklet_Source.md` | Remove stale pre-unification comment |
+| `HANDOFF-2026-06-30-lennar-new-listing-protocol.md` | `docs/lennar/Lennar_New_Listing_Protocol.md` | Update launcher filename table to universal names |
+| `HANDOFF-2026-06-30-session-log-022.md` | `docs/project/Project_Session_Log.md` | This entry |
+
+### Documents Updated This Session
+
+| Document | ID | Version | Changes |
+|---|---|---|---|
+| bookmarklets/listing_info.html | — | not bumped | Synced to current TAB 1 source — ZIP SKIP-TAXID gating restored, Subdivision/Post Office writes removed |
+| CVRMLS Payload Schema | AAR-TC-CVRMLS-PL-001 | not bumped | Stale Fee Info Known Bug note removed (bug already fixed in source as of Session 021) |
+| CVRMLS Bookmarklet Source | AAR-TC-CVRMLS-BM-SRC-001 | not bumped | Leftover pre-unification comment removed from TAB 1 |
+| Lennar New Listing Protocol | AAR-TC-LENNAR-PROTO-001 | not bumped | Launcher filename table updated to universal names; Features A/B correctly marked untested rather than carrying forward stale "Tested" status |
+
+---
+*Next session: New/Resale, SqFt Source, and Owned By stored-value extraction pass; Occupant Name "Vacant" default written into `CVRMLS_Payload_Schema.md`; Features A/B live smoke test; Owner Info `owner_name`/`agent_related` naming resolution; stale Remarks field ID fix in `Lennar_Features_Payload_Schema.md`; Project Vision doc update.*
