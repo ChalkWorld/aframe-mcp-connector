@@ -1,7 +1,7 @@
 # Lennar MLS — Features Bookmarklet Source
 **Document ID:** AAR-TC-LENNAR-BM-SRC-001-FEA
-**Version:** 1.0
-**Date:** June 26, 2026
+**Version:** 1.2
+**Date:** 2026-07-01 — Basement/Foundation resolution corrected (was backwards: had Crawl Space firing for homes with a basement); "Already shared" field list expanded into a payload-key table with Style and Appl/Equip codes inlined
 **Addendum to:** `Lennar_MLS_Bookmarklet_Source.md` (`AAR-TC-LENNAR-BM-SRC-001`)
 **Field Map:** `Lennar_MLS_Features_Field_Map.md` (`AAR-TC-LENNAR-BM-001-FEA`)
 
@@ -441,10 +441,31 @@ Watermark:        heating ["Input_86_07"], heat_fuel ["Input_87_05"], pool_yn "1
 | Field | Payload key | Resolution |
 |---|---|---|
 | Garage | `features_a.garage` | Session resolves to `["Input_539_02","Input_539_05"]` (Attached + Direct Entry) when `garage_yn === "1"`, plus `"Input_539_03"` (Auto Door Opener) if applicable, or `[]` if no garage. Features A's existing `setCheckGroup(ids, d.garage)` already accepts any array — no new payload key, no bookmarklet conditional logic needed. |
-| Basement/Foundation | `features_a.basement_foundation` | Session resolves to `["Input_569_03"]` (Crawl Space) if `basement_yn === "1"`, else `["Input_569_12"]` (Slab). |
+| Basement/Foundation | `features_a.basement_foundation` | **Corrected 2026-07-01** — was backwards. Session resolves to `["Input_569_01"]` (Basement-Full) if `basement_yn === "1"`, else `["Input_569_12"]` (Slab). Confirmed live: 15824 Greenhart Dr has a basement; correct checkbox is Basement-Full, not Crawl Space (`Input_569_03`, previously used here in error). |
 
 #### Already shared, no resolution needed — listing-specific regardless of builder
 
-Style, Parking, Exterior, Interior, Appl/Equip, Porch, Num Cars, Num Fp, Fireplace (Features A already implements the conditional-on-`num_fp > 0` check for this field).
+**Added 2026-07-01:** payload key (A vs B) wasn't specified per field below — caught live when Appl/Equip was placed under `features_a` instead of `features_b` (Chunk 7) and silently didn't write to Matrix. Table below fixes that.
+
+| Field | Payload key | Codes |
+|---|---|---|
+| Style | `features_a.style` | Inlined below |
+| Parking | `features_a.parking` | See `CVRMLS_Features_Field_Map.md` Chunk 2 |
+| Exterior | `features_a.exterior` | See `CVRMLS_Features_Field_Map.md` Chunk 2 |
+| Interior | `features_a.interior` | See `CVRMLS_Features_Field_Map.md` Chunk 4 |
+| Num Cars | `features_a.num_cars` | Select, not checkbox — `1`, `15` (=1.5), `2`, `25` (=2.5), `3`, `4plus` |
+| Num Fp | `features_a.num_fp` | Select — `"0"` default |
+| Fireplace | `features_a.fireplace` | Only written when `num_fp` > 0 (Features A already gates this) — codes in `CVRMLS_Features_Field_Map.md` Chunk 5 |
+| Porch | `features_b.porch` | See `CVRMLS_Features_Field_Map.md` Chunk 8 |
+| Appl/Equip | `features_b.appl_equip` | Inlined below |
+
+**Style — `Input_541_*` (checkbox group):**
+2-Story `27` · A-frame `01` · Cape `02` · Colonial `03` · Contemporary `04` · Cottage/Bungalow `05` · Craftsman `33` · Custom `06` · Dutch Colonial `07` · Farm House `09` · Gentleman Farm `10` · Green Certified Home `31` · Hi-Rise `30` · Log `11` · Low-Rise `28` · Manufactured Homes `32` · Mediterranean/Spanish `12` · Mid-Century Modern `36` · Mid-Rise `29` · Modern `34` · Modular `14` · Other `15` · Patio Home `16` · Ranch `18` · Rowhouse/Townhouse `19` · Saltbox `20` · Split Foyer `21` · Transitional `23` · Tri-Level/Quad Level `24` · Tudor `25` · Victorian `26`
+
+**Appl/Equip — `Input_81_*` (checkbox group):**
+Attic Fan `01` · Central Vac `02` · Compactor `03` · Countertop Range `04` · **Dishwasher `05`** · Disposal `06` · Downdraft Range `07` · **Dryer `08`** · Electric Cooking `09` · Electric Air Cln `10` · Exhaust Fan `11` · Freezer `12` · **Gas Cooking `13`** · Gas Grill `14` · Humidifier `15` · Ice Maker `16` · Intercom `17` · **Microwave `18`** · **Refrigerator `19`** · Satellite Dish `20` · Self/Con Cleaning `21` · Smoke Alarm `22` · Stove `23` · **Stove Hood `24`** (= "Range Hood" on builder forms) · Sump Pump `25` · **Wall Oven `26`** · **Washer `27`** · Water Purifier `28` · Water Softener `29` · Stack Washer/Dryer `30` · Drop-In Range `31` · Oven `32` · Double Oven `33` · Smooth Top Cooking `34` · Wine Cooler `35` · Generator `36` · Generator Wired `37` · EV Charging Station `39` · Fire Sprinkler System `38`
+*(bolded = appear on nearly every Lennar listing, confirmed 15824 Greenhart Dr)*
 
 **Net effect: zero changes to `bookmarklets/features_a.html` or `bookmarklets/features_b.html`.** The entire merge is session-side payload resolution.
+
+**Note on the JS block above ("Features — Non-Lennar Variant"):** that code predates the Session 021 unification — reads a single `features` payload key, not `features_a`/`features_b`. Kept as historical reference only, not authoritative. Flagging, not rewriting — out of scope for this handoff.

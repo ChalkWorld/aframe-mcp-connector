@@ -177,7 +177,7 @@ Rules: Bath Desc only needed when Full Baths > 0. All numeric fields must be exp
 
 ## TAB 3 — Features
 
-**Bookmarklet:** `bookmarklets/lennar_features.html` ✅ Built and tested (schema patch pending commit)
+**Superseded 2026-07-01:** this section predates the Session 021 bookmarklet unification and still describes a dedicated `lennar_features.html` (deleted) and a single `features` payload key (replaced by `features_a`/`features_b`). Current authority is `docs/lennar/AAR-TC-LENNAR-BM-SRC-001-FEA.md`. Left in place for historical field-map reference (Input IDs below are still accurate); payload key names and the bookmarklet filename are not.
 
 ### Lennar Classification
 
@@ -201,7 +201,7 @@ Rules: Bath Desc only needed when Full Baths > 0. All numeric fields must be exp
 | ADU Y/N | — | — | EXCL | Not written |
 | Basement Y/N | Select | `Input_153` | DYN | `features.basement_yn` — `"1"` or `"0"` |
 | Basement — Slab | Checkbox | `Input_569_12` | COND | Auto-checked when `basement_yn` = `"0"` |
-| Basement — Crawl Space | Checkbox | `Input_569_03` | COND | Auto-checked when `basement_yn` = `"1"` |
+| Basement — Full | Checkbox | `Input_569_01` | COND | Auto-checked when `basement_yn` = `"1"` — **corrected 2026-07-01**, this row previously pointed to Crawl Space (`Input_569_03`), which is backwards; confirmed live on 15824 Greenhart Dr |
 | Interior | Checkbox | `Input_568_*` | DYN | `features.interior` |
 | Water | Checkbox | `Input_676_PW` | HC | Public Water |
 | Sewer/Septic | Checkbox | `Input_670_PBLCSR` | HC | Sewer - Public |
