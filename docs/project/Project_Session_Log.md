@@ -1439,3 +1439,92 @@ Genuine differences were kept rather than forced to match — buyer-side keeps i
 
 ---
 *Next session: Close out the two flagged stale-reference gaps (`PREAUTOMATION-001`, `TRANSACTION_WORKFLOWS_FRAMEWORK.md`); add a signage/vendor-preference field to Agent Profiles.*
+
+## Session 021 — June 30, 2026
+
+**Focus:** CVRMLS Bookmarklet Source patch (Listing Info Tax ID skip logic + Fee Info HOA bug fix); bookmarklet unification architecture decision; dedicated unification session completed same day
+
+---
+
+### What Was Done
+
+**1. Payload schema confirmed complete — no work needed**
+`CVRMLS_Payload_Schema.md` (AAR-TC-CVRMLS-PL-001) was uploaded from GitHub and confirmed as v1.0, "Active" — already complete from Session 019's live Tax ID test. Session 019 handoff had listed it as an open item but the doc itself was already finished. Item 2 from the Session 019/020 agenda is closed.
+
+**2. CVRMLS_Bookmarklet_Source.md patched (v0.2 → v0.3)**
+Patched the non-Lennar Listing Info and Fee Info variants against schema v1.0. Also corrected the document ID (was mislabeled `AAR-TC-LENNAR-BM-SRC-001`; corrected to `AAR-TC-CVRMLS-BM-SRC-001`). Stale embedded canonical schema block removed and replaced with a pointer to `CVRMLS_Payload_Schema.md` as the sole authority — eliminates a drift risk that existed since the schema and source docs drifted apart.
+
+Listing Info non-Lennar changes:
+- `street_dir` now writes on all paths — confirmed not pre-populated by Matrix on any path (4508 Ridgecrest live test)
+- `year_built`, `rooms`, `levels`, `lot`, `bedrooms` now gated to `path !== "taxid"` — confirmed pre-populated by Matrix from tax record
+- `zip` now cascade-only on taxid path — no longer overwritten from payload value
+- `subdivision` and `post_office` removed entirely — MANUAL per schema v1.0; bookmarklet never writes these
+- `sqft_source` defaults to `"01"` (Per Tax) — standard listings always use Per Tax
+
+Fee Info non-Lennar changes:
+- `Input_109` (HOA/Condo) and `Input_112` (Membership Required) now payload-driven — were hardcoded to `"1"` unconditionally, which is wrong for standard listings with no HOA
+- Early return added when `hoa_condo !== "1"` — bookmarklet sets No and stops; remaining fee fields stay blank
+- This closes the Known Bug explicitly flagged in `CVRMLS_Payload_Schema.md` v1.0
+
+**3. Bookmarklet unification — architecture decision made**
+Discovered this session that all 12 HTML launcher files in `bookmarklets/` were still Lennar-only despite being renamed to universal filenames during the Session 017 restructure. The rename was cosmetic — the JS inside never changed.
+
+Two architecture decisions made:
+- **Target: bookmarklet files contain zero builder-specific logic** — no `isLennar` branches, no `COMMUNITIES` lookup tables, no hardcoded Lennar statics. Every field is resolved to its final value at session time (before the payload is generated), using the builder reference doc. The bookmarklet only writes what's already in the payload.
+- **Builder resolution is session-side** — `docs/lennar/Lennar_Bookmarklet_Customization.md` stays the authority for Lennar-specific data (community table, statics); it is now framed as a session-time resolution reference, not a description of bookmarklet branching logic.
+
+**4. Dedicated unification session completed same day**
+Separate session ran immediately after this one to execute the unification. Results (per that session's completion summary):
+- All 12 Matrix tab launchers replaced with universal, payload-driven versions — no builder logic in any of them
+- `lennar_features.html` deleted (previously the one accepted builder-named exception; collapsed into universal pattern along with everything else)
+- `CVRMLS_Bookmarklet_Source.md` — all Non-Lennar/Lennar variant pairs collapsed to single universal functions; two additional bugs fixed during the process: Model Available hardcoded as `'N'` corrected to `'0'`; `owned_by`/`possession` written as single value corrected to array
+- `Lennar_Bookmarklet_Customization.md` — reframed from bookmarklet-branching spec to session-time resolution reference
+- `Lennar_Features_Bookmarklet_Source.md` — Lennar JS block replaced with full field-by-field resolution table
+
+---
+
+### Decisions Made
+
+- **Bookmarklet files are builder-agnostic** — zero `isLennar` flags, zero lookup tables, zero hardcoded builder statics in any launcher file; this is now a permanent architectural constraint
+- **Builder resolution is session-side** — the session generates fully resolved payload values before clipboard copy; the bookmarklet has no knowledge of which builder is involved
+- **`docs/lennar/Lennar_Bookmarklet_Customization.md` is the standard reference location** for builder-specific data; future builders follow the same pattern under `docs/[builder]/`; this doc's data doesn't change, only its framing
+- **`lennar_features.html` deleted** — no longer an exception to the universal pattern; Features collapses to the same architecture as all other tabs
+- **Non-Lennar variant blocks in source doc eliminated** — `CVRMLS_Bookmarklet_Source.md` now has one JS block per tab, not two; the "Non-Lennar variant / Lennar variant" pair pattern is gone
+- **`payload.lennar` flag** — still useful at the session-generation layer (tells the session which builder doc to consult) but is no longer read by any bookmarklet; its presence in the payload is inert from the bookmarklet's perspective
+- **Subdivision and Post Office permanently manual** — not in bookmarklet scope; confirmed via schema v1.0; removed from source JS
+- **`sqft_source` always `"01"` (Per Tax) for standard listings** — default confirmed; bookmarklet writes it unconditionally
+
+### Protocol Rules Confirmed / Established
+
+- **Upload live files from GitHub before editing** — working from `project_knowledge_search` fragments in place of the real file caused compounding errors this session (stale doc ID discovered, schema drift vs. source, Listing Info structure misread). Standing reminder from prior sessions now confirmed as the right call; do not patch against reconstructed source
+- **"Should already be fine" is a hypothesis, not a fact** — every file in the unification pass was opened and confirmed before being called done; two real bugs were caught this way (Model Available `'N'`→`'0'`, `owned_by`/`possession` array vs. single value)
+- **Source doc first, then HTML launcher** — `CVRMLS_Bookmarklet_Source.md` is always updated before the HTML file is rebuilt; the launcher is derived from the source, never the other way around
+
+### Gaps Identified / Carried Forward
+
+- **Owner Info — `owner_name` for standard listings** — open design question: does a standard (non-Lennar) listing ever include `owner_name` in the payload, or does that key stay Lennar-only in practice? Not resolved this session.
+- **Stale field ID cross-reference in `Lennar_Features_Payload_Schema.md`** — `Input_45/46/47` in the Remarks cross-reference should be `Input_107/108/662`; needs a small correction pass
+- **Features A/B smoke test** — still untested live in Matrix; carried from Session 013; remains open
+- **Room Info tab** — still a stub in source doc; REPEAT0 question still unresolved; out of scope for both this session and the unification session
+- **Project Vision doc update** — productized MLS automation package concept; carried from Session 019/020; still not started
+- **Session 019/020 open items** — all items not addressed above remain unchanged from the Session 019 handoff + Session 020 addendum
+
+### Cursor Handoffs Produced This Session
+
+| Handoff | Target File | Purpose |
+|---|---|---|
+| `HANDOFF-2026-06-30-listing-info-taxid-patch.md` | `docs/cvrmls/CVRMLS_Bookmarklet_Source.md` | Full file overwrite — Listing Info taxid skip logic, Fee Info HOA bug fix, doc ID correction, stale schema block removed. Andrew placed file directly; Cursor committed. |
+| `HANDOFF-bookmarklet-unification-session.md` | Dedicated session brief | Opening brief for the unification session — not a Cursor-executable patch; used as session context. |
+| `HANDOFF-2026-06-30-session-log-021.md` | `docs/project/Project_Session_Log.md` | This entry |
+
+### Documents Updated This Session / Unification Session
+
+| Document | ID | Version | Changes |
+|---|---|---|---|
+| CVRMLS Bookmarklet Source | AAR-TC-CVRMLS-BM-SRC-001 | 0.2 → 0.3 (this session) → further in unification | Doc ID corrected; Listing Info taxid skip logic patched; Fee Info HOA bug fixed; stale schema block removed; then in unification session: all variant pairs collapsed to single universal functions; two additional bugs fixed |
+| Lennar Bookmarklet Customization | AAR-TC-LENNAR-BM-CUST-001 | Updated | Reframed as session-time resolution reference |
+| Lennar Features Bookmarklet Source | AAR-TC-LENNAR-BM-SRC-001-FEA | Updated | Lennar JS block replaced with field-by-field resolution table |
+| bookmarklets/ (all 12 launchers) | — | Replaced | All rebuilt as universal, payload-driven; `lennar_features.html` deleted |
+
+---
+*Next session: Run the new listing file through the patched Listing Info bookmarklet (standard Tax ID path). Then: Owner Info `owner_name` design question; stale Remarks field ID fix in `Lennar_Features_Payload_Schema.md`; Project Vision doc update.*
