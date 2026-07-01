@@ -1,8 +1,8 @@
 # CVRMLS Matrix Bookmarklet Source
 **Document ID:** AAR-TC-CVRMLS-BM-SRC-001
-**Version:** 0.3 — Listing Info taxid skip logic + Fee Info HOA bug patched
-**Last Updated:** 2026-06-30
-**Status:** In Progress — Listing Info and Fee Info reconciled against CVRMLS_Payload_Schema.md v1.0; remaining tabs pending same pass
+**Version:** 0.5 — Listing Info Lennar taxid-path fixes; Owner Info drift confirmed and closed
+**Last Updated:** 2026-07-01
+**Status:** In Progress — Listing Info, Fee Info, and Owner Info reconciled against live deployment; remaining tabs pending same pass
 
 ---
 
@@ -14,6 +14,7 @@
 | 0.2 | 2026-06-27 | Andrew Rich / Claude | TODO notes removed — County/City, Area, and school stored values confirmed for 11 jurisdictions; documented in CVRMLS_County_City_Reference.md (AAR-TC-CVRMLS-CC-001). Payload schema county_city and area comments updated. Doc ID corrected to AAR-TC-CVRMLS-BM-SRC-001 (universal/non-builder file). |
 | 0.3 | 2026-06-30 | Andrew Rich / Claude | Listing Info non-Lennar variant patched against CVRMLS_Payload_Schema.md v1.0: street_dir now writes on all paths; year_built/rooms/levels/lot/bedrooms gated to SKIP-TAXID (new/copy only); zip cascade-set only, no longer overwritten from payload on taxid path; sqft_source defaults to "01" (Per Tax). Fee Info non-Lennar variant patched: hoa_condo and membership_required now payload-driven instead of hardcoded "1" — closes Known Bug flagged in schema v1.0. Street Suffix value reference added. |
 | 0.4 | 2026-06-30 | Andrew Rich / Claude | Bookmarklet unification: every "Non-Lennar Variant" / "Lennar Variant" pair collapsed into a single universal function for Listing Info, Bath Info, General Info, Remarks, Fee Info, Owner Info, Agent/Office Info, and Showing Instructions. Virtual Tour Info and Internet Display Info were already single-variant — unchanged. Builder-specific values (community lookups, hardcoded statics) move entirely to session-time resolution — see `docs/lennar/Lennar_Bookmarklet_Customization.md`. Corrected a bug carried over from the old Lennar General Info variant: Model Available (`Input_249`) was hardcoded `'N'` (copy-paste artifact from the adjacent Waterfront line) — corrected to `'0'`, matching the non-Lennar variant, the customization doc, and the build doc's field map. `lennar_features.html` deleted — see `docs/lennar/Lennar_Features_Bookmarklet_Source.md` for the Features resolution table. |
+| 0.5 | 2026-07-01 | Andrew Rich / Claude | Session 023 live verification (15824 Greenhart Dr, Harpers Mill SF) surfaced two real bugs and confirmed a doc/live drift. Listing Info: Subdivision restored as a payload-driven write, gated correctly for Lennar; Year Built/Rooms/Levels/Bedrooms no longer skipped on taxid path when `payload.lennar` is true (Lot left as-is, unconfirmed). Owner Info: deployed launcher was missing Owner Phone/Owner Name 2/Occupant Phone writes that this doc already had — synced; resolves the "open design question" note as settled, not open. `bookmarklets/listing_info.html` and `bookmarklets/owner_info.html` updated to match via separate handoffs. |
 
 ---
 
@@ -153,10 +154,14 @@ Reads all fields from clipboard payload. No builder branch, no `COMMUNITIES` tab
       if (path !== "taxid") {
         setField('Input_635', d.zip);
       }
-      // Subdivision (Input_259) and Post Office (Input_41) are MANUAL per schema v1.0 —
-      // permanently out of bookmarklet scope (too many dropdown options to map reliably).
-      // Not written here. Neighborhood (Input_236) is the one location text field still
-      // bookmarklet-driven — used for communities like Everstone where Subdivision = "None".
+      // Post Office (Input_41) remains MANUAL — too many dropdown options to map reliably
+      // for standard listings. Subdivision (Input_259) was also MANUAL under that same
+      // reasoning until 2026-07-01: correct for the standard path (unbounded community count),
+      // wrong for Lennar (small, fixed community set already resolved via the COMMUNITIES
+      // table in Lennar_Bookmarklet_Customization.md). Now payload-driven for every builder —
+      // harmless blank write for standard listings that don't provide it, correct write for
+      // Lennar. Confirmed live: 15824 Greenhart Dr, 2026-07-01.
+      setField('Input_259', d.subdivision || "");
       setField('Input_236', d.neighborhood || "");
       setField('Input_51',  d.elementary);
       setField('Input_53',  d.middle);
@@ -194,15 +199,23 @@ Reads all fields from clipboard payload. No builder branch, no `COMMUNITIES` tab
       }
       setField('Input_35', d.street_dir || "");
 
-      // Step 6: Property detail fields — SKIP-TAXID
-      // Confirmed pre-populated by Matrix from the tax record on taxid path
-      // (live test, 4508 Ridgecrest Ln, 2026-06-29). Write only on new/copy.
+      // Step 6: Property detail fields
+      // Confirmed pre-populated by Matrix from the tax record on taxid path for an
+      // established resale property (live test, 4508 Ridgecrest Ln, 2026-06-29) — that
+      // finding does not hold for Lennar new construction, where the tax record predates
+      // the built structure and has no bedroom/room/level/year-built data yet. Corrected
+      // 2026-07-01 after a live miss on 15824 Greenhart Dr: these four fields now write
+      // whenever the listing is Lennar, regardless of path. Lot (Input_622) was NOT
+      // reported missing on that same live test — left SKIP-TAXID for every builder
+      // pending confirmation it needs the same carve-out.
+      if (path !== "taxid" || payload.lennar) {
+        setField('Input_44', d.year_built);
+        setField('Input_48', d.rooms);
+        setField('Input_49', d.levels);
+        setField('Input_47', d.bedrooms);
+      }
       if (path !== "taxid") {
-        setField('Input_44',  d.year_built);
-        setField('Input_48',  d.rooms);
-        setField('Input_49',  d.levels);
         setField('Input_622', d.lot);
-        setField('Input_47',  d.bedrooms);
       }
 
       // SqFt Source — defaults to Per Tax ("01") for standard listings.
@@ -524,7 +537,9 @@ No builder branch — HOA/Membership/Fee Desc/Allow Onsite are resolved by the s
 
 ### Owner Info — Universal
 
-No builder branch — the bookmarklet writes whatever the session provides, or leaves Matrix's pre-populated value alone if the key is omitted. **Open design question, not resolved here:** does the session always resolve `owner_name` into the payload when an override is needed (Lennar or otherwise), making the unconditional write below the right behavior for every builder — or does Owner Info override behavior stay Lennar-only in practice? Flagged for a session-level decision.
+No builder branch — the bookmarklet writes whatever the session provides, or leaves Matrix's pre-populated value alone if the key is omitted.
+
+**Design question resolved 2026-07-01:** the unconditional-write pattern below is correct for every builder, not Lennar-only. Confirmed via a live miss on 15824 Greenhart Dr — Owner Name 2 (`Input_857`) inherited "Lennar" from Matrix's own pre-population/auto-copy behavior because the deployed launcher was missing the `owner_phone`/`owner_name_2`/`occupant_phone` writes shown below (present in this doc, absent from the live file — pure drift, not a design gap). Deployed file corrected to match this source.
 
 ```javascript
 (function() {
