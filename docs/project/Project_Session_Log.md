@@ -1583,3 +1583,61 @@ All Session 021 carried-forward items not addressed above remain open unchanged.
 
 ---
 *Next session: New/Resale, SqFt Source, and Owned By stored-value extraction pass; Occupant Name "Vacant" default written into `CVRMLS_Payload_Schema.md`; Features A/B live smoke test; Owner Info `owner_name`/`agent_related` naming resolution; stale Remarks field ID fix in `Lennar_Features_Payload_Schema.md`; Project Vision doc update.*
+
+---
+
+## Session 023 — July 1, 2026
+
+### Focus
+Front-loaded diff verification of the Lennar bookmarklet path (tab-by-tab, live file vs. documented source, before touching a real listing) — plus first full live run of the entire Lennar tab sequence on a real Harpers Mill SF listing, which surfaced two real bugs the diff pass alone didn't catch.
+
+### What Was Done
+- Diffed the 8 previously-unverified tabs (Bath Info, General Info, Fee Info, Owner Info, Agent/Office Info, Showing Instructions, Virtual Tour Info, Internet Display Info) against `CVRMLS_Bookmarklet_Source.md`. Bath Info, General Info, Showing Instructions, Virtual Tour Info, and Internet Display Info matched exactly — no drift. Agent/Office Info matched exactly and is fully payload-driven, including Co-List Agent Code — resolves the Session 022 gap on that contradiction
+- Found and confirmed (not fixed — standard-path scope, carried to the Session 022 thread): Fee Info's deployed launcher is missing the no-HOA early-return + `"0"` fallback defaults that the source doc says were already patched; `CVRMLS_Payload_Schema.md` has Owner Info's `agent_related` field name wrong — live bookmarklet actually reads `agent_related_to_seller`, resolving the Session 022 gap on that naming question
+- Resolved the open Features routing question directly against GitHub rather than by inference: `bookmarklets/lennar_features.html` is deleted (404), and `features_a.html`/`features_b.html` have zero Lennar-specific branching — Lennar routes through the same two universal launchers as every other builder
+- Live-tested the full tab sequence against a real Harpers Mill SF listing. Two real, previously-undetected bugs surfaced that the diff pass could not have caught, since in both cases the live file and the documented source agreed with each other — they just carried a standard-path assumption that doesn't hold for Lennar:
+  - **Listing Info:** Subdivision was never written at all (removed during the Session 021 unification under a "too many options to map" rule that's correct for the standard path and wrong for Lennar's small, fixed community set). Year Built, Rooms, Levels, and Bedrooms were hardcoded to skip on the Tax ID path on the assumption Matrix pre-populates them from the tax record — true for an established resale property, false for Lennar new construction, where the tax record predates the built structure
+  - **Owner Info:** deployed launcher was missing Owner Phone / Owner Name 2 / Occupant Phone writes that the source doc already had (pure drift, not a design gap) — surfaced live as Owner Name 2 inheriting "Lennar" from Matrix's own pre-population with nothing writing over it
+- Shipped Cursor handoffs fixing both bugs in the live bookmarklets and syncing `CVRMLS_Bookmarklet_Source.md` to match, with the live-test reasoning written into the code comments
+- Found a second backwards-mapping bug in the Features Basement/Foundation resolution (`basement_yn = "1"` was resolving to Crawl Space instead of Basement-Full) — present in both `AAR-TC-LENNAR-BM-SRC-001-FEA.md` and the older `Lennar_Features_Payload_Schema.md`. Confirmed the correct mapping directly before shipping the fix
+- A payload-construction error (Appl/Equip placed under `features_a` instead of `features_b` — it's Chunk 7, not Chunk 1–5) silently failed to write on first attempt; corrected and re-run successfully. Used this as the trigger to close a real reference gap: the "already shared, no resolution needed" field list in `AAR-TC-LENNAR-BM-SRC-001-FEA.md` named fields with no payload key at all. Replaced it with a table specifying the correct `features_a`/`features_b` key per field, with Style (30 codes) and Appl/Equip (39 codes) inlined directly
+
+### Key Decisions
+- **Diffing catches drift; it does not catch conceptual gaps.** A drift bug is doc and code disagreeing — diffing finds it directly. A conceptual gap is doc and code agreeing while both carry an assumption inherited from the standard path that was never re-checked against Lennar (Subdivision, the Tax-ID-path property-detail skip, and — from earlier this session — the Agent/Office co-agent line). Catching these requires asking "does this concept even apply to Lennar," not just comparing two sources against each other. Worth carrying into every future tab pass on this path, not just this session's
+- Rooms field: no reliable formula exists anywhere in the process to derive it. Standing default until revisited: **10 for Single Family, 8 for Townhouse**
+- Fee Period (`Input_113`) is a coded select field (`MO`/`QU`/`YR`), not display text — sending `"Yearly"` silently fails instead of erroring. Watch for this pattern (coded selects vs. display text) on other select fields going forward
+- Basement/Foundation (`Input_569_*`): `basement_yn = "1"` resolves to Basement-Full (`Input_569_01`), not Crawl Space (`Input_569_03`) — corrected in both Lennar Features docs
+
+### Gaps Identified / Carried Forward
+- **`Lennar_Bookmarklet_Customization.md` TAB 9** still has the line stating Co-List Agent Code "comes from the agent profile regardless of builder." Confirmed this session that the concept doesn't apply to the Lennar path at all — Lennar listings never carry a co-list agent, so the field needs no resolution logic of any kind, not even a static value. Line was never actually removed via handoff this session — still open
+- **`Lennar_Features_Payload_Schema.md` version not bumped** despite two content changes this session (Basement/Foundation fix, superseded-marker note) — same version-hygiene gap Session 022 flagged, recurring
+- **Fee Info (standard/non-Lennar path)** — missing no-HOA early-return + fallback defaults in `fee_info.html`, confirmed via live diff, not fixed. Standard-path scope, belongs with the Session 022 thread
+- **Owner Info (standard/non-Lennar path)** — `CVRMLS_Payload_Schema.md` field name still says `agent_related`, confirmed wrong (`agent_related_to_seller` is correct). Standard-path scope, belongs with the Session 022 thread
+- **Lot (`Input_622`) on Listing Info** — still gated to skip on Tax ID path for every builder including Lennar. Not confirmed broken (wasn't reported missing on the live test) but also not confirmed correct — watch on the next Lennar Tax ID listing
+- **Second Lennar listing (Harpers Mill TH, homesite T071)** — not started. Deferred to a fresh session by design (token management), not because of any blocker
+
+All Session 022 carried-forward items not addressed above remain open unchanged.
+
+### Cursor Handoffs Produced This Session
+
+| Handoff | Target File | Purpose |
+|---|---|---|
+| `HANDOFF-2026-07-01-listing-info-html.md` | `bookmarklets/listing_info.html` | Restore Subdivision write; stop skipping Year Built/Rooms/Levels/Bedrooms on Tax ID path when the listing is Lennar |
+| `HANDOFF-2026-07-01-owner-info-html.md` | `bookmarklets/owner_info.html` | Restore missing Owner Phone / Owner Name 2 / Occupant Phone writes |
+| `HANDOFF-2026-07-01-cvrmls-bookmarklet-source-sync.md` | `docs/cvrmls/CVRMLS_Bookmarklet_Source.md` | Sync TAB 1 and TAB 8 documentation to match the two live fixes above |
+| `HANDOFF-2026-07-01-lennar-features-payload-schema.md` | `docs/lennar/Lennar_Features_Payload_Schema.md` | Correct backwards Basement/Foundation mapping; flag Features section as superseded |
+| `HANDOFF-2026-07-01-lennar-features-addendum.md` | `docs/lennar/AAR-TC-LENNAR-BM-SRC-001-FEA.md` | Correct backwards Basement/Foundation mapping; add payload-key table and inline Style/Appl-Equip codes for the "already shared" field group |
+| `HANDOFF-2026-07-01-session-log-023.md` | `docs/project/Project_Session_Log.md` | This entry |
+
+### Documents Updated This Session
+
+| Document | ID | Version | Changes |
+|---|---|---|---|
+| bookmarklets/listing_info.html | — | not bumped | Subdivision write restored; Year Built/Rooms/Levels/Bedrooms no longer skipped on Tax ID path when payload is Lennar |
+| bookmarklets/owner_info.html | — | not bumped | Owner Phone / Owner Name 2 / Occupant Phone writes restored |
+| CVRMLS Bookmarklet Source | AAR-TC-CVRMLS-BM-SRC-001 | 0.3 → 0.5 | TAB 1 and TAB 8 synced to the two live fixes above; also corrected a header/version-history mismatch already present in the doc |
+| Lennar Features Payload Schema | AAR-TC-LENNAR-BM-SCH-001 | not bumped | Basement/Foundation mapping corrected; Features section flagged superseded by `AAR-TC-LENNAR-BM-SRC-001-FEA` |
+| Lennar Features Bookmarklet Source (addendum) | AAR-TC-LENNAR-BM-SRC-001-FEA | 1.0 → 1.2 | Basement/Foundation mapping corrected; "already shared" field list replaced with a payload-key (A/B) table, Style and Appl/Equip codes inlined |
+
+---
+*Next session: second Lennar listing (Harpers Mill TH, homesite T071) via the same tab-by-tab methodology — most tabs now confirmed clean, so this pass should move faster. Remove the stray Co-List Agent Code line from `Lennar_Bookmarklet_Customization.md` TAB 9. Bump `Lennar_Features_Payload_Schema.md`'s version to reflect this session's edits.*
