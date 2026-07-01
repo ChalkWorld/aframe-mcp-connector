@@ -444,15 +444,6 @@ The session outputs one JSON object. Each bookmarklet reads only its own top-lev
 
 ---
 
-## Known Bugs — Pending Item 3
-
-| Bug | Tab | Current Source | Correct Behavior |
-|---|---|---|---|
-| HOA/Condo hardcoded | Fee Info | Hardcodes `Input_109` to `"1"` | Must be payload-driven (`fee.hoa_condo`) |
-| Membership Required hardcoded | Fee Info | Hardcodes `Input_112` to `"1"` | Must be payload-driven (`fee.membership_required`) |
-
----
-
 *CVRMLS Matrix universal payload schema — non-Lennar Phase 1 standard listing.*
 *Builder-specific schemas: `docs/lennar/Lennar_Features_Payload_Schema.md` (AAR-TC-LENNAR-BM-SCH-001).*
 *Source JS: `docs/cvrmls/CVRMLS_Bookmarklet_Source.md` (AAR-TC-CVRMLS-BM-SRC-001).*

@@ -335,21 +335,22 @@ Every Lennar payload must include `"lennar": true` as a top-level key. This flag
 - Virtual tour: omit `"tour"` key entirely if no link provided — bookmarklet skips tab
 - `"room"` key: omit for Lennar — room data is not provided for Lennar listings; Room Info tab is skipped
 
-**Bookmarklet launchers (Lennar):**
+**Bookmarklet launchers (universal — session resolves Lennar-specific values into the payload before use; see `Lennar_Bookmarklet_Customization.md`):**
 
 | Tab | Launcher File | Status |
 |---|---|---|
-| Listing Info | `bookmarklets/lennar_listing_info.html` | ✅ Tested |
-| Bath Info | `bookmarklets/lennar_bath_info.html` | ✅ Tested |
-| Features | `bookmarklets/lennar_features.html` | ✅ Tested |
-| General Info | `bookmarklets/lennar_general_info.html` | ✅ Tested |
-| Remarks | `bookmarklets/lennar_remarks.html` | ✅ Tested |
-| Fee Info | `bookmarklets/lennar_fee_info.html` | ✅ Tested |
-| Owner Info | `bookmarklets/lennar_owner_info.html` | ✅ Tested |
-| Agent/Office Info | `bookmarklets/lennar_agent_office_info.html` | ✅ Tested |
-| Showing Instructions | `bookmarklets/lennar_showing_instructions.html` | ✅ Tested |
-| Virtual Tour Info | `bookmarklets/lennar_virtual_tour_info.html` | ✅ Tested |
-| Internet Display Info | `bookmarklets/lennar_internet_display_info.html` | ✅ Tested |
+| Listing Info | `bookmarklets/listing_info.html` | ✅ Tested |
+| Bath Info | `bookmarklets/bath_info.html` | ✅ Tested |
+| Features A | `bookmarklets/features_a.html` | ⬜ Not yet tested |
+| Features B | `bookmarklets/features_b.html` | ⬜ Not yet tested |
+| General Info | `bookmarklets/general_info.html` | ✅ Tested |
+| Remarks | `bookmarklets/remarks.html` | ✅ Tested |
+| Fee Info | `bookmarklets/fee_info.html` | ✅ Tested |
+| Owner Info | `bookmarklets/owner_info.html` | ✅ Tested |
+| Agent/Office Info | `bookmarklets/agent_office_info.html` | ✅ Tested |
+| Showing Instructions | `bookmarklets/showing_instructions.html` | ✅ Tested |
+| Virtual Tour Info | `bookmarklets/virtual_tour_info.html` | ✅ Tested |
+| Internet Display Info | `bookmarklets/internet_display_info.html` | ✅ Tested |
 | Status | — | ❌ Never automated |
 | Room Info | — | Skipped for Lennar |
 

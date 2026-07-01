@@ -169,7 +169,6 @@ Reads all fields from clipboard payload. No builder branch, no `COMMUNITIES` tab
       setField('Input_850', d.attached_yn);
       setField('Input_162', d.expire_date);
 
-      // Delayed Show — from payload (non-Lennar may vary)
       setField('Input_32', d.delayed_show || "0");
 
       // New/Resale — from payload
