@@ -1,5 +1,5 @@
 # Lennar New Listing Protocol
-**Version 2.1** | *Last Updated: June 26, 2026*
+**Version 2.2** | *Last Updated: July 15, 2026*
 *Claude-facing SOP | Lennar new listing intake and lifecycle management*
 
 ---
@@ -25,6 +25,24 @@ Before any build work, lookup, or intake begins, Claude must:
 2. Explicitly invite Andrew to surface any between-session questions, changes, or new context that should affect the session plan
 
 This beat exists to prevent jumping into work without alignment. It is required even when the agenda feels clear.
+
+### Surface Ambiguity, Don't Guess (Standing Rule)
+
+When a session encounters something the schema, protocol, or reference docs don't explicitly cover — a field with no stored value documented, a listing detail that doesn't fit a known pattern, an entry-path question, an unexpected combination of options — the session **surfaces the ambiguity to Andrew and waits** for a decision.
+
+The session does not:
+- Infer a plausible value from context and proceed
+- Pick the "best guess" from multiple options in the docs
+- Assume a default that isn't documented as a default
+- Continue past the gap and note it for later
+
+The session does:
+- Stop at the point of ambiguity
+- State exactly what's ambiguous and why
+- Present the options if any are known
+- Wait for Andrew's answer before continuing
+
+The cost of pausing to ask is always lower than the cost of a wrong value in a live MLS record. This applies at every step — routing (which docs to load), payload generation, protocol execution, and any lookup or resolution.
 
 ---
 

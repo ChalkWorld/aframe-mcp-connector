@@ -1,8 +1,8 @@
 ---
 title: New Seller Side Session Protocol
 document_id: AAR-TC-SELLER-PROTO-001
-version: 0.4
-version_date: 2026-06-29
+version: 0.5
+version_date: 2026-07-15
 status: Draft — MLS Data Input section only; remaining sections pending
 author: Andrew Rich, AAR-TC Transaction Services
 contributor: Claude (Anthropic) — AI-assisted document assembly
@@ -23,6 +23,7 @@ project: AAR-TC Transaction Services
 | 0.2 | 2026-06-29 | Andrew Rich / Claude | Service tiers added; Incomplete status as Phase 1 landing point; two-payload model clarified; automation scope boundary documented; strategic context note added |
 | 0.3 | 2026-06-29 | Andrew Rich / Claude | Showing instruction defaults locked in; co-list agent rule and current assignments added; Tax ID path pre-populated fields confirmed via live Matrix entry; sqft confirmed blank on Tax ID path — bookmarklet writes from tax record; street suffix confirmed pre-populated; subdivision and post office confirmed manual-only |
 | 0.4 | 2026-06-29 | Andrew Rich / Claude | Seller name verification check added to Step 2 — session surfaces tax record owner names and confirms accuracy before payload; covers LLC/investor overrides and unexpected deed names; aligns with existing Aframe verification task |
+| 0.5 | 2026-07-15 | Andrew Rich / Claude | Session Rules section added — “Surface Ambiguity, Don’t Guess” standing rule per `AAR-TC-DOC-REALIGN-TARGET-001` §6. Mirrors the same rule added to Lennar New Listing Protocol v2.2. |
 
 ---
 
@@ -47,6 +48,28 @@ This version covers the **MLS data input** portion of the seller-side session wo
 | CVRMLS Payload Schema | AAR-TC-CVRMLS-PL-001 | Universal payload schema baseline |
 | CVRMLS County/City Reference | AAR-TC-CVRMLS-CC-001 | Jurisdiction stored values, Area, schools |
 | Cursor Handoff Protocol | CURSOR-HANDOFF-PROTOCOL-001 | Handoff format and commit process |
+
+---
+
+## Session Rules
+
+### Surface Ambiguity, Don’t Guess (Standing Rule)
+
+When a session encounters something the schema, protocol, or reference docs don’t explicitly cover — a field with no stored value documented, a listing detail that doesn’t fit a known pattern, an entry-path question, an unexpected combination of options — the session **surfaces the ambiguity to Andrew and waits** for a decision.
+
+The session does not:
+- Infer a plausible value from context and proceed
+- Pick the “best guess” from multiple options in the docs
+- Assume a default that isn’t documented as a default
+- Continue past the gap and note it for later
+
+The session does:
+- Stop at the point of ambiguity
+- State exactly what’s ambiguous and why
+- Present the options if any are known
+- Wait for Andrew’s answer before continuing
+
+The cost of pausing to ask is always lower than the cost of a wrong value in a live MLS record. This applies at every step — routing (which docs to load), payload generation, protocol execution, and any lookup or resolution.
 
 ---
 
