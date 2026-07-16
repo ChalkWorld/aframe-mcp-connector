@@ -255,7 +255,66 @@ Resolve the two bugs surfaced by the 8720 Whitman Dr smoke test (see `Session_Ha
 
 ---
 
-*Next session: 8724 Whitman Dr smoke re-test as final Step 4 verification, then Step 5 (CVRMLS clarification pass including CVRMLS-parallel Format Conventions section per this session's carry-forward note).*
+## Session 005 — 8724 Whitman Dr Smoke Re-Test + Standing Defaults
+**Date:** July 16, 2026
+
+### Focus
+Run the 8724 Whitman Dr smoke re-test — the final Step 4 verification — against the fully-consolidated schema (v1.1) and protocol (v2.4). Resolve the bath/basement ambiguity the intake surfaced, capture the standing defaults that came out of it, and close a documentation-drift gap discovered along the way.
+
+### What Was Accomplished
+- Read Carly's intake email (thread `19f6606514083bb1`) and Izaiah Clark's exterior photo email (thread `19f4d39b6674a190`) for 8724 Whitman Dr (Harpers Mill TH, Arcadia model, homesite T074).
+- Surfaced a genuine ambiguity rather than guessing through it: the form's "Basement, Slab or Crawl? → Slab" conflicted with "Finished SqFt - Bsmt: 502," "Guest Room in Basement: Yes," and a 3-level bath breakdown. Andrew confirmed the Arcadia plan has no true basement — 3 levels on a slab foundation, with the ground floor mapping to Bath Info Level 1.
+- Generated the MLS Data Input Sheet and full bookmarklet JSON payload for 8724 Whitman Dr — corrected two Cognito comma/typo artifacts (street number, ZIP), stripped the Public Remarks phone number per the compliance rule.
+- **Smoke re-test ran clean — all tabs confirmed correct in Matrix.** Closes Step 4 of the doc realignment end-to-end.
+- Applied Gmail label `Lennar/8724 Whitman Dr` (standard Lennar/[Address] palette — `#98d7e4` / `#0d3b44`) to the three related threads (intake, exterior photo, signing-complete).
+- Resolved the "Session Data tab metadata" open item carried since the Smoke Test 1 addendum — worksheet ID `1881501036`, 16-column schema, accessed via the Google Sheets Zapier connector. Added the 8724 Whitman Dr row (Active, Received, MLS Input Stage: Done) and updated 8720 Whitman Dr's Status → Active and Addendum Status → Received, per this morning's signing-complete confirmation covering both addresses.
+- Discovered and resolved a documentation-drift gap: the Community Reference Database in Claude's project knowledge was showing as stale v1.0 (missing the Fee Includes Codes rows Session 004 had already migrated into the real v1.1 repo file). Andrew confirmed the repo is correctly at v1.1 and replaced the stale project-knowledge copies of the schema, protocol, and Community DB with current versions.
+
+### Decisions Made
+- **All Lennar townhomes are 3-level/slab until told otherwise.** No true basement — Bath Info always maps to Level 1/2/3, never the Basement row, regardless of community.
+- **All full baths on Lennar listings default to `"TS"`** unless the email explicitly states otherwise.
+- **Rooms static default: `"8"` for Townhouse, `"10"` for Single Family**, used whenever the field isn't stated in the intake email.
+- **ShowingTime "No" Allow Online Requests formalized as a standing manual checklist item.** Previously relied on the Aframe task template firing automatically at transaction creation — no longer reliable now that sessions skip Aframe transaction creation by default (per current practice, not yet reflected as a protocol-level decision).
+- **New "Activation Double-Check" standing rule.** When Andrew reports a listing went Active, the session proactively re-surfaces the ShowingTime toggle, the Aframe status flip, and the sales rep email — rather than waiting to be asked.
+- **Step 13 (Active Listing Email, session-executed) stubbed in intentionally incomplete** — trigger, recipient roster, template, and attachment method all deferred to a later session.
+
+### Documents Updated
+
+| Document | ID | Version | Change Summary |
+|---|---|---|---|
+| Lennar Payload Schema | AAR-TC-LENNAR-PL-001 | 1.1 → 1.2 | Rooms static fallback (TH="8"/SF="10"); TH bath structural default (3-level/slab, no Basement row); all-full-baths-`"TS"` default; §7.1 Bath configuration item partially resolved |
+| Lennar New Listing Protocol | AAR-TC-LENNAR-PROTO-001 | 2.4 → 2.5 | ShowingTime "No" Allow Online Requests reminder added to Step 12; Step 13 stub added for session-executed Active Listing Email; new Activation Double-Check standing rule |
+
+### Cursor Handoffs Produced This Session
+
+| Handoff | Target File | Purpose |
+|---|---|---|
+| `HANDOFF-2026-07-16-lennar-payload-schema.md` | `docs/lennar/Lennar_Payload_Schema.md` | Rooms fallback + TH bath standing defaults (v1.2) |
+| `HANDOFF-2026-07-16-lennar-new-listing-protocol.md` | `docs/lennar/Lennar_New_Listing_Protocol.md` | ShowingTime reminder + Step 13 stub + Activation Double-Check rule (v2.5) |
+| `HANDOFF-2026-07-16-session-log-v2-005.md` | `docs/project/Project_Session_Log_v2.md` | This entry |
+
+### Discrepancies Surfaced (Not Fixed This Session)
+- **Claude project-knowledge copies can silently drift behind the repo.** The Community DB was a full version behind (v1.0 shown vs. v1.1 actual) with no indication anything was wrong until the version header was checked directly. Worth a habit of spot-checking version headers on frequently-edited docs rather than assuming project knowledge is current.
+- **Session 003 (Smoke Test: First Live Intakes) is still an unfilled stub in this log.** Flagged again this session; still not resolved — retro-fill from the smoke test addendum, or explicit decision to leave it, still pending.
+
+### Open Verification Items (Carried Forward)
+- Session 003 stub — still pending retro-fill or explicit decision to leave as-is.
+- Street Suffix stored values (`Input_37`) — still open, carried since Session 017.
+- `fee.addl_fee_desc` scope across communities — still open.
+- Owner Info `agent_related` — deployed `owner_info.html` behavior not specifically re-verified this session.
+- Bath configuration — partially resolved (TH structure now fixed); Single Family bath structure remains unconfirmed.
+- Features A/B "Not yet tested" status in the Protocol launcher table — still not updated despite two clean Lennar TH intakes (8720, 8724) exercising both in practice. Worth closing out.
+- POC/primary contact — Carly Evans was still sending as of this session (7/16), despite the protocol saying Megan Cook took over 6/30.
+
+### Key References
+- `Lennar_Payload_Schema.md` v1.2 — Lennar runtime schema
+- `Lennar_New_Listing_Protocol.md` v2.5 — Lennar session protocol
+- `Lennar_Community_Reference_Database.md` v1.1 — confirmed current in repo; project-knowledge copy refreshed this session
+- Google Sheet Session Data tab — worksheet ID `1881501036` (resolved this session)
+
+---
+
+*Next session: Step 5 (CVRMLS clarification pass — retire the stale Builder Flag Pattern section, reclassify Post Office MANUAL→DYN, mirror the Format Conventions section upstream) is now unblocked. Step 8 (`REPO_STRUCTURE.md` update) waits on Step 5 landing first. Session 003 stub remains open.*
 
 ---
 
