@@ -161,6 +161,104 @@ The Step 4 recommendation from this entry gates the next migration handoff.
 
 ---
 
+## Session 004 — Smoke Test Fixes + Step 4 Completion
+**Date:** July 15, 2026
+
+### Focus
+Resolve the two bugs surfaced by the 8720 Whitman Dr smoke test (see `Session_Handoff_Doc_Realignment_Steps_2_3_ADDENDUM_SmokeTest.md` for the surfacing context), then close Step 4 of the doc realignment execution plan — migrate per-community `fee.fee_includes` codes into the Community DB and retire the four consolidated Lennar source docs. Unblock 8724 Whitman Dr as the smoke re-test against the fully-consolidated schema.
+
+### What Was Accomplished
+
+**Fix 1 — Listing Info bookmarklet + CVRMLS source of truth.**
+- Root cause: the Lennar carveout `if (path !== "taxid" || payload.lennar)` was orphaned by the Session 021 envelope migration — `payload.lennar` was retired in favor of `payload.builder === "lennar"` and the bookmarklet's dead-flag check never got updated. On the first live use of the envelope, four fields (Year Built, Rooms, Levels, Bedrooms) stopped writing on Lennar taxid. Post Office (`Input_41`) was a separate bug — the bookmarklet code never wrote it, though the inline reference block claimed it did.
+- Fix: migrate the flag check to `payload.builder === "lennar"`; add `setField('Input_41', d.post_office || "")` universally following the Subdivision precedent; add `|| ""` fallback to Lot write for safety. Two handoffs shipped and applied.
+- Verification: live smoke test against a blank Matrix listing with a targeted Harpers Mill TH taxid payload — all five fix-target fields (Year Built, Rooms, Levels, Bedrooms, Post Office) populated correctly. Confirmed 2026-07-15.
+
+**Fix 2 — Fee Info fee_includes (turned out to be a payload-format bug, not code).**
+- Initial hypothesis was silent-write failure at the code level (same class as July's Appl/Equip). Diagnosis instead: DOM inspection confirmed `Input_576_19` = Clubhouse (prefix and code both correct), a targeted-payload test with schema §8.1's suffix-only codes lit up all six Fee Includes checkboxes cleanly.
+- Root cause identified from the actual smoke-test payload: `fee.fee_includes` was populated with full IDs (`["Input_576_19","Input_576_01",...]`) while the Fee Info bookmarklet reconstructs IDs inline via `setCheck('Input_576_' + v, true)` — expecting suffix-only. Bookmarklet built the DOM lookup as `Input_576_Input_576_19` (nonexistent), no boxes checked, no error. Identical `(x || []).forEach(...)` silent-failure surface as July's Appl/Equip — but here the mechanism was payload format mismatch across the two bookmarklet conventions (Fee Info reconstructs, Features A/B pass full IDs), not payload structure.
+- Fix: no bookmarklet change. Schema §8.1/§8.2 example payloads corrected to suffix-only format; convention documented prominently as new end-of-doc "Format Conventions" section in `Lennar_Payload_Schema.md` v1.1.
+
+**Step 4 — full doc realignment completion.**
+- `fee.fee_includes` numeric codes migrated from retired Build Notes into `Lennar_Community_Reference_Database.md` v1.1 as a paired "Fee Includes Codes" row per community. Harpers Mill TH verified live 2026-07-15; Everstone and Watermark carry "interim mapping — verify at first live use"; Harpers Mill SF and Creekside Run remain pending display-text confirmation.
+- Four Lennar source docs retired via `git rm`: `Lennar_Bookmarklet_Customization.md`, `Lennar_Bookmarklet_Build_Notes.md`, `Lennar_Features_Payload_Schema.md`, `Lennar_Features_Bookmarklet_Source.md`. All content had migrated to `Lennar_Payload_Schema.md` v1.0 (Session 002 of Steps 2 & 3 track) or into the Community DB (this session).
+- Lennar Payload Schema bumped to v1.1: new Format Conventions section; §4.1 Lot corrected to SKIP-TAXID for Lennar per smoke test (tax record autofills confirmed live on Harpers Mill); §7.1 Property Details item resolved and Fee Includes item closed by migration; §8.1 and §8.2 example payloads corrected to suffix-only fee_includes format.
+- Lennar New Listing Protocol bumped to v2.4: "Payload Format Conventions" standing rule added (cross-references schema §Format Conventions), `listing.lot` added to Step 5b taxid-path omit list, four retired-doc rows removed from Key IDs & References.
+
+### Decisions Made
+
+- **Bookmarklet Lennar carveouts stay in code, gated by envelope `payload.builder`.** The universal-bookmarklet ethos leaves as little builder logic in code as possible, but the property-details-on-taxid case is a legitimate builder-specific behavior — Lennar new construction lacks tax-record data that standard listings have. Retaining the check while migrating its flag (from `payload.lennar` to envelope's `payload.builder === "lennar"`) preserves correctness without adding new branches.
+- **Post Office follows the Subdivision precedent.** Universal payload-driven write with `|| ""` fallback; community-driven for Lennar, harmless blank for standard MLS (which keeps human-picked). No builder gate needed at code level — payload presence determines behavior.
+- **Lot is SKIP-TAXID for Lennar.** Smoke test confirmed Harpers Mill taxid autofills Lot from tax record. Previously documented as "always written for Lennar" — schema §4.1 corrected. Payload should omit `listing.lot` on taxid path.
+- **Checkbox array format is a first-class convention.** Two patterns depending on target bookmarklet: suffix-only for Fee Info/Owner arrays (bookmarklet reconstructs `'Input_XX_' + v` inline), full-ID for Features A/B (bookmarklet uses `setCheckGroup` with fixed ID list). This is now documented as the new §Format Conventions in `Lennar_Payload_Schema.md` and as a standing rule in the Protocol. Carry-forward flagged for CVRMLS upstream when Step 5 comes up.
+- **Community DB uses paired display-text + codes rows.** Human-readable text stays for MLS-sheet copy-paste; codes row underneath for payload generation, with verification status inline per community (verified live vs. interim vs. pending).
+- **Interim mapping is acceptable for un-verified communities.** Everstone SF and Watermark SF codes carried from retired Build Notes; verify at first live use rather than gating the migration. Preserves velocity, keeps risk visible.
+
+### Documents Updated
+
+| Document | ID | Version | Change Summary |
+|---|---|---|---|
+| CVRMLS Bookmarklet Source | AAR-TC-CVRMLS-BM-SRC-001 | 0.5 → 0.6 | Listing Info §TAB 1: envelope migration (`payload.lennar` → `payload.builder`); Post Office write added; Lot fallback fix |
+| Deployed launcher | — | — | `bookmarklets/listing_info.html` — href updated to match v0.6; reference block groupings corrected |
+| Lennar Community Reference Database | AAR-TC-LENNAR-DB-001 | 1.0 → 1.1 | Fee Includes Codes rows added for all 5 communities (HM TH verified live; Everstone + Watermark interim; HM SF + Creekside pending) |
+| Lennar Payload Schema | AAR-TC-LENNAR-PL-001 | 1.0 → 1.1 | New Format Conventions section; §4.1 Lot correction; §7.1 items resolved; §8 example payloads corrected; Retirement Notes finalized |
+| Lennar New Listing Protocol | AAR-TC-LENNAR-PROTO-001 | 2.3 → 2.4 | Payload Format Conventions standing rule; `listing.lot` added to taxid omit list; four retired-doc rows removed |
+
+### Documents Retired
+
+| Document | ID | Reason |
+|---|---|---|
+| Lennar Bookmarklet Customization | AAR-TC-LENNAR-BM-CUST-001 | Content fully migrated to Lennar Payload Schema v1.0; envelope pattern supersedes bookmarklet-embedded COMMUNITIES table |
+| Lennar Bookmarklet Build Notes | AAR-TC-LENNAR-BM-NOTES-001 | Schema content migrated to Lennar Payload Schema; per-community fee_includes codes migrated to Community DB this session |
+| Lennar Features Payload Schema | AAR-TC-LENNAR-BM-SCH-001 | Features field-map content migrated; Listing Info and Fee Info sections dropped as stale (used non-canonical Input IDs) |
+| Lennar Features Bookmarklet Source | AAR-TC-LENNAR-BM-SRC-001-FEA | Lennar-resolution table migrated; JS source predated Session 021 unification (deployed features_a/features_b.html are the current authority) |
+
+### Cursor Handoffs Produced This Session
+
+| Handoff | Target File | Purpose |
+|---|---|---|
+| `HANDOFF-2026-07-15-cvrmls-bookmarklet-source.md` | `docs/cvrmls/CVRMLS_Bookmarklet_Source.md` | Fix 1 source-of-truth update (v0.6) |
+| `HANDOFF-2026-07-15-listing-info-bookmarklet.md` | `bookmarklets/listing_info.html` | Fix 1 deployed launcher update + commit |
+| `HANDOFF-2026-07-15-community-db-fee-includes.md` | `docs/lennar/Lennar_Community_Reference_Database.md` | Step 4: Fee Includes codes migration (v1.1) |
+| `HANDOFF-2026-07-15-lennar-payload-schema.md` | `docs/lennar/Lennar_Payload_Schema.md` | Step 4: Format Conventions + smoke-test corrections (v1.1) |
+| `HANDOFF-2026-07-15-lennar-protocol-v2-4.md` | `docs/lennar/Lennar_New_Listing_Protocol.md` | Step 4: standing rule + Lot omit + retired-doc cleanup (v2.4) |
+| `HANDOFF-2026-07-15-step-4-retirement.md` | *(retirement + commit)* | Step 4: `git rm` × 4 source docs + final commit |
+| `HANDOFF-2026-07-15-session-log-v2-002.md` | `docs/project/Project_Session_Log_v2.md` | This entry |
+
+### Discrepancies Surfaced (Not Fixed This Session)
+
+- **`listing_info.html` reference block — ZIP (`Input_635`) accuracy.** The reference block lists ZIP under "ALWAYS — from payload (no builder gate)" but the code writes ZIP only when `path !== "taxid"`. Not touched this session (scoped as reference-block ZIP fix out of Fix 1 scope). Doc-only, low-stakes.
+- **Schema §4.1 street_dir vs. deployed code.** Schema lists `street_dir` in the taxid-omit set; deployed bookmarklet writes it on all paths with `|| ""` fallback. Practically invisible for Lennar (Whitman Dr etc. have empty street_dir), but the schema-vs-code disagreement warrants cleanup on a doc-only pass.
+- **`fee.addl_fee_desc` scope decision.** Whether Capital Contribution text should write into `Input_117` for all Lennar communities (not just Harpers Mill TH) — question raised in §7.1, not resolved this session. Verify against MLS convention on live Fee Info tab at some point.
+
+### Open Verification Items (Carried Forward)
+
+- **Fee Includes codes for four communities.** Harpers Mill TH verified live; Everstone SF and Watermark SF are interim from retired Build Notes; Harpers Mill SF and Creekside Run TH pending display-text confirmation. First live use of each is the verification.
+- **Street Suffix stored values (`Input_37`).** Full stored-value set not extracted — carried from Session 017.
+- **Bath configuration confirmation.** Common defaults are documented but per-listing truth requires email confirmation — a permanent item, not resolvable via schema work alone.
+- **Owner Info naming — `agent_related`.** Verify deployed `owner_info.html` reads `payload.owner.agent_related` (not legacy `_to_seller`). Not exercised this session's smoke test.
+- **Features A/B live test status.** Protocol still shows "Not yet tested" for both `features_a.html` and `features_b.html`. Andrew's 8720 Whitman Dr smoke test payload had both `features_a` and `features_b` populated and ran through to completion, so they've likely been exercised in practice — but Protocol status hasn't been updated. Confirm and update on next intake.
+- **Post Office semantics for standard MLS.** Reclassification MANUAL → DYN in `CVRMLS_Payload_Schema.md` — batched with Step 5 CVRMLS work.
+
+### Key References
+
+- `Payload_Envelope.md` v1.0 — envelope contract
+- `Lennar_Payload_Schema.md` v1.1 — Lennar runtime schema (with new Format Conventions section)
+- `Lennar_New_Listing_Protocol.md` v2.4 — Lennar session protocol
+- `Lennar_Community_Reference_Database.md` v1.1 — per-community values including fee_includes codes
+- `CVRMLS_Bookmarklet_Source.md` v0.6 — CVRMLS bookmarklet JS source of truth
+- `bookmarklets/listing_info.html` — deployed launcher (post Fix 1)
+
+### Session Handoff Produced
+
+`Session_Handoff_Doc_Realignment_Step_4_Complete.md` — bridges to the next session, whose primary task is running the 8724 Whitman Dr smoke re-test against the fully-consolidated schema and protocol. Handoff carries a targeted payload template, the areas of highest re-test risk, and the branching plan (test clean → Step 5 next; test surfaces issues → fix first).
+
+---
+
+*Next session: 8724 Whitman Dr smoke re-test as final Step 4 verification, then Step 5 (CVRMLS clarification pass including CVRMLS-parallel Format Conventions section per this session's carry-forward note).*
+
+---
+
 *Log started July 15, 2026. Post-realignment doc architecture in effect. Old log (`docs/project/Project_Session_Log.md`) preserved as pre-realignment archive.*
 
 ---
