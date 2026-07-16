@@ -1,7 +1,7 @@
 ---
 title: Lennar Payload Schema
 document_id: AAR-TC-LENNAR-PL-001
-version: 1.0
+version: 1.1
 version_date: 2026-07-15
 status: Active — Living Document
 author: Andrew Rich, AAR-TC Transaction Services
@@ -147,11 +147,11 @@ Coverage is complete for all Matrix tabs a Lennar session touches. Room Info is 
 | `listing.street_dir` | `Input_35` | Dynamic (email) / *skip* on taxid | Blank string if none |
 | `listing.street_name` | `Input_36` | Dynamic (email) / *skip* on taxid | |
 | `listing.street_suffix` | `Input_37` | Dynamic (email) / *skip* on taxid | Stored option value — see §7 Open Verification Items |
-| `listing.year_built` | `Input_44` | Dynamic (email) | Always written for Lennar — see path rules note |
-| `listing.rooms` | `Input_48` | Dynamic (email) | Always written for Lennar |
-| `listing.levels` | `Input_49` | Dynamic (email) | Always written for Lennar |
-| `listing.lot` | `Input_622` | Dynamic (email) | Always written for Lennar |
-| `listing.bedrooms` | `Input_47` | Dynamic (email) | Always written for Lennar |
+| `listing.year_built` | `Input_44` | Dynamic (email) | Always written for Lennar — Lennar new-construction parcels lack this in tax record (confirmed 2026-07-15) |
+| `listing.rooms` | `Input_48` | Dynamic (email) | Always written for Lennar — same reason |
+| `listing.levels` | `Input_49` | Dynamic (email) | Always written for Lennar — same reason |
+| `listing.lot` | `Input_622` | Dynamic (email) / *skip* on taxid | Matrix pre-populates from tax record on Harpers Mill taxid path (confirmed 2026-07-15). SKIP-TAXID for Lennar too, same as standard listings. |
+| `listing.bedrooms` | `Input_47` | Dynamic (email) | Always written for Lennar — same reason as year_built |
 | `listing.sqft_above_finished` | `Input_879` | Dynamic (email) | |
 | `listing.sqft_below_finished` | `Input_882` | Dynamic (email) | `"0"` if no basement |
 | `listing.sqft_above_unfinished` | `Input_880` | Dynamic (email) | `"0"` if none |
@@ -159,7 +159,7 @@ Coverage is complete for all Matrix tabs a Lennar session touches. Room Info is 
 
 **Path-specific include/omit rules:**
 - **On `"new"` path:** Include all fields above.
-- **On `"taxid"` path:** Omit `pid`, `street_num`, `street_dir`, `street_name`, `street_suffix`. Include everything else, including the cascade fields (cascade must fire for the Area / Schools dropdowns to populate).
+- **On `"taxid"` path:** Omit `pid`, `street_num`, `street_dir`, `street_name`, `street_suffix`, and `lot` — Matrix pre-populates these from the tax record. Include everything else, including the cascade fields (cascade must fire for the Area / Schools dropdowns to populate). Property details (`year_built`, `rooms`, `levels`, `bedrooms`) remain in the payload on taxid for Lennar because new-construction parcels lack these values in the tax record — bookmarklet writes them via `payload.builder === "lennar"` carveout.
 
 **Fields excluded from payload entirely:**
 - No Show Until (`Input_33`), Expected OnMkt Date (`Input_782`) — always manual
@@ -290,13 +290,13 @@ Copyright Agreement (`Input_662`) is hardcoded to `"1"` by the bookmarklet — n
 | `fee.fee_amount` | `Input_110` | Community lookup | From DB "Fee" — dollar amount as string, e.g. `"800.00"` |
 | `fee.fee_period` | `Input_113` | Community lookup | From DB "Fee" period, mapped: Monthly → `"MO"`, Quarterly → `"QU"`, Yearly → `"YR"` |
 | `fee.management_firm` | `Input_705` | Community lookup | From DB "Management Firm"; blank if none listed |
-| `fee.fee_includes` | `Input_576_*` | Community lookup | From DB "Fee Includes" — mapped to stored option value array (see §7 Open Verification Items) |
+| `fee.fee_includes` | `Input_576_*` | Community lookup | From DB "Fee Includes Codes" row — suffix-only format per Format Conventions section at end of doc; example: `["19","01","25","10","14","15"]` |
 | `fee.addl_fee_amount` | `Input_115` | Community lookup | Harpers Mill TH: `"70.00"`; all others: blank (see §7) |
 | `fee.addl_fee_desc` | `Input_117` | Community lookup | From DB "Initial Working Capital Contribution" or "Capital Contribution Fee" — text string like `"Initial Working Capital Contribution: $350"` |
 
 **Path-specific rules:** None. All fields always included on both paths.
 
-**Cross-reference:** Per-community values (fee amounts, periods, management firms, fee includes lists, capital contribution amounts) live in `Lennar_Community_Reference_Database.md`. Stored option value mappings for `fee_includes` are pending migration into the DB — flagged in §7.
+**Cross-reference:** Per-community values (fee amounts, periods, management firms, fee includes display text AND numeric codes, capital contribution amounts) live in `Lennar_Community_Reference_Database.md`. Fee Includes numeric codes migrated into the DB 2026-07-15 (Step 4 complete); each community's HOA table now carries a "Fee Includes Codes" row alongside the display-text row.
 
 ---
 
@@ -528,7 +528,7 @@ Never written for Lennar. Some are excluded from CVRMLS scope generally; others 
 
 ## 6. Community Lookup Pointer
 
-Per-community values for schools, HOA fees, management firms, fee includes, and Features B community fields (heating, heat fuel, pool, community amenities) live in **`Lennar_Community_Reference_Database.md`** (`AAR-TC-LENNAR-DB-001`).
+Per-community values for schools, HOA fees, management firms, fee includes (display text AND numeric codes per 2026-07-15 migration), and Features B community fields (heating, heat fuel, pool, community amenities) live in **`Lennar_Community_Reference_Database.md`** (`AAR-TC-LENNAR-DB-001`).
 
 **Community keys used in Lennar payloads** (values match DB section headers by display name):
 
@@ -551,10 +551,9 @@ Anything currently guessed or not yet confirmed on a live MLS session. Flagged e
 
 ### 7.1 Live-verification pending
 
-- **Property details on Harpers Mill taxid path.** Does the tax record actually populate Year Built, Rooms, Levels, Bedrooms, and Lot for Harpers Mill parcels, or does the session need to write these from the email? This schema documents the current Lennar-specific override behavior (always write from email) — but the underlying question of what the tax record contains for a new-construction Lennar parcel has not been confirmed live. If tax records DO populate these, the payload can omit them on taxid path per standard CVRMLS behavior. Related to Session 023 agenda.
+- **Property details on Harpers Mill taxid path.** *Resolved 2026-07-15 — smoke test (8720 Whitman Dr) confirmed field-specific behavior:* Lot autofills from the tax record on Harpers Mill taxid (SKIP-TAXID is correct — see §4.1 Lot row); Year Built, Rooms, Levels, Bedrooms, and Post Office do NOT autofill and must be written from payload via the Lennar carveout (`payload.builder === "lennar"`). §4.1 and §7.2 updated to match. Behavior for other taxid-path communities (Harpers Mill SF future) remains unverified but expected to match per parcel-record consistency across Chesterfield County.
 - **Street Suffix stored values.** `listing.street_suffix` uses stored option values (`Input_37`). Full stored value set (Dr, Ln, Way, Ct, Pl, Blvd, Rd, St, Ter) has not been extracted — carried forward from Session 017 agenda item 2. Currently the deployed bookmarklet writes the value from payload; if the payload uses a value not in Matrix's stored options, the field remains blank.
-- **Fee Includes stored value mappings per community.** `fee.fee_includes` requires stored option value arrays (e.g. `["Input_576_01", "Input_576_19", ...]`). Current mappings live in the retired `Lennar_Bookmarklet_Build_Notes.md` fee table. Step 4 of the doc realignment migrates these into `Lennar_Community_Reference_Database.md`. Until that migration lands, sessions should consult the interim table in the retired Build Notes or the FEA doc's community table for community_amenities equivalents.
-- **`fee.addl_fee_desc` scope across communities.** Build Notes' fee table populates Addl Fee Desc for Harpers Mill TH only (`"Initial Working Capital Contribution: $350"`). The Community Reference DB, however, records capital contribution amounts for all communities (`$300` HM SF, `$450` Creekside, `$144` Everstone, `$275` Watermark). Question: should the Capital Contribution text write into `Input_117` (Add'l Fee Dsc) for all Lennar communities, or only Harpers Mill TH (which is the only community with Addl HOA = Yes)? Current schema documents Harpers Mill TH only per deployed behavior; verify against MLS convention on a live standard-listing Fee Info tab.
+- **`fee.addl_fee_desc` scope across communities.** Build Notes' fee table populated Addl Fee Desc for Harpers Mill TH only (`"Initial Working Capital Contribution: $350"`). The Community Reference DB records capital contribution amounts for all communities (`$300` HM SF, `$450` Creekside, `$144` Everstone, `$275` Watermark). Question: should the Capital Contribution text write into `Input_117` (Add'l Fee Dsc) for all Lennar communities, or only Harpers Mill TH (which is the only community with Addl HOA = Yes)? Current schema documents Harpers Mill TH only per deployed behavior; verify against MLS convention on a live standard-listing Fee Info tab.
 - **Bath configuration confirmation.** The typical configurations in §4.2 are common defaults, not per-listing truth. Sessions must confirm bath counts from the actual email before writing to payload.
 - **Owner Info naming — `agent_related`.** CVRMLS canonical is `owner.agent_related` (per upstream schema, `Input_707`). Legacy Lennar Customization used `owner.agent_related_to_seller`. This schema uses the canonical form. Verify the deployed `owner_info.html` bookmarklet actually reads `payload.owner.agent_related` and not the legacy key. Resolves Session 023 agenda item 5.
 
@@ -566,13 +565,13 @@ These are called out so the reasoning is retrievable if any of them turns out to
 - **`"lennar": true` retired.** Envelope's `"builder": "lennar"` supersedes. Introduces a dependency on Step 5 of the doc realignment: `CVRMLS_Payload_Schema.md`'s "Builder Flag Pattern" section describes the old convention and will need updating.
 - **`path: "taxid"` canonical form** (no underscore). Per `Payload_Envelope.md` §2. Any legacy `tax_id` occurrence in bookmarklet source or protocol templates should be updated on contact.
 - **FEA doc authoritative for Features.** `Lennar_Features_Payload_Schema.md` §TAB 3 is superseded reference only (per its own `**Superseded 2026-07-01**` marker). This schema pulls Features content from FEA.
-- **Property details always in payload for Lennar** (`listing.year_built`, `rooms`, `levels`, `lot`, `bedrooms`). Standard CVRMLS behavior is SKIP-TAXID; Lennar overrides because new-construction parcels typically lack these values in tax records. See §7.1 first item.
+- **Property details in payload for Lennar — with Lot as the exception.** `listing.year_built`, `rooms`, `levels`, and `bedrooms` are always in the Lennar payload; standard CVRMLS behavior is SKIP-TAXID but Lennar overrides because new-construction parcels lack these values in tax records. `listing.lot` was originally documented under the same override — the 2026-07-15 smoke test confirmed Harpers Mill taxid actually DOES pre-populate Lot from the tax record, so Lot is SKIP-TAXID for Lennar too (same as standard). See §7.1 first item for the closed verification.
 
 ### 7.3 Depends on other realignment steps
 
-- **Step 3 (Lennar Protocol update):** Step 5b payload template in `Lennar_New_Listing_Protocol.md` currently shows `"community": "..."` at top level (correct) and `"lennar": true` (retiring). Protocol update must regenerate the template against this schema.
-- **Step 4 (retire drift):** Four source docs retire once this schema is verified live. Community fee data in Build Notes migrates into the Community DB with stored value mappings added.
-- **Step 5 (CVRMLS clarification):** `CVRMLS_Payload_Schema.md`'s Builder Flag Pattern section becomes stale on retirement of `"lennar": true`. Small update to reference envelope pattern.
+- **Step 3 (Lennar Protocol update):** *Complete 2026-07-15.* Protocol Step 5b template regenerated against this schema.
+- **Step 4 (retire drift):** *Complete 2026-07-15.* Four source docs retired; per-community `fee.fee_includes` codes migrated into `Lennar_Community_Reference_Database.md` (Harpers Mill TH verified live; other four communities carry interim mappings from the retired Build Notes, verify at first live use).
+- **Step 5 (CVRMLS clarification):** `CVRMLS_Payload_Schema.md`'s Builder Flag Pattern section becomes stale on retirement of `"lennar": true`. Small update to reference envelope pattern. When Step 5 lands, mirror the Format Conventions section (end of doc) upstream to `CVRMLS_Payload_Schema.md` — the same suffix vs. full-ID split applies to standard non-Lennar checkbox arrays.
 
 ---
 
@@ -687,7 +686,7 @@ Illustrates: taxid path omits (street fields, pid, acres, tax_year, legal); Addl
     "fee_amount":          "800.00",
     "fee_period":          "YR",
     "management_firm":     "ACS West Management",
-    "fee_includes":        ["Input_576_19","Input_576_01","Input_576_25","Input_576_10","Input_576_14","Input_576_15"],
+    "fee_includes":        ["19","01","25","10","14","15"],
     "addl_fee_amount":     "70.00",
     "addl_fee_desc":       "Initial Working Capital Contribution: $350"
   },
@@ -837,7 +836,7 @@ Illustrates: new path includes street fields, pid, tax_year, legal; Addl HOA = N
     "fee_amount":          "180.00",
     "fee_period":          "QU",
     "management_firm":     "ACS West Management",
-    "fee_includes":        ["Input_576_19","Input_576_25","Input_576_10","Input_576_11"],
+    "fee_includes":        ["19","25","10","11"],
     "addl_fee_amount":     "",
     "addl_fee_desc":       ""
   },
@@ -901,11 +900,48 @@ What survived, what changed, what dropped:
 | " | Features — Lennar Resolution | **Migrated in full** into §5. |
 | " | Community table | Migrated into §5.2. |
 
-**Files retiring after this schema is verified live** (Step 4 of the doc realignment execution):
-- `Lennar_Bookmarklet_Customization.md`
-- `Lennar_Bookmarklet_Build_Notes.md`
-- `Lennar_Features_Payload_Schema.md`
-- `Lennar_Features_Bookmarklet_Source.md`
+**Files retired 2026-07-15** (Step 4 of the doc realignment execution complete):
+- `Lennar_Bookmarklet_Customization.md` — full content migrated in earlier consolidation; deleted 2026-07-15
+- `Lennar_Bookmarklet_Build_Notes.md` — schema content migrated in earlier consolidation; per-community `fee.fee_includes` codes migrated into `Lennar_Community_Reference_Database.md` this session; deleted 2026-07-15
+- `Lennar_Features_Payload_Schema.md` — Features field-map content migrated; Listing Info and Fee Info sections dropped as stale; deleted 2026-07-15
+- `Lennar_Features_Bookmarklet_Source.md` — Features Lennar-resolution table migrated; JS source predated Session 021 unification (superseded by deployed `bookmarklets/features_a.html` and `bookmarklets/features_b.html`); deleted 2026-07-15
+
+---
+
+## Format Conventions
+
+Two conventions govern payload structure that aren't obvious from the field-by-field tables and produce silent write failures when violated. Both trace to helper patterns in the deployed bookmarklets, and both use `(x || []).forEach(...)` iteration internally — so wrong values fail cleanly (no error, no crash, zero DOM effect) rather than loudly. **When generating any Lennar payload with checkbox arrays, check the format against this section or against the concrete payload examples in §8.**
+
+### Checkbox array format — two patterns depending on target bookmarklet
+
+Checkbox array fields carry stored option values as JSON arrays. The array's element format depends on which bookmarklet consumes the payload key.
+
+**Suffix-only format** — Fee Info and Owner Info arrays. Payload arrays hold only the numeric (or short-string) suffix; the bookmarklet reconstructs the full DOM ID inline via string concatenation, e.g. `setCheck('Input_576_' + v, true)`.
+
+| Payload key | Bookmarklet consumer | Example value |
+|---|---|---|
+| `fee.fee_desc` | `bookmarklets/fee_info.html` | `["01"]` |
+| `fee.allow_onsite` | `bookmarklets/fee_info.html` | `[]` |
+| `fee.fee_includes` | `bookmarklets/fee_info.html` | `["19","01","25","10","14","15"]` |
+| `owner.owned_by` | `bookmarklets/owner_info.html` | `["02"]` |
+| `owner.possession` | `bookmarklets/owner_info.html` | `["01"]` |
+
+**Full-ID format** — Features A/B arrays. Payload arrays hold complete DOM IDs; the bookmarklet passes them to a `setCheckGroup(ids, selected)` helper that iterates a fixed ID list and matches by full ID against the payload array.
+
+| Payload key | Bookmarklet consumer | Example value |
+|---|---|---|
+| `features_a.style`, `.structure`, `.siding`, `.roof`, `.flooring`, `.attic`, `.water`, `.sewer` | `bookmarklets/features_a.html` | `["Input_541_19"]` etc. |
+| `features_a.parking`, `.exterior`, `.interior`, `.garage`, `.basement_foundation`, `.fireplace` | `bookmarklets/features_a.html` | Full IDs |
+| `features_b.water_heater`, `.cooling`, `.wall_type`, `.heating`, `.heat_fuel` | `bookmarklets/features_b.html` | Full IDs |
+| `features_b.pool_desc`, `.community_amenities`, `.appl_equip`, `.porch`, `.unit_placement` | `bookmarklets/features_b.html` | Full IDs |
+
+**Silent failure signature.** Sending suffix-only values to a full-ID consumer (or full IDs to a suffix consumer) produces zero DOM writes and no error. The Matrix field simply stays blank on save.
+
+**First live surfacing:** 2026-07-15 smoke test on 8720 Whitman Dr. `fee.fee_includes` was populated with full IDs (`["Input_576_19",...]`), the Fee Info bookmarklet reconstructed `Input_576_Input_576_19` (a non-existent DOM ID), and no boxes checked. Payload format corrected to suffix-only; write worked immediately. This is the second silent-write bug of this class in the project (July 2026 Appl/Equip was structural — a payload key nested under the wrong parent — same silent-failure surface via the same `|| []` fallback).
+
+### Carry-forward for Standard listing schema work
+
+When the Standard MLS schema docs are next revised (`CVRMLS_Payload_Schema.md`, associated bookmarklet source docs, `New_Seller_Side_Session_Protocol.md`), a parallel Format Conventions section should be added upstream. The same two-pattern split applies to non-Lennar checkbox arrays because the same universal bookmarklets consume them. Bringing the convention up to the CVRMLS layer makes it available to any future builder without duplication and is the natural home for it once Lennar-only scope is no longer the constraint.
 
 ---
 
@@ -914,6 +950,7 @@ What survived, what changed, what dropped:
 | Version | Date | Author | Notes |
 |---|---|---|---|
 | 1.0 | 2026-07-15 | Andrew Rich / Claude | Initial consolidated schema. Merges content from `Lennar_Bookmarklet_Customization.md`, `Lennar_Bookmarklet_Build_Notes.md`, `Lennar_Features_Payload_Schema.md` (Features section only — Listing Info and Fee Info dropped as stale), and `Lennar_Features_Bookmarklet_Source.md`. Aligns to `Payload_Envelope.md` — retires `"lennar": true` flag; adopts `"builder": "lennar"` from envelope. Top-level `community` placement resolves prior drift. Canonical `owner.agent_related` (per CVRMLS upstream). Canonical `path: "taxid"` (no underscore). |
+| 1.1 | 2026-07-15 | Andrew Rich / Claude | Step 4 of doc realignment complete + smoke-test findings captured. Added Format Conventions section documenting the checkbox array format split (suffix-only for Fee Info/Owner; full-ID for Features A/B) — first live surfacing on 8720 Whitman Dr. §4.1 Lot corrected to SKIP-TAXID for Lennar (smoke test confirmed tax-record autofill on Harpers Mill); Year Built/Rooms/Levels/Bedrooms/Post Office confirmed as NOT autofilled and remain in the Lennar-carveout write group. §4.6 fee_includes Notes and §6 Community Lookup Pointer updated to reflect Fee Includes codes now in Community DB. §7.1 Property Details item resolved; Fee Includes item removed (Step 4 closed it). §7.2 Property details structural decision updated with Lot exception. §7.3 Steps 3 & 4 marked complete; Step 5 gains Format Conventions carry-forward note. §8.1 and §8.2 example payloads corrected to suffix-only `fee_includes` format. Retirement Notes finalized — 4 source docs deleted this session. |
 
 ---
 

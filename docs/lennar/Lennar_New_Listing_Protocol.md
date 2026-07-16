@@ -1,5 +1,5 @@
 # Lennar New Listing Protocol
-**Version 2.3** | *Last Updated: July 15, 2026*
+**Version 2.4** | *Last Updated: July 15, 2026*
 *Claude-facing SOP | Lennar new listing intake and lifecycle management*
 
 ---
@@ -43,6 +43,14 @@ The session does:
 - Wait for Andrew's answer before continuing
 
 The cost of pausing to ask is always lower than the cost of a wrong value in a live MLS record. This applies at every step — routing (which docs to load), payload generation, protocol execution, and any lookup or resolution.
+
+### Payload Format Conventions (Standing Rule — Added 2026-07-15)
+
+Checkbox array fields in Lennar payloads use one of two formats depending on which bookmarklet consumes them, and getting it wrong is a silent write failure — no error, no crash, zero DOM effect on save. Fee Info arrays (`fee.fee_desc`, `fee.allow_onsite`, `fee.fee_includes`) and Owner Info arrays (`owner.owned_by`, `owner.possession`) use **suffix-only** format: `["19","01","25"]`. Features A/B arrays (all `features_a.*` and `features_b.*` checkbox groups) use **full-ID** format: `["Input_541_19","Input_539_02"]`. Mixing them silently fails — the bookmarklet's `(x || []).forEach(...)` iteration finds no matching DOM IDs and writes nothing.
+
+Sessions verify format against **`Lennar_Payload_Schema.md` §Format Conventions** (end-of-doc section) or against the concrete payload examples in Schema §8.1 and §8.2 before generating any payload containing checkbox arrays. When in doubt, prefer the format shown in the examples over an educated guess. First live surfacing was the 2026-07-15 smoke test on 8720 Whitman Dr — `fee.fee_includes` was populated with full IDs, Fee Info bookmarklet reconstructed `Input_576_Input_576_19`, zero boxes checked; fixed by correcting to suffix-only.
+
+When the equivalent Standard MLS Session Protocol is built, add a parallel standing rule pointing at whatever section captures the same convention upstream in `CVRMLS_Payload_Schema.md` (per the schema's Format Conventions carry-forward note).
 
 ---
 
@@ -407,7 +415,7 @@ Payload structure follows the envelope contract in `Payload_Envelope.md` (`AAR-T
 - Set `"community"` to the exact community display name (e.g. `"Harpers Mill TH"`) — the session uses this to look up per-community values in `Lennar_Community_Reference_Database.md` (schools, HOA fees, management firm, capital contributions) and in `Lennar_Payload_Schema.md` §5.2 Features B community table (heating, heat fuel, pool, community amenities).
 - Features are split across two payload keys — `"features_a"` (structural: style, structure, siding, roof, flooring, garage, basement, interior, etc.) and `"features_b"` (systems + community: cooling, heating, pool, community amenities, appliances, etc.). Each is consumed by its own launcher (`bookmarklets/features_a.html` and `bookmarklets/features_b.html`). See `Lennar_Payload_Schema.md` §5 for the A/B assignment of every field.
 - `style` — **always populate** based on property type from the Cognito form email: Townhouse → `["Input_541_19"]` (Rowhouse/Townhouse). Single Family → confirm value from `Lennar_Payload_Schema.md` §5.4 Style stored value list as SF plan styles come up; do not leave as `[]`.
-- On `"taxid"` path (Harpers Mill TH/SF): omit `listing.pid`, `listing.street_num`, `listing.street_dir`, `listing.street_name`, `listing.street_suffix`, `general.acres`, `general.tax_year`, `general.legal` — Matrix pre-populates from the parcel tax record. `owner.owner_name` always writes `"Lennar"` (force-overwrite even on taxid path). `general.assd_improvement` always writes `"0"` — Lennar new construction never pre-populates this field, unlike standard listings.
+- On `"taxid"` path (Harpers Mill TH/SF): omit `listing.pid`, `listing.street_num`, `listing.street_dir`, `listing.street_name`, `listing.street_suffix`, `listing.lot`, `general.acres`, `general.tax_year`, `general.legal` — Matrix pre-populates from the parcel tax record. `listing.lot` autofill confirmed live 2026-07-15 (8720 Whitman Dr smoke test). `owner.owner_name` always writes `"Lennar"` (force-overwrite even on taxid path). `general.assd_improvement` always writes `"0"` — Lennar new construction never pre-populates this field, unlike standard listings. Property details `listing.year_built`, `listing.rooms`, `listing.levels`, `listing.bedrooms`, and `listing.post_office` DO remain in the payload on taxid (Lennar new-construction parcels lack these in the tax record) — the deployed `bookmarklets/listing_info.html` writes them via `payload.builder === "lennar"` carveout.
 - Virtual tour: omit the `"tour"` key entirely if no link is provided in the email — the launcher is not clicked in that case.
 - `"room"` key: omit for Lennar — Room Info is not populated for Lennar new construction; the tab is skipped entirely.
 
@@ -593,10 +601,6 @@ This protocol is designed for Lennar but intended to be builder-agnostic. When o
 | CVRMLS Bookmarklet Build | AAR-TC-CVRMLS-BM-001 (`docs/cvrmls/CVRMLS_Bookmarklet_Build.md`) |
 | CVRMLS Features Field Map | AAR-TC-CVRMLS-BM-001-FEA (`docs/cvrmls/CVRMLS_Features_Field_Map.md`) |
 | CVRMLS Bookmarklet Source | AAR-TC-CVRMLS-BM-SRC-001 (`docs/cvrmls/CVRMLS_Bookmarklet_Source.md`) |
-| Lennar Bookmarklet Customization | AAR-TC-LENNAR-BM-CUST-001 (`docs/lennar/Lennar_Bookmarklet_Customization.md`) |
-| Lennar Bookmarklet Build Notes | AAR-TC-LENNAR-BM-NOTES-001 (`docs/lennar/Lennar_Bookmarklet_Build_Notes.md`) |
-| Lennar Features Payload Schema | AAR-TC-LENNAR-BM-SCH-001 (`docs/lennar/Lennar_Features_Payload_Schema.md`) |
-| Features Source Addendum | AAR-TC-LENNAR-BM-SRC-001-FEA (`docs/lennar/Lennar_Features_Bookmarklet_Source.md`) |
 | Aframe — Gary Martin agent ID | *(confirm via Aframe at session start)* |
 
 ---
@@ -611,6 +615,7 @@ This protocol is designed for Lennar but intended to be builder-agnostic. When o
 | 2.1 | 2026-06-26 | Added features.style payload rule; added lennar flag requirement |
 | 2.2 | 2026-06-27 | Confirmed Lennar-Wide Statics table — Features rows corrected: Roof updated to Shingled; Flooring, Attic, Wall Type added; Garage Y/N, Basement Y/N, ADU Y/N, Fenced Y/N, Restrictions, Disabl Equipd Y/N, Maintenance Contract Y/N removed (DYN or EXCL, not HC); Assd Improvement field ID corrected to Input_248 with isLennar gate note; Key IDs section updated to post-Session 017 restructured paths |
 | 2.3 | 2026-07-15 | Step 3 of doc realignment (`AAR-TC-DOC-REALIGN-TARGET-001` §8). Synced to consolidated `Lennar_Payload_Schema.md` (`AAR-TC-LENNAR-PL-001`): Step 5b payload template regenerated against envelope contract (adds `mls`/`builder` keys, retires `"lennar": true` flag, splits `features` into `features_a`/`features_b`, adds session-resolved statics for `general`/`owner`/`agent_office`). Matrix Entry Path Rules by Community table populated with confirmed path assignments (Harpers Mill TH/SF → taxid; Creekside Run TH / Everstone SF / Watermark SF → new). Systems & Reference and end-of-5b references updated from stale doc paths to `Lennar_Payload_Schema.md` and `Payload_Envelope.md`. Key IDs table gained rows for the two new docs. |
+| 2.4 | 2026-07-15 | Step 4 of doc realignment (`AAR-TC-DOC-REALIGN-TARGET-001` §8) plus smoke-test findings. Added "Payload Format Conventions" standing rule cross-referencing the new `Lennar_Payload_Schema.md` §Format Conventions section — captures the checkbox array format split (Fee Info/Owner = suffix-only; Features A/B = full-ID) first surfaced on 8720 Whitman Dr smoke test. Added `listing.lot` to the taxid-path omit list in Step 5b (smoke test confirmed Harpers Mill tax record autofills Lot). Removed four retired-doc rows from Key IDs & References (`AAR-TC-LENNAR-BM-CUST-001`, `AAR-TC-LENNAR-BM-NOTES-001`, `AAR-TC-LENNAR-BM-SCH-001`, `AAR-TC-LENNAR-BM-SRC-001-FEA`) — full retirement handled in a separate commit that also `git rm`'s the four files themselves. |
 
 ---
 

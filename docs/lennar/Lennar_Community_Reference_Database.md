@@ -1,8 +1,8 @@
 ---
 title: Lennar Community Reference Database
 document_id: AAR-TC-LENNAR-DB-001
-version: 1.0
-version_date: 2026-06-12
+version: 1.1
+version_date: 2026-07-15
 status: Active — Living Document
 author: Andrew Rich, AAR-TC Transaction Services
 contributor: Claude (Anthropic) — AI-assisted data extraction and document assembly
@@ -57,6 +57,7 @@ Data in this document was sourced and verified from the following:
 | Version | Date | Author | Notes |
 |---|---|---|---|
 | 1.0 | 2026-06-12 | Andrew Rich / Claude | Initial document created. 4 of 6 communities fully populated. Harpers Mill SF Fee Includes and Creekside Run Fee Includes pending MLS verification. Wynwood at Fox Creek pending next listing. |
+| 1.1 | 2026-07-15 | Andrew Rich / Claude | Fee Includes numeric codes migrated from retired `Lennar_Bookmarklet_Build_Notes.md` (Step 4 of doc realignment execution). Codes format is suffix-only per `Lennar_Payload_Schema.md` §7 Format Conventions — Fee Info bookmarklet reconstructs `Input_576_XX` inline. Harpers Mill TH verified live 2026-07-15 (8720 Whitman Dr smoke test); Everstone and Watermark carry "interim mapping — verify at first live use"; Harpers Mill SF and Creekside Run remain pending display-text confirmation. |
 
 ---
 
@@ -95,6 +96,7 @@ Data in this document was sourced and verified from the following:
 | Management Firm | ACS West Management |
 | Fee Description | Community Association |
 | Fee Includes | Clubhouse, Comm Ar Mnt, Common Area, Pool, Snow Removal, Trash Removal |
+| Fee Includes Codes | `["19","01","25","10","14","15"]` — verified live 2026-07-15 (8720 Whitman Dr smoke test) |
 | Trash by HOA | Yes |
 
 ---
@@ -118,6 +120,7 @@ Data in this document was sourced and verified from the following:
 | Management Firm | ACS West Management |
 | Fee Description | Community Association |
 | Fee Includes | *(confirm exact MLS wording — no SF example sheet yet)* |
+| Fee Includes Codes | *(pending — populate when display text confirmed on first SF listing)* |
 | Trash by HOA | No |
 
 ---
@@ -140,6 +143,7 @@ Data in this document was sourced and verified from the following:
 | Initial Working Capital Contribution: $450 | |
 | Fee Description | Condo Association |
 | Fee Includes | *(blank on MLS sheet — confirm)* |
+| Fee Includes Codes | *(pending — populate when display text confirmed on first Creekside Run listing)* |
 | Trash by HOA | No |
 
 ---
@@ -163,6 +167,7 @@ Data in this document was sourced and verified from the following:
 | Management Firm | Everstone HOA Management |
 | Fee Description | Community Association |
 | Fee Includes | Comm Ar Mnt, Common Area |
+| Fee Includes Codes | `["01","25"]` — interim mapping from retired Build Notes; verify at first live use |
 | Trash by HOA | No |
 
 ---
@@ -186,6 +191,7 @@ Data in this document was sourced and verified from the following:
 | Management Firm | ACS West Management |
 | Fee Description | Community Association |
 | Fee Includes | Clubhouse, Common Area, Pool, Recreational Facilities |
+| Fee Includes Codes | `["19","25","10","11"]` — interim mapping from retired Build Notes; verify at first live use |
 | Trash by HOA | No |
 
 ---
