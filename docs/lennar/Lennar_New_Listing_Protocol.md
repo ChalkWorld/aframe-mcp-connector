@@ -1,5 +1,5 @@
 # Lennar New Listing Protocol
-**Version 2.4** | *Last Updated: July 15, 2026*
+**Version 2.5** | *Last Updated: July 16, 2026*
 *Claude-facing SOP | Lennar new listing intake and lifecycle management*
 
 ---
@@ -51,6 +51,18 @@ Checkbox array fields in Lennar payloads use one of two formats depending on whi
 Sessions verify format against **`Lennar_Payload_Schema.md` §Format Conventions** (end-of-doc section) or against the concrete payload examples in Schema §8.1 and §8.2 before generating any payload containing checkbox arrays. When in doubt, prefer the format shown in the examples over an educated guess. First live surfacing was the 2026-07-15 smoke test on 8720 Whitman Dr — `fee.fee_includes` was populated with full IDs, Fee Info bookmarklet reconstructed `Input_576_Input_576_19`, zero boxes checked; fixed by correcting to suffix-only.
 
 When the equivalent Standard MLS Session Protocol is built, add a parallel standing rule pointing at whatever section captures the same convention upstream in `CVRMLS_Payload_Schema.md` (per the schema's Format Conventions carry-forward note).
+
+### Activation Double-Check (Standing Rule — Added 2026-07-16)
+
+Whenever Andrew reports that a listing has gone Active — in any phrasing ("I just made 8724 active," "both are active now," etc.) — the session immediately surfaces the short list of easy-to-forget manual tasks that go with activation, without waiting to be asked. As of 2026-07-16 that list is:
+
+1. ShowingTime — "No" for Allowing Online Requests (Aframe, UI-only)
+2. Flip Aframe status from Draft to Lennar - Active, if not already done
+3. Send the active listing email to the community sales rep(s) (Step 11 / Step 13 stub)
+
+Keep it to a quick nudge, not a full session review — e.g. "Nice — just want to make sure you didn't forget: ShowingTime toggle and the sales rep email for both." If multiple addresses are reported active in the same message, cover each by address rather than assuming they're all in the same state.
+
+This list should be kept in sync with whatever Step 12's Aframe/activation-adjacent checklist items are — if that checklist changes, update this list too.
 
 ---
 
@@ -502,6 +514,8 @@ Once the listing goes Active in MLS (Andrew handles activation), send the "now a
 
 Sales rep roster by community: *(stub — see Primary Contact section above)*
 
+*(See Step 13 for the session-executed version of this step — stub, not yet implemented.)*
+
 ### 12. Session Handoff Summary
 Close every session with a clear handoff of what still needs Andrew's action:
 - [ ] Add the new listing row to the Google Sheet main tab — main tab is read-only for sessions; Andrew adds manually using the row surfaced in Step 6. **Apply the MLS data sheet URL captured in Step 8 as a hyperlink on the address text in Column A.**
@@ -512,10 +526,25 @@ Close every session with a clear handoff of what still needs Andrew's action:
 - [ ] Send listing addendum to Megan/Carly for signature (until DocuSign is connected)
 - [ ] Flip Aframe status from Draft to Lennar - Active if needed
 - [ ] Set Property Type in Aframe UI (dropdown — cannot be written via connector)
+- [ ] ShowingTime — check "No" for Allowing Online Requests in Aframe (UI-only — cannot be written via connector). Keeps buyer agents from contacting the listing agent (Gary Martin) directly to request showings. Easy to forget now that Aframe transactions aren't created automatically at intake — flag every session regardless of whether Step 9 ran.
 - [ ] Save MLS# back to the Session Data tab once assigned; surface to Andrew for manual entry on the main tab
 - [ ] Save signed addendum to Google Drive property folder once returned
 - [ ] Activate listing in MLS once signed addendum is on file
 - [ ] Send active listing email to community sales rep(s)
+
+---
+
+### 13. Send Active Listing Email — STUB (session-executed, details pending)
+
+*Added 2026-07-16 — placeholder step, not yet fully specified. Do not treat as executable guidance until fleshed out.*
+
+Once Andrew confirms a listing has gone Active in MLS, the session — not Andrew — drafts and sends the "now active" notification email to the appropriate community sales rep(s), with the MLS listing sheet attached. Meant to eventually replace the manual process described in Step 11.
+
+Not yet defined:
+- Exact trigger — does Andrew explicitly flag each activation, or does the session watch for status changes some other way?
+- Recipient roster by community (see Primary Contact section — Megan's full rep roster is still a stub)
+- Email template and tone
+- Whether the MLS data sheet is attached directly or linked from Drive
 
 ---
 
@@ -616,6 +645,7 @@ This protocol is designed for Lennar but intended to be builder-agnostic. When o
 | 2.2 | 2026-06-27 | Confirmed Lennar-Wide Statics table — Features rows corrected: Roof updated to Shingled; Flooring, Attic, Wall Type added; Garage Y/N, Basement Y/N, ADU Y/N, Fenced Y/N, Restrictions, Disabl Equipd Y/N, Maintenance Contract Y/N removed (DYN or EXCL, not HC); Assd Improvement field ID corrected to Input_248 with isLennar gate note; Key IDs section updated to post-Session 017 restructured paths |
 | 2.3 | 2026-07-15 | Step 3 of doc realignment (`AAR-TC-DOC-REALIGN-TARGET-001` §8). Synced to consolidated `Lennar_Payload_Schema.md` (`AAR-TC-LENNAR-PL-001`): Step 5b payload template regenerated against envelope contract (adds `mls`/`builder` keys, retires `"lennar": true` flag, splits `features` into `features_a`/`features_b`, adds session-resolved statics for `general`/`owner`/`agent_office`). Matrix Entry Path Rules by Community table populated with confirmed path assignments (Harpers Mill TH/SF → taxid; Creekside Run TH / Everstone SF / Watermark SF → new). Systems & Reference and end-of-5b references updated from stale doc paths to `Lennar_Payload_Schema.md` and `Payload_Envelope.md`. Key IDs table gained rows for the two new docs. |
 | 2.4 | 2026-07-15 | Step 4 of doc realignment (`AAR-TC-DOC-REALIGN-TARGET-001` §8) plus smoke-test findings. Added "Payload Format Conventions" standing rule cross-referencing the new `Lennar_Payload_Schema.md` §Format Conventions section — captures the checkbox array format split (Fee Info/Owner = suffix-only; Features A/B = full-ID) first surfaced on 8720 Whitman Dr smoke test. Added `listing.lot` to the taxid-path omit list in Step 5b (smoke test confirmed Harpers Mill tax record autofills Lot). Removed four retired-doc rows from Key IDs & References (`AAR-TC-LENNAR-BM-CUST-001`, `AAR-TC-LENNAR-BM-NOTES-001`, `AAR-TC-LENNAR-BM-SCH-001`, `AAR-TC-LENNAR-BM-SRC-001-FEA`) — full retirement handled in a separate commit that also `git rm`'s the four files themselves. |
+| 2.5 | 2026-07-16 | Added ShowingTime "No" Allow Online Requests reminder to Step 12 Session Handoff Summary checklist (Aframe UI-only task, easy to miss now that Aframe transactions aren't created automatically at intake). Added Step 13 stub for session-executed Active Listing Email — trigger, recipient roster, template, and attachment method not yet defined; placeholder only, cross-referenced from Step 11. Added "Activation Double-Check" standing rule — when Andrew reports a listing went Active, the session proactively re-surfaces the ShowingTime toggle, Aframe status flip, and sales rep email as a quick nudge. |
 
 ---
 
