@@ -219,6 +219,20 @@ Before certain capabilities can be automated, the underlying Aframe configuratio
 
 ---
 
+## 7. Why This Matters — Scaling Limited Rep Agent Work
+
+This section resolves the "productized package" gap flagged in earlier session logs (standardized protocol + field maps + bookmarklet sources + Chrome extension = LLM-ready MLS automation package) now that there's a concrete business reason to build it, in Andrew's own words.
+
+**The business case:** Gary Martin holds the limited rep agent role for the local Lennar sales group in Richmond — Lennar pays him a flat monthly fee to handle their new-construction listings, and that fee flows through to Andrew as TC. Full fee mechanics are documented in Gary's entry in `Agent_Profiles.md`: $1,500/month flat for up to 15 listings, $100 for each additional listing, less $150 the broker keeps for E&O and other liabilities, netting Andrew $1,350/month. This is a repeatable relationship shape — an agent holding a limited rep deal with a builder, paying a TC a flat monthly rate to run the MLS input and Aframe side — and Andrew wants to replicate it with other agent/builder pairs, not just Gary/Lennar.
+
+**Why the automation is the prerequisite, not a side project:** Taking on more limited rep relationships only works if each new listing's Matrix input and Aframe setup is fast, reliable, and doesn't scale Andrew's own hours linearly with volume. That's the direct throughline from the Priority 1–3 use cases above — and from the CVRMLS bookmarklet/Chrome extension system, and the eventual document-signing (DocuSign) integration for listing addenda — to this business goal: the more streamlined and "locked in" the input pipeline is, the more of this kind of work Andrew can take on without it costing more hours per listing. This is also why the Gary/Lennar fee structure is being tracked as a documented baseline in `Agent_Profiles.md` rather than left as a one-off detail — it's the reference point for what to propose to the next agent.
+
+**Pricing consideration:** Andrew is weighing whether to price this service at a flat $1,500/month regardless of what a given builder's flat fee to the agent actually is, using the Gary/Lennar number as a baseline rather than a hard rule.
+
+**Immediate next step:** Gary has mentioned another agent in his office who works with a different builder under a similar arrangement. Andrew wants Gary to set up an introductory meeting — but wants the systems (bookmarklets, Chrome extension, document signing) more fully dialed in first, so the pitch is backed by a working system rather than a plan.
+
+---
+
 ## Relationship to Other Documents
 
 ```
