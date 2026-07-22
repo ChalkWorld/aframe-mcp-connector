@@ -1,5 +1,5 @@
 # Lennar New Listing Protocol
-**Version 2.5** | *Last Updated: July 16, 2026*
+**Version 2.6** | *Last Updated: July 21, 2026*
 *Claude-facing SOP | Lennar new listing intake and lifecycle management*
 
 ---
@@ -503,9 +503,36 @@ Confirm via `list_task_templates` before applying — do not rely on memorized I
 > **Next session TODO:** Add Aframe contact IDs for Gary Martin and Lennar to this table so sessions don't have to look them up every time. Pull via `search_contacts` once and hardcode here.
 
 ### 10. Send the Listing Addendum
-*(DocuSign connector — future capability, not yet implemented)*
+Sessions send the listing addendum directly via the PandaDoc connector. This step no longer requires Andrew to do anything manually.
 
-Until DocuSign is connected: flag in the handoff that the addendum needs to be sent manually via Transaction Desk to Carly/Megan for signature.
+**Template:** `Lennar Listing Addendum - Testing` (PandaDoc template ID `9DpcJ2wbwTkXvLh59aTPTn`) — built on the CVR 106 form. Static content (agreement date, Owner/Broker names, and the Owner/Broker printed-name/title captions) is typed directly onto the page and confirmed current as of the Megan Cook transition.
+
+**Field map** — sender-filled, passed via the `fields` parameter on `documents_create`:
+
+| Merge Field Name | Value |
+|---|---|
+| `Property Address` | Street number + street name only (e.g. `8724 Whitman Dr`) — no city/state/zip |
+| `Composed Clause` | `This addendum to the Master Listing Agreement serves as input for the following address -\n[Property Address] at $[Price] in the [Community] community.` — the line break before the address is required; without it the address number and street name can split across the page wrap |
+
+**Roles and recipients:**
+
+| Role | Person | Email | Fields |
+|---|---|---|---|
+| Sender | (document creator, auto-assigned — no live recipient) | — | `Property Address`, `Composed Clause` |
+| Owner | Megan Cook | `megan.cook@lennar.com` | Signature, auto-fill Date |
+| Agent | Gary Martin | `agentandrewrich@gmail.com` | Signature, auto-fill Date |
+
+Andrew signs on Gary Martin's behalf — the Agent role routing to Andrew's own email is deliberate, not a routing error. Both Owner and Agent date fields are configured to autofill with the signing date; no manual date entry is required from either signer.
+
+**Document naming convention:** `Lennar Listing Addendum - [Street Number] [Street Name]` — e.g. `Lennar Listing Addendum - 8724 Whitman Dr`. Do not include city, state, or zip in the document name.
+
+**Sequencing:** send the addendum early in intake — do not wait for Megan's signature before continuing the rest of the session. Megan can take up to half a day to see the request. After sending, set Addendum Status to `Sent` on the Session Data tab (Step 7).
+
+**Exception — future launch date:** occasionally a new listing arrives with a requested activation/launch date in the future rather than an immediate one (e.g. the form is received Monday but the listing isn't meant to go live until Friday). Check the intake email for a stated launch date before sending. If one is present and it's in the future, do not send the addendum at intake — hold it and send on the requested launch date instead. This comes up rarely, but check for it on every new listing regardless, and flag any held send clearly in the session handoff so a future session knows to follow through on the correct date.
+
+**Multiple listings at once:** there is no single batch API call for sending several addenda together. When two or more new listings arrive at once, the session creates and sends each one individually, one after another, in the same session.
+
+**Not yet automated:** retrieving the completed/signed document from PandaDoc and saving it to the Google Drive property folder. Until that's built, this remains a flagged handoff item — see Step 12 and the Future section below.
 
 > **HARD RULE: A listing cannot go Active in the MLS under any circumstances until the signed listing addendum is on file. This is a compliance requirement. Do not mark the activation handoff item complete and do not prompt Andrew to activate until the signed addendum has been received and saved to the Google Drive property folder.**
 
@@ -523,7 +550,6 @@ Close every session with a clear handoff of what still needs Andrew's action:
 - [ ] Confirm Assistant 1 set to Andrew Rich in Aframe (UI-only — cannot be written via connector)
 - [ ] MLS data input — using the bookmarklet payload generated in Step 5b. Copy payload to clipboard, navigate to Matrix, click bookmarklet on each tab.
 - [ ] Photos — download/save; upload and reorder in MLS (exterior first, bathrooms to back)
-- [ ] Send listing addendum to Megan/Carly for signature (until DocuSign is connected)
 - [ ] Flip Aframe status from Draft to Lennar - Active if needed
 - [ ] Set Property Type in Aframe UI (dropdown — cannot be written via connector)
 - [ ] ShowingTime — check "No" for Allowing Online Requests in Aframe (UI-only — cannot be written via connector). Keeps buyer agents from contacting the listing agent (Gary Martin) directly to request showings. Easy to forget now that Aframe transactions aren't created automatically at intake — flag every session regardless of whether Step 9 ran.
@@ -597,7 +623,7 @@ Photo upload order in MLS: exterior first, bathroom photos to the back.
 - [ ] **Aframe contact IDs** — pull Gary Martin and Lennar contact IDs via `search_contacts` and hardcode into Step 9 table above
 
 ### Future
-- [ ] **DocuSign connector** — once connected, Step 10 (addendum send) becomes automated; flag will change from "send manually" to automated in the handoff
+- [ ] **PandaDoc signed-document retrieval** — session does not yet pull the completed signed addendum back from PandaDoc automatically; still requires Andrew to notice it's signed and save it to the Google Drive property folder manually. Automate once a reliable trigger/webhook pattern is worked out.
 - [ ] **Active listing email automation** — Step 11 is currently manual; automate once sales rep roster is documented and Gmail connector can attach Drive files
 - [ ] **Chrome extension** — replaces the bookmarklet folder system; single toolbar button, auto-detects Matrix tab, holds payload internally (no clipboard management). Built in Cursor; installed via `chrome://extensions` developer mode. Target state once all tab bookmarklets are proven.
 
@@ -631,6 +657,7 @@ This protocol is designed for Lennar but intended to be builder-agnostic. When o
 | CVRMLS Features Field Map | AAR-TC-CVRMLS-BM-001-FEA (`docs/cvrmls/CVRMLS_Features_Field_Map.md`) |
 | CVRMLS Bookmarklet Source | AAR-TC-CVRMLS-BM-SRC-001 (`docs/cvrmls/CVRMLS_Bookmarklet_Source.md`) |
 | Aframe — Gary Martin agent ID | *(confirm via Aframe at session start)* |
+| PandaDoc — Lennar Addendum Template ID | `9DpcJ2wbwTkXvLh59aTPTn` |
 
 ---
 
@@ -646,6 +673,7 @@ This protocol is designed for Lennar but intended to be builder-agnostic. When o
 | 2.3 | 2026-07-15 | Step 3 of doc realignment (`AAR-TC-DOC-REALIGN-TARGET-001` §8). Synced to consolidated `Lennar_Payload_Schema.md` (`AAR-TC-LENNAR-PL-001`): Step 5b payload template regenerated against envelope contract (adds `mls`/`builder` keys, retires `"lennar": true` flag, splits `features` into `features_a`/`features_b`, adds session-resolved statics for `general`/`owner`/`agent_office`). Matrix Entry Path Rules by Community table populated with confirmed path assignments (Harpers Mill TH/SF → taxid; Creekside Run TH / Everstone SF / Watermark SF → new). Systems & Reference and end-of-5b references updated from stale doc paths to `Lennar_Payload_Schema.md` and `Payload_Envelope.md`. Key IDs table gained rows for the two new docs. |
 | 2.4 | 2026-07-15 | Step 4 of doc realignment (`AAR-TC-DOC-REALIGN-TARGET-001` §8) plus smoke-test findings. Added "Payload Format Conventions" standing rule cross-referencing the new `Lennar_Payload_Schema.md` §Format Conventions section — captures the checkbox array format split (Fee Info/Owner = suffix-only; Features A/B = full-ID) first surfaced on 8720 Whitman Dr smoke test. Added `listing.lot` to the taxid-path omit list in Step 5b (smoke test confirmed Harpers Mill tax record autofills Lot). Removed four retired-doc rows from Key IDs & References (`AAR-TC-LENNAR-BM-CUST-001`, `AAR-TC-LENNAR-BM-NOTES-001`, `AAR-TC-LENNAR-BM-SCH-001`, `AAR-TC-LENNAR-BM-SRC-001-FEA`) — full retirement handled in a separate commit that also `git rm`'s the four files themselves. |
 | 2.5 | 2026-07-16 | Added ShowingTime "No" Allow Online Requests reminder to Step 12 Session Handoff Summary checklist (Aframe UI-only task, easy to miss now that Aframe transactions aren't created automatically at intake). Added Step 13 stub for session-executed Active Listing Email — trigger, recipient roster, template, and attachment method not yet defined; placeholder only, cross-referenced from Step 11. Added "Activation Double-Check" standing rule — when Andrew reports a listing went Active, the session proactively re-surfaces the ShowingTime toggle, Aframe status flip, and sales rep email as a quick nudge. |
+| 2.6 | 2026-07-21 | Step 10 (Send the Listing Addendum) rewritten — DocuSign-pending stub replaced with the built and tested PandaDoc automation: template ID, Sender/Owner/Agent role structure, field map (`Property Address`, `Composed Clause`), recipient routing (Megan Cook → `megan.cook@lennar.com`, Gary Martin → `agentandrewrich@gmail.com`), document naming convention, and fire-and-forget send sequencing. Step 12 checklist item for manual addendum sending removed (now session-executed). "Future" section's DocuSign line replaced with signed-document retrieval automation as the remaining open item. Key IDs table gained PandaDoc template ID row. |
 
 ---
 

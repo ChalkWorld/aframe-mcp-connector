@@ -318,6 +318,57 @@ Run the 8724 Whitman Dr smoke re-test — the final Step 4 verification — agai
 
 ---
 
+## Session 006 — PandaDoc Addendum Signing Automation
+**Date:** July 21, 2026
+
+### Focus
+Build and test automated Lennar listing addendum signing via PandaDoc, replacing the DocuSign-pending Step 10 stub in the Lennar New Listing Protocol.
+
+### What Was Accomplished
+- Evaluated DocuSign's free tier — confirmed no free API/MCP access exists at any account tier; production sending requires the Business Pro plan regardless of whether it's called through the connector or a direct API integration
+- Researched alternatives (Verdocs, SignWell, PandaDoc, Docuseal); confirmed PandaDoc's free tier explicitly includes Claude/ChatGPT (LLM agent) usage as a named feature, and PandaDoc has a native MCP connector already in Anthropic's directory
+- Connected the PandaDoc account and connector
+- Uploaded the blank CVR 106 form and built a PandaDoc Template (`Lennar Listing Addendum - Testing`, ID `9DpcJ2wbwTkXvLh59aTPTn`)
+- Designed and built the field structure collaboratively in the PandaDoc editor: Sender role (auto-assigned to document creator, no live recipient) holding two sender-filled text fields (`Property Address`, `Composed Clause`); Owner and Agent roles each carrying a signature field and an autofill-with-signing-date date field
+- Found and fixed a field pre-fill bug — PandaDoc requires an explicit "merge field name" distinct from the internal field ID before the API `fields` parameter can target a field
+- Ran three iterative test sends against safe test inboxes, catching and correcting: a field-value swap (composed clause and address values landed reversed relative to internal field IDs), a sentence line-wrap issue (address number splitting from street name mid-line — fixed with an inserted line break before the address), and date fields defaulting to manual entry instead of autofill
+- Confirmed final recipient routing, document naming convention, and multi-listing handling; captured as a Cursor handoff to the Lennar New Listing Protocol doc
+
+### Decisions Made
+- PandaDoc is the platform of record for Lennar addendum signing — DocuSign ruled out (no free-tier API access at any tier); Verdocs ruled out (no connector path via the MCP registry or Zapier)
+- Recipient routing: Owner role → Megan Cook (`megan.cook@lennar.com`); Agent role → Gary Martin, routed to Andrew's own inbox (`agentandrewrich@gmail.com`) — Andrew signs on Gary's behalf by design, not a routing error
+- Document naming convention: `Lennar Listing Addendum - [Street Number] [Street Name]` — no city/state/zip
+- Send-first, fire-and-forget sequencing — the session sends the addendum early in intake and does not block on signature; Addendum Status on the Session Data tab is set to `Sent` immediately after sending
+- No native batch-send API exists — multiple simultaneous new listings are handled as sequential create-and-send calls within the same session, not a blocker
+- Signed-document retrieval from PandaDoc back to the Google Drive property folder is explicitly **not yet automated** — remains a flagged manual step and a Future work item
+
+### Documents Created / Updated
+
+| Document | Version | File |
+|---|---|---|
+| Lennar New Listing Protocol | 2.6 | `docs/lennar/Lennar_New_Listing_Protocol.md` |
+
+### Cursor Handoffs Produced
+
+| Handoff | Purpose |
+|---|---|
+| `HANDOFF-2026-07-21-lennar-new-listing-protocol.md` | Step 10 rewrite (PandaDoc automation), Step 12 checklist cleanup, Future section update, Key IDs addition, version bump to 2.6 |
+| `HANDOFF-2026-07-21-session-log.md` | This entry |
+
+### Open Verification Items
+- Signed-document retrieval and save-to-Drive automation — not yet built
+- PandaDoc free-tier volume (60 documents/year per the platform's stated cap) not yet verified against a full year of actual Lennar listing pace
+- Megan Cook's exact job title for the printed-name/title caption line — confirmed current directly in PandaDoc by Andrew; not independently verified against a source document
+
+### Key References
+
+| Item | Value |
+|---|---|
+| PandaDoc — Lennar Addendum Template ID | `9DpcJ2wbwTkXvLh59aTPTn` |
+| Lennar New Listing Protocol | v2.6 (`docs/lennar/Lennar_New_Listing_Protocol.md`) |
+
+---
+
 *Log started July 15, 2026. Post-realignment doc architecture in effect. Old log (`docs/project/Project_Session_Log.md`) preserved as pre-realignment archive.*
 
 ---
