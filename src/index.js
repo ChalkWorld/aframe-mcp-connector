@@ -1785,7 +1785,7 @@ server.tool(
       };
       const result = await searchContacts(body);
       results.push({
-        label: label ?? Object.values(criteria).filter(Boolean).join(" ") || "(unlabeled entry)",
+        label: label ?? (Object.values(criteria).filter(Boolean).join(" ") || "(unlabeled entry)"),
         matchCount: result?.payload?.items?.length ?? 0,
         matches: result?.payload?.items ?? [],
       });
