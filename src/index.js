@@ -69,7 +69,7 @@ function formatResult(header, { payload, warnings }) {
 
 const server = new McpServer({
   name: "aframe-connector",
-    version: "0.6.0",
+    version: "0.7.0",
 });
 
 // Tool 1: create_transaction
@@ -1622,6 +1622,179 @@ server.tool(
   }
 );
 
+// Tool 39: bulk_update_custom_fields
+server.tool(
+  "bulk_update_custom_fields",
+  "Update multiple custom/merge fields on a single Aframe transaction in one call. Loops update_custom_field internally — same validation and auto-create behavior per field. Partial failure is tolerated: a bad merge field code on one entry does not block the others. Use this instead of calling update_custom_field repeatedly when writing several fields to the same transaction (e.g. at intake).",
+  {
+    xactionId: z.number().int().describe("The transaction ID — applies to every field in this call"),
+    fields: z
+      .array(
+        z.object({
+          mergeFieldCode: z
+            .string()
+            .describe("Merge Field Code of the field to update, e.g. 'f_EarnestMoney'"),
+          value: z.string().optional().describe("New value for the field, as a string"),
+          color: z
+            .enum([
+              "NONE", "RED", "TANGERINE", "TAUPE", "YELLOW", "LIME",
+              "GREEN", "CYAN", "TEAL", "COBALT", "PURPLE", "MAGENTA",
+            ])
+            .optional()
+            .describe("Display color label for the field"),
+          omitted: z.boolean().optional().describe("Omit the field from display on the transaction"),
+          required: z.boolean().optional().describe("Mark the field as required"),
+          agentVisible: z.boolean().optional().describe("Whether the field is visible to agents"),
+          buyerSellerVisible: z.boolean().optional().describe("Whether the field is visible to buyers/sellers"),
+        })
+      )
+      .min(1)
+      .describe("Fields to update, in any order. Each entry is independent — a failure on one does not stop the rest."),
+  },
+  async ({ xactionId, fields }) => {
+    const results = [];
+    for (const { mergeFieldCode, ...changes } of fields) {
+      try {
+        const result = await updateCustomField(xactionId, mergeFieldCode, changes);
+        results.push({ mergeFieldCode, status: "success", result });
+      } catch (err) {
+        results.push({ mergeFieldCode, status: "failed", error: err.message || String(err) });
+      }
+    }
+    const succeeded = results.filter((r) => r.status === "success").length;
+    const failed = results.length - succeeded;
+    const summary = `Transaction ${xactionId}: ${succeeded} of ${results.length} fields updated${failed ? `, ${failed} failed` : ""}.`;
+    return formatResult(summary, { results });
+  }
+);
+
+// Tool 40: bulk_add_transaction_participants
+server.tool(
+  "bulk_add_transaction_participants",
+  "Add multiple participants to a single Aframe transaction in one call. Loops add_transaction_participant internally — each entry independently resolves to either an existing linked Contact (linkedContactId) or a new inline contact (contactInfo, created and linked in the same call). Partial failure is tolerated: a bad entry does not block the rest. Categories, when supplied, are passed at contact-creation time only — required if the contact needs to be categorized on creation, since Aframe categories cannot be patched after creation.",
+  {
+    xactionId: z.number().int().describe("The transaction ID — applies to every participant in this call"),
+    participants: z
+      .array(
+        z.object({
+          xactionParticipantRoleId: z
+            .number()
+            .int()
+            .describe("ID of the participant role to assign (from list_participant_roles)"),
+          linkedContactId: z
+            .number()
+            .int()
+            .optional()
+            .describe("ID of an existing Contact to link. If provided, all contactInfo-shaped fields below are ignored."),
+          // contactInfo fields — used when no linkedContactId is supplied
+          firstName: z.string().optional().describe("Contact first name"),
+          lastName: z.string().optional().describe("Contact last name"),
+          company: z.string().optional().describe("Contact company name"),
+          email1: z.string().optional().describe("Contact primary email"),
+          phone1: z.string().optional().describe("Contact phone 1"),
+          phone1Type: z
+            .enum(["CELL", "HOME", "WORK", "COMPANY", "PAGER", "ASSISTANT", "FAX", "OTHER"])
+            .optional()
+            .describe("Contact phone 1 type"),
+          phone2: z.string().optional().describe("Contact phone 2"),
+          phone2Type: z
+            .enum(["CELL", "HOME", "WORK", "COMPANY", "PAGER", "ASSISTANT", "FAX", "OTHER"])
+            .optional()
+            .describe("Contact phone 2 type"),
+          altContactFirstName: z.string().optional().describe("Alt contact first name"),
+          altContactLastName: z.string().optional().describe("Alt contact last name"),
+          altContactEmail1: z.string().optional().describe("Alt contact primary email"),
+          licenseNum: z.string().optional().describe("Contact license number"),
+          categories: z
+            .array(z.string())
+            .optional()
+            .describe("Category names to associate with a newly-created Contact (must already exist on the Team). Ignored when linkedContactId is provided — categories cannot be patched onto an existing contact."),
+          onlySaveContactInTransaction: z
+            .boolean()
+            .optional()
+            .describe("If true, contact info is stored only on the participant snapshot — no standalone Contact entity is created."),
+        })
+      )
+      .min(1)
+      .describe("Participants to add, in any order. Each entry is independent."),
+  },
+  async ({ xactionId, participants }) => {
+    const results = [];
+    for (const entry of participants) {
+      const { xactionParticipantRoleId, linkedContactId, onlySaveContactInTransaction, ...contactFields } = entry;
+      const label = contactFields.lastName
+        ? `${contactFields.firstName ?? ""} ${contactFields.lastName}`.trim()
+        : linkedContactId
+        ? `linkedContactId ${linkedContactId}`
+        : contactFields.company ?? "(unnamed entry)";
+      try {
+        const body = {
+          xactionId,
+          xactionParticipantRoleId,
+          ...(linkedContactId !== undefined && { linkedContactId }),
+          ...(onlySaveContactInTransaction !== undefined && { onlySaveContactInTransaction }),
+        };
+        if (linkedContactId === undefined) {
+          const contactInfo = {};
+          for (const [key, val] of Object.entries(contactFields)) {
+            if (val !== undefined) contactInfo[key] = val;
+          }
+          if (Object.keys(contactInfo).length > 0) body.contactInfo = contactInfo;
+        }
+        const result = await addTransactionParticipant(body);
+        results.push({ label, status: "success", result });
+      } catch (err) {
+        results.push({ label, status: "failed", error: err.message || String(err) });
+      }
+    }
+    const succeeded = results.filter((r) => r.status === "success").length;
+    const failed = results.length - succeeded;
+    const summary = `Transaction ${xactionId}: ${succeeded} of ${results.length} participants added${failed ? `, ${failed} failed` : ""}.`;
+    return formatResult(summary, { results });
+  }
+);
+
+// Tool 41: bulk_search_contacts
+server.tool(
+  "bulk_search_contacts",
+  "Search Aframe for multiple contacts in one call — e.g. checking a co-op agent, a lender, and a closer against existing Contacts before deciding whether to link or create each one. Loops search_contacts internally, 'starts with' matching on name fields (same as the single-entity tool and Aframe's own UI typeahead — not fuzzy matching). Read-only: every entry returns a result (zero, one, or several matches), there is no failure state to report.",
+  {
+    searches: z
+      .array(
+        z.object({
+          label: z
+            .string()
+            .optional()
+            .describe("Optional free-text label for this entry (e.g. 'Co-op agent', 'Lender'), echoed back in the result to make a multi-entry response easy to scan. Not sent to Aframe."),
+          firstName: z.string().optional().describe("Filter by first name ('starts with' matching)"),
+          lastName: z.string().optional().describe("Filter by last name ('starts with' matching)"),
+          company: z.string().optional().describe("Filter by company name ('starts with' matching)"),
+          email: z.string().optional().describe("Filter by email address (exact matching)"),
+        })
+      )
+      .min(1)
+      .describe("Searches to run, in any order."),
+  },
+  async ({ searches }) => {
+    const results = [];
+    for (const { label, ...criteria } of searches) {
+      const body = {
+        contactSearchCriteriaDto: { ...criteria },
+        page: 0,
+        pageSize: 20,
+      };
+      const result = await searchContacts(body);
+      results.push({
+        label: label ?? Object.values(criteria).filter(Boolean).join(" ") || "(unlabeled entry)",
+        matchCount: result?.payload?.items?.length ?? 0,
+        matches: result?.payload?.items ?? [],
+      });
+    }
+    const summary = `${searches.length} search${searches.length === 1 ? "" : "es"} run — ${results.filter((r) => r.matchCount > 0).length} returned at least one match.`;
+    return formatResult(summary, { results });
+  }
+);
+
 // ---------------------------------------------------------------------------
 // Express HTTP server
 // ---------------------------------------------------------------------------
@@ -1633,7 +1806,7 @@ app.get("/", (_req, res) => {
   res.json({
     status: "ok",
     service: "aframe-mcp-connector",
-    version: "0.6.0",
+    version: "0.7.0",
   });
 });
 
@@ -1661,7 +1834,7 @@ app.post("/mcp", async (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
-  console.log(`Aframe MCP connector v0.6.0 listening on port ${PORT}`);
+  console.log(`Aframe MCP connector v0.7.0 listening on port ${PORT}`);
   console.log(`  Health check: GET  /`);
   console.log(`  MCP endpoint: POST /mcp`);
   console.log(`  Tools: create_transaction, get_transaction, update_transaction,`);
@@ -1679,5 +1852,7 @@ app.listen(PORT, () => {
   console.log(`         list_transaction_attachments, update_transaction_attachment,`);
   console.log(`         upload_transaction_attachment_file, unassign_transaction_attachment_file,`);
   console.log(`         assign_transaction_attachment_file,`);
-  console.log(`         search_tasks, get_task, update_task, create_task`);
+  console.log(`         search_tasks, get_task, update_task, create_task,`);
+  console.log(`         bulk_update_custom_fields, bulk_add_transaction_participants,`);
+  console.log(`         bulk_search_contacts`);
 });
