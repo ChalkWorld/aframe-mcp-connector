@@ -1664,7 +1664,7 @@ server.tool(
     const succeeded = results.filter((r) => r.status === "success").length;
     const failed = results.length - succeeded;
     const summary = `Transaction ${xactionId}: ${succeeded} of ${results.length} fields updated${failed ? `, ${failed} failed` : ""}.`;
-    return formatResult(summary, { results });
+    return formatResult(summary, { payload: results });
   }
 );
 
@@ -1750,7 +1750,7 @@ server.tool(
     const succeeded = results.filter((r) => r.status === "success").length;
     const failed = results.length - succeeded;
     const summary = `Transaction ${xactionId}: ${succeeded} of ${results.length} participants added${failed ? `, ${failed} failed` : ""}.`;
-    return formatResult(summary, { results });
+    return formatResult(summary, { payload: results });
   }
 );
 
@@ -1791,7 +1791,7 @@ server.tool(
       });
     }
     const summary = `${searches.length} search${searches.length === 1 ? "" : "es"} run — ${results.filter((r) => r.matchCount > 0).length} returned at least one match.`;
-    return formatResult(summary, { results });
+    return formatResult(summary, { payload: results });
   }
 );
 
