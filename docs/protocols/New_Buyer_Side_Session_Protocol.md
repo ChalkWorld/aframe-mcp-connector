@@ -1,5 +1,5 @@
 # New Buyer Side Session Protocol
-**Version 1.2** | *Last Updated: June 30, 2026*
+**Version 1.3** | *Last Updated: August 7, 2026*
 *Claude-facing SOP | Generic — applies to all agents and file types*
 
 ---
@@ -135,6 +135,12 @@ When creating a new contact, always apply these rules:
 | Seller on a buyer-side file | `Seller Other Side` |
 | Buyer on a seller-side file | `Buyer Other Side` |
 | Other-side agent (any file) | `Co-Op Agent` + transaction year (e.g. `2026`) |
+| Lender (either side) | `Lender` — no "Other Side" variant exists in Aframe; same category regardless of which role ID is used |
+| Closer (either side) | `Closer` — no "Other Side" variant exists; see functional-role note below |
+| Attorney (either side) | `Attorney` — no "Other Side" variant exists |
+| Termite inspector | `Termite` |
+| Septic company | `Septic Company` |
+| Referral agent | `Referral Agent` |
 
 **Other-side agents — Co-Op Agent rule**
 Other-side agents always receive two categories at creation: `Co-Op Agent` plus the transaction year. Never use `Agent` as the category for an other-side agent. Both must be passed in the same `create_contact` call.
@@ -144,6 +150,32 @@ The seller record on a buyer-side file is name + role (Seller Other Side, role I
 
 **Agent + TC on the Other Side**
 When the listing agent has an assistant or TC copied on the email thread, create one contact record for the agent and include the TC as the alt contact on the same record.
+
+**Closer — a functional role, not a job title**
+The Closer / Closer (Other Side) participant role and `Closer` category represent whoever is the actual point of contact for settlement on a given side — not a specific job title. This covers both a title company's "closer" and a real estate attorney's office where the equivalent function is performed by someone whose job title is "paralegal." Aframe has a `Paralegal` participant role (21563) and category, but it reflects earlier practice and isn't used currently — whoever does the settlement-coordination work goes in as Closer regardless of their actual job title.
+
+**Attorney — a separate role from Closer, can coexist on the same file**
+Attorney (role 21546) / Attorney (Other Side) (role 21551), category `Attorney` either side, is used when an attorney is genuinely involved — either as the principal at a firm handling settlement (who may be copied on correspondence while someone else at the firm does the day-to-day settlement work as Closer), or as the other side's named point of contact directly. Attorney and Closer can both be added to the same file; they aren't mutually exclusive slots.
+
+**Lender Processor — not a separate participant**
+A lender's loan processor is not added as its own participant. It goes in the `altContact*` fields on the same Lender / Lender (Other Side) record as the primary loan officer — the same mechanism used for a buyer or seller spouse. `$LenderOtherSide-AllEmails` (and equivalent merge fields) pulls both the primary and alt contact's emails from that one record. Role ID 21814 ("Lender Processor") exists in Aframe as a standalone participant role but isn't the pattern in use — don't add it as a separate participant.
+
+**Agent-tag category — sphere-of-influence tagging**
+Contacts representing Clients (Buyer/Seller, our own side), Lender (our own side), and Referral Agent additionally receive a category tagging the roster agent they belong to (e.g. `Liz Brown`) — this is a separate category alongside the role category above, not a replacement for it. Own-side only — do not apply an agent tag to an Other Side contact. Closer does not get this tag.
+
+**Termite (WDI) and Septic — vendor sourcing and add triggers**
+Vendor contact for both trades is sourced from Agent Profiles' "Preferred Termite Inspector" table (and the equivalent septic entry, when the agent has a standard one) for the file's roster agent — never hardcode a vendor name into this protocol, since different agents may use different vendors.
+
+- *Trigger, buyer-side:* VA or FHA financing → always add the termite contact, no need to ask (lender-mandated). On a non-as-is deal, follow standard responsibility. On an as-is deal with other financing, default to adding it — most buyers still want the inspection — *unless* the buyer is a flagged investor (a documented Agent Profiles quirk for a known repeat investor, or an LLC/entity buyer name on the contract as a soft signal), in which case ask before adding rather than assuming.
+- *Well vs. septic are independent facts, not a package* — check both the water source and sewage disposal fields on the contract separately; don't assume one implies the other.
+- *Septic vendor* is selected manually by Andrew based on location/availability — flag it for his attention rather than auto-adding a contact (see Step 10).
+- *Well water testing* is handled by whichever vendor does the termite/pest inspection — they ship samples to a certified lab and request whatever panel is needed, so no separate lab vendor is required. VA financing requires an expanded panel (bacteria, lead, nitrates/nitrites) in addition to the standard test — same vendor, larger request, added cost.
+
+**Referral Agent**
+When the file involves a referral (per contract or agent notice — this is frequently a Phase 2 add, since referrals aren't always disclosed at initial intake), add a Referral Agent participant (role 22678, category `Referral Agent` + agent-tag) using the referral agreement for contact details, and populate `f_ReferralTransaction2` on the transaction as `"[Referring Agent Name] - [Fee]%"` (e.g. `Lauren Hurlbut - 25%`) via `update_custom_field`.
+
+**Designated Agency check**
+If the co-op (other-side) agent is at the same brokerage as our own roster agent, a Designated Agency form is required (a compliance document, uploaded to the broker portal). Flag this for Andrew in the handoff summary (Step 10) whenever the two brokerage names match — a plain-language comparison is enough (e.g. "Exp Realty" vs. "Exp" vs. "eXp" all count as a match); this isn't worth building fuzzy-matching logic for.
 
 ---
 
@@ -290,6 +322,9 @@ Standard roles:
 | Seller Other Side | 43983 |
 | TC Other Side | 21908 |
 | Buyer Other Side | 43982 |
+| Attorney | 21546 |
+| Attorney (Other Side) | 21551 |
+| Referral Agent | 22678 |
 
 ---
 
@@ -367,6 +402,8 @@ At the close of every session, present Andrew with a clear handoff summary of wh
 - [ ] Confirm `percentageCommission` and `payoutEstimated` populated on the transaction (via `update_transaction`)
 - [ ] Confirm EMD wire received by due date
 - [ ] Review and action any flagged items from signature verification
+- [ ] Confirm Designated Agency form signed and uploaded to broker portal, if co-op agent shares our roster agent's brokerage
+- [ ] Select and add a septic company contact if the property is on septic (vendor chosen manually — location/availability dependent)
 - [ ] Note any pending contacts (e.g. TC Other Side not yet introduced)
 
 ---

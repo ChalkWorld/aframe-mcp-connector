@@ -1,8 +1,8 @@
 ---
 title: Seller Under Contract — Session Protocol
 document_id: WORKFLOWS-SELLER-001
-version: 1.1
-version_date: 2026-06-30
+version: 1.2
+version_date: 2026-08-07
 status: Active — Living Document
 author: Andrew Rich, AAR-TC Transaction Services
 contributor: Claude (Anthropic) — AI-assisted document assembly
@@ -31,6 +31,7 @@ This document was built from a live working session on the 7113 Deer Run Ln file
 |---|---|---|---|
 | 1.0 | 2026-06-30 | Andrew Rich / Claude | Initial protocol document, built from the Deer Run working session. |
 | 1.1 | 2026-06-30 | Andrew Rich / Claude | Structural mirror pass against buyer-side protocol v1.2: added Commission and Payout (single-rate), Services Requested, full merge field master tables (Standard + Native), Land Listings section, and the missing-signatures compliance rule. |
+| 1.2 | 2026-08-07 | Andrew Rich / Claude | Role/category audit session: added Lender (Other Side) and Attorney/Attorney (Other Side) roles, Closer functional-role clarification, Paralegal and Lender Processor notes, Termite always-add rule, Septic contract-check rule, Referral Agent pattern, agent-tag category rule, and Designated Agency brokerage check. |
 
 ---
 
@@ -152,11 +153,22 @@ These mirror the buyer-side protocol's contact rules, applied from the seller's 
 | Agent (Other Side) | 21543 |
 | Buyer (Other Side) | 43982 |
 | Closer (Other Side) | 21549 |
+| Lender (Other Side) | 21550 |
+| Attorney | 21546 |
+| Attorney (Other Side) | 21551 |
+| Referral Agent | 22678 |
 
 **Categories at creation:**
 - Buyers: `Buyer Other Side` + transaction year (e.g. `2026`)
 - Buyer's agent: `Agent` + transaction year
 - Buyer's settlement company: `Closer` + transaction year
+- Buyer's lender (when added — e.g. for the Intro to Buyer's Lender email): `Lender` — no "Other Side" variant exists in Aframe
+- Attorney, either side (when used): `Attorney` — no "Other Side" variant exists
+- Referral agent (when applicable): `Referral Agent`
+
+> ⚠️ Open item, not resolved this session: the "+ transaction year" convention above for Buyer's settlement company (`Closer`) hasn't been confirmed against a live record the way Termite and Referral Agent were. Worth a quick check next time it comes up — if wrong, it's a one-line fix here.
+
+Own-side Seller, Lender, and Referral Agent contacts also receive a category tagging the roster agent (e.g. `Liz Brown`), alongside the categories above — own-side only, and Closer does not get this tag.
 
 Categories are creation-time only — the connector cannot patch categories onto an existing contact. If missed, it must be fixed manually in the Aframe UI.
 
@@ -169,6 +181,29 @@ Categories are creation-time only — the connector cannot patch categories onto
 The settlement company named in the contract is the **buyer's** settlement company, and goes in the `Closer (Other Side)` role — even though the contract itself doesn't use "other side" language. This is the inverse of how it reads on a buyer-side file, and it's an easy place to make a mistake if read too literally off the contract.
 
 Do not replace the existing seller-side Closer participant based on what's named in the contract's settlement section — that section names the other side's company.
+
+**Closer is a functional role, not a job title.** It covers a title company's "closer" and a real estate attorney's office where the equivalent function is performed by someone whose job title is "paralegal." Aframe has a standalone `Paralegal` participant role (21563), but it isn't used in current practice — the settlement POC goes in as Closer / Closer (Other Side) regardless of job title.
+
+**Attorney (role 21546 / Attorney (Other Side) 21551, category `Attorney` either side)** is a separate role from Closer and can coexist with it on the same file — e.g. an attorney who's the named principal at a settlement firm (copied on correspondence) while someone else at that firm does the day-to-day work as Closer. Also used when an attorney is directly named as the other side's point of contact.
+
+**Lender (Other Side)** — when the buyer's lender needs to be added (e.g. for the "Intro to Buyer's Lender" email template, which needs `$LenderOtherSide-AllEmails` and related merge fields), use role 21550, category `Lender`. A loan processor is not a separate participant — it goes in the `altContact*` fields on this same record, same mechanism as a spouse.
+
+### Termite (WDI) and Septic
+
+Vendor contact sourced from Agent Profiles' "Preferred Termite Inspector" table for the roster agent — never hardcode a vendor name into this protocol.
+
+- **Always add the termite contact on seller-side files at setup**, regardless of as-is status — a deliberate default (current vendor is used by every agent, and an unused contact costs nothing), not a conditional trigger. Category `Termite`.
+- **Well and septic are independent facts** — check the water source and sewage disposal fields on the contract separately; don't assume one implies the other.
+- **Septic vendor** is selected manually by Andrew based on location/availability — flag for his attention (Step 10) rather than auto-adding a contact. Category `Septic Company` when added.
+- **Well water testing** is handled by whichever vendor does termite/pest — they ship samples to a certified lab and request whatever panel is needed, so no separate lab vendor is required.
+
+### Referral Agent
+
+If a referral is involved, same pattern as buyer-side: role 22678, category `Referral Agent` + agent-tag, contact details from the referral agreement, `f_ReferralTransaction2` on the transaction formatted `"[Referring Agent Name] - [Fee]%"`. See `New_Buyer_Side_Session_Protocol.md` Step 6 for the full pattern and a worked example.
+
+### Designated Agency check
+
+If the buyer's agent is at the same brokerage as our own roster agent, a Designated Agency form is required (compliance document, uploaded to the broker portal). Flag this for Andrew in the handoff summary (Step 10) whenever the two brokerage names match on a plain-language basis (e.g. "Exp Realty" / "Exp" / "eXp" all count) — not worth building fuzzy-matching logic for.
 
 ---
 
@@ -316,6 +351,8 @@ At the close of every session, present Andrew with:
 - [ ] Confirm the buyer's settlement company contact — if only the company name is known at intake, this gets filled in via a Mode 2 update once the buyer's side settlement contact introduces themselves
 - [ ] Note any contract ambiguities resolved during the session and the reasoning used (e.g. paragraph 23 override calls) so the file record shows *why*, not just the final value
 - [ ] Confirm signed addenda (possession agreement, escalation addendum, etc.) are saved to the transaction and/or Drive folder
+- [ ] Confirm Designated Agency form signed and uploaded to broker portal, if buyer's agent shares our roster agent's brokerage
+- [ ] Select and add a septic company contact if the property is on septic (vendor chosen manually — location/availability dependent)
 
 ---
 
