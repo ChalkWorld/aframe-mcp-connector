@@ -459,6 +459,68 @@ Two threads: (1) refine the batch/bulk connector tools design carried from `SESS
 
 ---
 
+## Session 009 — Batch/Bulk Tools Build
+**Date:** August 7, 2026
+
+### Focus
+Finalize and ship the three batch/bulk connector tools scoped across `SESSION-HANDOFF-2026-07-13-batch-tools.md` and `SESSION-HANDOFF-2026-08-07-batch-tools.md` — `bulk_update_custom_fields`, `bulk_add_transaction_participants`, and a newly-added third tool, `bulk_search_contacts`.
+
+### What Was Accomplished
+- Locked final schemas against the live `src/index.js`, confirming no `src/aframe.js` changes were needed — each bulk tool loops an already-imported single-entity function.
+- Added `bulk_search_contacts` as a third tool, not in the original plan — covers the co-op agent/lender/closer "might already exist in the system" lookup, the same thing Aframe's UI typeahead does.
+- Confirmed `bulk_create_contacts` stays cut — no standalone use case, since `bulk_add_transaction_participants` already creates-and-links inline.
+- Added `categories` to `bulk_add_transaction_participants` — doesn't exist on the single-entity `add_transaction_participant` tool at all; flagged as drift between the two, not fixed this session.
+- Shipped as v0.7.0: three Cursor handoffs (`src/index.js`, `package.json`, `CONNECTOR_TOOL_ROADMAP.md` Tier 2 → Tier 1), applied in sequence.
+- **Production incident, self-caused:** v0.7.0 crash-looped on deploy — `bulk_search_contacts` mixed `??` and `||` without parentheses, a genuine JS syntax error. Diagnosed from the Railway crash log, fixed in a one-line hotfix (v0.7.1).
+- **Second bug, same authoring pass:** all three bulk tools called `formatResult(summary, { results })` instead of `formatResult(summary, { payload: results })` — the per-entry detail array was silently dropped from every tool's output, only the summary line ever rendered. Caught during the first live smoke test. Fixed across all three tools in one hotfix (v0.7.2).
+- Reconnected the Claude.ai connector after the v0.7.0 tool-list change; confirmed all three tools discoverable via `tool_search`.
+- Full smoke test against the `1 POC Lane` sandbox (`xactionId 551669`) after both hotfixes — all three tools confirmed working end to end, including `categories` verified via a follow-up `get_contact` call and partial-failure isolation confirmed on both write tools with deliberately bad entries.
+
+### Decisions Made
+- `bulk_search_contacts` is read-only, no partial-failure model — every entry always returns a result (0, 1, or several matches), never "failed."
+- No per-entry `agentVisible`/`buyerSellerVisible` on `bulk_add_transaction_participants` — Aframe's default (`true`) applies; a known, deliberately deferred gap.
+- `formatResult` convention (summary line + full per-entry array) is now actually working as designed, not just documented.
+- Recurring vendor contacts (closer, lender, termite, co-agent) should be checked against Agent Profiles before any search tool call — `bulk_search_contacts` is for participant-type lookups, not a replacement for the Agent Profiles ID table.
+
+### Known Issues Fixed This Session
+| Issue | Introduced | Fixed | Severity |
+|---|---|---|---|
+| `??`/`||` syntax error in `bulk_search_contacts` crashed the Railway deploy on boot | v0.7.0 handoff | v0.7.1 hotfix | Production outage |
+| `formatResult` called with `{ results }` instead of `{ payload: results }` across all three bulk tools — detail array silently dropped | v0.7.0 handoff | v0.7.2 hotfix | Silent data-visibility bug, no crash |
+
+Both bugs were introduced in the same handoff-authoring pass, and both were authoring mistakes, not Cursor apply errors — Cursor applied both fixes correctly on the first pass. The live smoke test is what caught the second bug; a code read-through alone hadn't.
+
+### Documents Created / Updated
+- `src/index.js` — 3 new tools (39–41), version bumped 0.6.0 → 0.7.0, two follow-up hotfixes
+- `package.json` — version bumped to 0.7.0
+- `docs/connector/CONNECTOR_TOOL_ROADMAP.md` — v3.1 → v3.2; Batch/Bulk Operations promoted Tier 2 → Tier 1
+- `BATCH-TOOLS-DESIGN-001` — new standalone design doc (schemas, rationale, sample outputs)
+
+### Cursor Handoffs Produced
+| Handoff | Purpose |
+|---|---|
+| `HANDOFF-v0.7.0-index-js.md` | 3 new bulk tools + version bump |
+| `HANDOFF-v0.7.0-package-json.md` | Version bump |
+| `HANDOFF-v0.7.0-roadmap.md` | Tier promotion; carried commit block |
+| `HANDOFF-v0.7.1-index-js-hotfix.md` | Syntax-error fix (crash) |
+| `HANDOFF-v0.7.2-index-js-hotfix.md` | `formatResult` payload-key fix (silent data loss) |
+
+### Process Note
+Session 008's log entry was misnumbered "Session 004" by the handoff that wrote it, authored without checking the log's live state. Corrected to Session 008 at apply time — low risk since it's a log entry, not code or a protocol doc. Going forward, any handoff appending a session-log entry should confirm the next session number against the live file at apply time rather than hardcoding it. Applied in practice for this entry.
+
+### Open Items Carried Forward
+- Two throwaway test participants (`Test SmokeTestSeller` / `Test SmokeTestTC`, IDs 2585318 / 2585319, contacts 2396057 / 2396058) left on `1 POC Lane` — remove in the UI if the file should stay a clean sandbox.
+- `f_EarnestMoney` / `f_Financing` on `1 POC Lane` overwritten by the smoke test (`$6,500` / `Cash`) — reset if prior values mattered.
+- Single-entity `add_transaction_participant` still doesn't expose `categories`, unlike `create_contact` and the new bulk tool.
+- Deployed version string still reports `0.7.0` despite two undeployed-version-bump hotfixes on top — cosmetic drift.
+
+### Key References
+- Railway connector URL: `https://aframe-mcp-connector-production.up.railway.app/mcp`
+- Test file: `1 POC Lane`, `xactionId 551669`
+- Batch tools design doc: `BATCH-TOOLS-DESIGN-001`
+
+---
+
 *Log started July 15, 2026. Post-realignment doc architecture in effect. Old log (`docs/project/Project_Session_Log.md`) preserved as pre-realignment archive.*
 
 ---
