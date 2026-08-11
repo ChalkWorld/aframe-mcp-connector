@@ -1,8 +1,8 @@
 ---
 title: Lennar Community Reference Database
 document_id: AAR-TC-LENNAR-DB-001
-version: 1.1
-version_date: 2026-07-15
+version: 1.2
+version_date: 2026-08-11
 status: Active — Living Document
 author: Andrew Rich, AAR-TC Transaction Services
 contributor: Claude (Anthropic) — AI-assisted data extraction and document assembly
@@ -58,6 +58,7 @@ Data in this document was sourced and verified from the following:
 |---|---|---|---|
 | 1.0 | 2026-06-12 | Andrew Rich / Claude | Initial document created. 4 of 6 communities fully populated. Harpers Mill SF Fee Includes and Creekside Run Fee Includes pending MLS verification. Wynwood at Fox Creek pending next listing. |
 | 1.1 | 2026-07-15 | Andrew Rich / Claude | Fee Includes numeric codes migrated from retired `Lennar_Bookmarklet_Build_Notes.md` (Step 4 of doc realignment execution). Codes format is suffix-only per `Lennar_Payload_Schema.md` §7 Format Conventions — Fee Info bookmarklet reconstructs `Input_576_XX` inline. Harpers Mill TH verified live 2026-07-15 (8720 Whitman Dr smoke test); Everstone and Watermark carry "interim mapping — verify at first live use"; Harpers Mill SF and Creekside Run remain pending display-text confirmation. |
+| 1.2 | 2026-08-11 | Andrew Rich / Claude | MLS Area codes added for all 5 active communities — previously undocumented anywhere (Harpers Mill 54, Creekside Run 60, Everstone 42, Watermark 54). Creekside Run Fee Includes resolved: Comm Ar Mnt / Common Area / Snow Removal (`["01","25","14"]`), confirmed 6039 Blue Iris Rd (MLS# 2621807) — sourced from internal HOA reference sheet, not yet cross-checked against a live MLS Fee Includes display. Creekside Run capital contribution confirmed flowing into `fee.addl_fee_desc` — second community confirmed after Harpers Mill TH (see `Lennar_Payload_Schema.md` §7.1). Wynwood at Fox Creek marked retired — community sold out, removed from Pending Items. |
 
 ---
 
@@ -66,8 +67,7 @@ Data in this document was sourced and verified from the following:
 | Community | Item Pending | Notes |
 |---|---|---|
 | Harpers Mill — Single Family | Fee Includes (exact MLS wording) | No SF example MLS sheet yet — confirm when available |
-| Creekside Run — Townhome | Fee Includes | Field was blank on 6033 Blue Iris Rd MLS sheet — confirm |
-| Wynwood at Fox Creek | All data | No recent listings — populate when next email received |
+| Wynwood at Fox Creek | All data | **Retired 2026-08-11 — community sold out, no further listings expected.** Not pursuing further. |
 | Fawncrest | All data | Listed in HOA Quick Sheet but not currently active — add when needed |
 
 ---
@@ -77,7 +77,7 @@ Data in this document was sourced and verified from the following:
 ---
 
 ### Harpers Mill — Townhome
-**County:** Chesterfield | **City:** Chesterfield | **Zip:** 23832 | **Property Type:** Condo/Townhome
+**County:** Chesterfield | **City:** Chesterfield | **Zip:** 23832 | **Property Type:** Condo/Townhome | **MLS Area:** 54
 
 #### Schools
 | Level | School |
@@ -102,7 +102,7 @@ Data in this document was sourced and verified from the following:
 ---
 
 ### Harpers Mill — Single Family
-**County:** Chesterfield | **City:** Chesterfield | **Zip:** 23832 | **Property Type:** Single Family
+**County:** Chesterfield | **City:** Chesterfield | **Zip:** 23832 | **Property Type:** Single Family | **MLS Area:** 54
 
 #### Schools
 | Level | School |
@@ -126,7 +126,7 @@ Data in this document was sourced and verified from the following:
 ---
 
 ### Creekside Run — Townhome
-**County:** Richmond City | **City:** Richmond | **Zip:** 23224 | **Property Type:** Condo/Townhome
+**County:** Richmond City | **City:** Richmond | **Zip:** 23224 | **Property Type:** Condo/Townhome | **MLS Area:** 60
 
 #### Schools
 | Level | School |
@@ -140,16 +140,16 @@ Data in this document was sourced and verified from the following:
 |---|---|
 | HOA | Yes |
 | Fee | $75.00 / Monthly |
-| Initial Working Capital Contribution: $450 | |
+| Initial Working Capital Contribution: $450 | Confirmed flows into payload `fee.addl_fee_desc` (Add'l Fee Dsc / Input_117) — 2026-08-11, 6039 Blue Iris Rd |
 | Fee Description | Condo Association |
-| Fee Includes | *(blank on MLS sheet — confirm)* |
-| Fee Includes Codes | *(pending — populate when display text confirmed on first Creekside Run listing)* |
+| Fee Includes | Comm Ar Mnt, Common Area, Snow Removal |
+| Fee Includes Codes | `["01","25","14"]` — confirmed 2026-08-11 (6039 Blue Iris Rd, MLS# 2621807); sourced from internal HOA reference sheet, not yet cross-checked against a live MLS Fee Includes display |
 | Trash by HOA | No |
 
 ---
 
 ### Everstone — Single Family
-**County:** Henrico | **City:** Richmond | **Zip:** 23223 | **Property Type:** Single Family
+**County:** Henrico | **City:** Richmond | **Zip:** 23223 | **Property Type:** Single Family | **MLS Area:** 42
 
 #### Schools
 | Level | School |
@@ -173,7 +173,7 @@ Data in this document was sourced and verified from the following:
 ---
 
 ### Watermark — Single Family
-**County:** Chesterfield | **City:** Chesterfield | **Zip:** 23234 | **Property Type:** Single Family
+**County:** Chesterfield | **City:** Chesterfield | **Zip:** 23234 | **Property Type:** Single Family | **MLS Area:** 54
 
 #### Schools
 | Level | School |
@@ -197,13 +197,14 @@ Data in this document was sourced and verified from the following:
 ---
 
 ### Wynwood at Fox Creek — Single Family
-**County:** *(pending)* | **City:** *(pending)* | **Property Type:** Single Family
+**Status:** Retired — community sold out, no further listings expected (confirmed August 2026)
+**County:** *(never populated)* | **City:** *(never populated)* | **Property Type:** Single Family
 
 #### Schools
-*(Pending — to be populated when next listing is received)*
+*(Not pursuing — community retired before data was collected)*
 
 #### HOA
-*(Pending — to be populated when next listing is received)*
+*(Not pursuing — community retired before data was collected)*
 
 ---
 
