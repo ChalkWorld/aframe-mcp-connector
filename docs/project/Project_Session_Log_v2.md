@@ -585,6 +585,71 @@ Clean up accumulated documentation debt across the three Lennar docs (Protocol, 
 
 ---
 
+## Session 011 — Airtable Adoption for Lennar Listings + Community Reference Data
+**Date:** August 14, 2026
+
+### Focus
+Replace the unreliable Zapier/Google Sheets connector with a direct Airtable connector for internal Lennar tracking. Migrate the Session Data tab and Community Reference Database into Airtable tables, lock down the division of authority between Airtable and the Google Sheet, and update all three governing docs to match.
+
+### What Was Accomplished
+- Diagnosed the Zapier Google Sheets connector: the connection itself was live and metadata/simple reads worked, but its higher-level "search" actions (`get_data_range`, `get_many_rows`) returned silently empty results on the Session Data tab despite real data being present — worked around via a raw Sheets API passthrough (`_zap_raw_request`) rather than trusting the abstracted read actions.
+- Evaluated alternatives to Zapier/GS given its metered monthly call-quota model: Claude artifact + persistent storage, Google Drive (ruled out — no in-place file-update tool), Supabase (ruled out — only a read-only log-query tool available in this environment, no table CRUD), Smartsheet, Airtable. Selected Airtable — native (non-Zapier) connector, free tier fits current scale, no per-call metered billing.
+- Connected Airtable; verified connection (`ping`, `list_bases`) with create-level permission.
+- Created the `Lennar Listings` table; migrated 7 rows from the Session Data tab (recovered via raw Sheets API after Zapier's abstracted reads falsely returned empty).
+- Cross-checked those 7 rows against the Google Sheet main tab — found and corrected real drift (price reductions, status advances). Corrected an earlier miscount of the main tab's row count (91 real listings, not the sheet's allocated-grid "194"). Added `Current Price` / `Closing Date` / `Price Change Date` fields. Corrected `MLS Input Stage` to Done for all 7 (Active/Pending listings can't have incomplete MLS input by definition).
+- Investigated a same-day MLS withdrawal request via Gmail (Izaiah Clark / Bret Williams threads) — confirmed the 7 actually-withdrawn addresses (Everstone + Creekside), confirmed none overlapped with the 7 Airtable listings.
+- Created the `Community Reference DB` table; migrated all 5 active communities plus retired Wynwood verbatim from `Lennar_Community_Reference_Database.md` (Fawncrest intentionally omitted — parked, not active, per standing instruction). Added structured verification-status fields (`Fee Includes Verification`, `Addl Fee Desc Confirmed`) that turn previously prose-buried hedge language into a filterable status.
+- Locked down the Airtable/Google Sheet division of authority: Airtable is source of truth for every table going forward; the Listings table is the sole exception — its `Status`/`Current Price`/`Closing Date`/`Price Change Date` fields remain Google-Sheet-authoritative, refreshed into Airtable at new-listing intake via an MLS#-matched delta sync (bounds drift to "since the last new listing" rather than indefinite).
+- Produced 3 Cursor handoffs updating `Lennar_New_Listing_Protocol.md` (v2.8), `Lennar_Payload_Schema.md` (v1.4), and `Lennar_Community_Reference_Database.md` (v1.3) to reflect the new workflow. Fixed the Session 007 §6 doc-pointer bug (open 3 weeks) as part of the Payload Schema update — it had claimed Features B community fields (heating, heat fuel, pool, amenities) lived in the Community Reference Database file; they never did, they've only ever lived in the Payload Schema's own §5.2.
+
+### Decisions Made
+- Airtable is source of truth for internal Lennar Listings tracking and all community reference data — applied per-table, not as a blanket statement. The Listings table's Status/Price/Closing Date fields are the one deliberate exception, staying Google-Sheet-authoritative.
+- Session Data tab formally deprecated — no longer a session write target.
+- Google Sheet ↔ Airtable sync trigger fixed to new-listing intake (delta-check by MLS# against existing Airtable rows), not a fixed schedule or "whenever touched."
+- `Lennar_Community_Reference_Database.md` superseded — kept only as historical record, not read at runtime.
+- Zapier's abstracted Google Sheets read actions are not to be trusted blind going forward; the raw API passthrough is the documented fallback when a read looks suspiciously empty.
+
+### Documents Created / Updated
+| Document | Version | Notes |
+|---|---|---|
+| `Lennar_New_Listing_Protocol.md` | 2.7 → 2.8 | Airtable adoption throughout; Session Data tab deprecated; Airtable tool-call reference table added |
+| `Lennar_Payload_Schema.md` | 1.3 → 1.4 | §6 doc-pointer bug fixed (Session 007, open 3 weeks); all Community DB file references retargeted to Airtable |
+| `Lennar_Community_Reference_Database.md` | 1.2 → 1.3 | Superseded — supersession banner added, kept for history only |
+
+### Cursor Handoffs Produced
+| Handoff | Target File | Purpose |
+|---|---|---|
+| `HANDOFF-2026-08-14-lennar-new-listing-protocol.md` | `docs/lennar/Lennar_New_Listing_Protocol.md` | Airtable adoption (v2.8) |
+| `HANDOFF-2026-08-14-lennar-payload-schema.md` | `docs/lennar/Lennar_Payload_Schema.md` | §6 doc-pointer fix + Airtable retarget (v1.4) |
+| `HANDOFF-2026-08-14-lennar-community-reference-database.md` | `docs/lennar/Lennar_Community_Reference_Database.md` | Supersession banner (v1.3) |
+| `HANDOFF-2026-08-14-session-log-v2-011.md` | `docs/project/Project_Session_Log_v2.md` | This entry |
+
+### Discrepancies Surfaced (Not Fixed This Session)
+- Heating/Heat Fuel/Pool/Community Amenities community data (Payload Schema §5.2) still not migrated to Airtable — natural next candidate, and directly relevant to the CVRMLS Matrix field migration planned for next session.
+- Whether Protocol Step 6's "surface a proposed new row to Andrew for the Google Sheet main tab" behavior should be kept or dropped now that Airtable is the primary write target was not explicitly settled this session — preserved as-is out of caution rather than guessed away; flagged for confirmation.
+
+### Open Verification Items (Carried Forward)
+- Sales rep roster by community — still a stub (unchanged from Session 010).
+- Style field "Custom" option — still unconfirmed against Andrew's Ranch/2 Story-only rule (unchanged from Session 007/010).
+- `fee.addl_fee_desc` scope — still confirmed for only 2 of 5 communities (unchanged from Session 010); now visible as a filterable Airtable field (`Addl Fee Desc Confirmed`) rather than prose.
+- Street Suffix stored values (`Input_37`) — still not extracted (unchanged, open since Session 017).
+- `owner_info.html` `agent_related` — still not independently re-verified (unchanged).
+- Harpers Mill SF Fee Includes — still pending, no SF example sheet (unchanged).
+- Fee Includes Verification status for Everstone/Watermark — still "Interim Mapping - Verify at First Use" (unchanged; now a structured, filterable Airtable field instead of a parenthetical).
+
+### Key References
+- Airtable base ID: `app78fMUwDNBHUZ6r`
+- Airtable Lennar Listings table ID: `tbllTArjNE464zFGi`
+- Airtable Community Reference DB table ID: `tbleMbM1WgY8Si2t7`
+- `Lennar_New_Listing_Protocol.md` v2.8
+- `Lennar_Payload_Schema.md` v1.4
+- `Lennar_Community_Reference_Database.md` v1.3 (superseded)
+
+### Session Handoff Produced
+- `SESSION-HANDOFF-2026-08-14-airtable-lockdown-and-cvrmls-migration.md` — bridge doc for next session (remaining Airtable-usage lockdown items, then CVRMLS Matrix field migration to Airtable)
+
+---
+
 *Log started July 15, 2026. Post-realignment doc architecture in effect. Old log (`docs/project/Project_Session_Log.md`) preserved as pre-realignment archive.*
 
 ---
