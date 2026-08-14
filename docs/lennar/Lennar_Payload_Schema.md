@@ -1,8 +1,8 @@
 ---
 title: Lennar Payload Schema
 document_id: AAR-TC-LENNAR-PL-001
-version: 1.3
-version_date: 2026-08-11
+version: 1.4
+version_date: 2026-08-14
 status: Active — Living Document
 author: Andrew Rich, AAR-TC Transaction Services
 contributor: Claude (Anthropic) — AI-assisted document assembly
@@ -15,7 +15,7 @@ project: AAR-TC Lennar CVRMLS Matrix Intake
 
 **Base upstream:** `docs/cvrmls/CVRMLS_Payload_Schema.md` (`AAR-TC-CVRMLS-PL-001`)
 **Envelope contract:** `docs/Payload_Envelope.md` (`AAR-TC-ENV-001`)
-**Community lookup source:** `docs/lennar/Lennar_Community_Reference_Database.md` (`AAR-TC-LENNAR-DB-001`)
+**Community lookup source:** Airtable Community Reference DB table (base `app78fMUwDNBHUZ6r`, table `tbleMbM1WgY8Si2t7`) — supersedes `docs/lennar/Lennar_Community_Reference_Database.md` (`AAR-TC-LENNAR-DB-001`, kept for history only). Features B community fields (heating, heat fuel, pool, amenities) remain in §5.2 of this doc — not yet migrated.
 
 ---
 
@@ -23,7 +23,7 @@ project: AAR-TC Lennar CVRMLS Matrix Intake
 
 The single runtime source of truth for a Lennar CVRMLS session. Derives from the CVRMLS Payload Schema (upstream) with Lennar-specific statics pre-resolved, community lookups mapped to the Community Reference Database, the Features field set scoped down to Lennar-used groups only, and path-specific include/omit rules applied.
 
-This is the payload-schema doc a Lennar session loads at runtime per `Payload_Envelope.md` §3, alongside `Lennar_New_Listing_Protocol.md` (workflow) and `Lennar_Community_Reference_Database.md` (per-community values). Nothing else on the Lennar side needs to be loaded to generate a valid payload.
+This is the payload-schema doc a Lennar session loads at runtime per `Payload_Envelope.md` §3, alongside `Lennar_New_Listing_Protocol.md` (workflow) and the Airtable Community Reference DB table (per-community values — supersedes `Lennar_Community_Reference_Database.md`). Nothing else on the Lennar side needs to be loaded to generate a valid payload.
 
 **Consolidates and retires:**
 - `Lennar_Bookmarklet_Customization.md` (`AAR-TC-LENNAR-BM-CUST-001`) — full content migrates
@@ -64,7 +64,7 @@ In addition to the four envelope keys, every Lennar payload carries a top-level 
 
 `community` is a sibling of the envelope keys, not part of the envelope contract — it's a Lennar-specific data key that lives at the top level because it drives lookups across multiple tabs (Listing Info location cascade, Fee Info values via Community DB, Features B community table). Placing it under `listing` would misrepresent its scope.
 
-**Values match the community sections in `Lennar_Community_Reference_Database.md` by display name:**
+**Values match the community records in the Airtable Community Reference DB table by display name:**
 
 ```
 "Harpers Mill TH" | "Harpers Mill SF" | "Creekside Run TH" |
@@ -300,7 +300,7 @@ Copyright Agreement (`Input_662`) is hardcoded to `"1"` by the bookmarklet — n
 
 **Path-specific rules:** None. All fields always included on both paths.
 
-**Cross-reference:** Per-community values (fee amounts, periods, management firms, fee includes display text AND numeric codes, capital contribution amounts) live in `Lennar_Community_Reference_Database.md`. Fee Includes numeric codes migrated into the DB 2026-07-15 (Step 4 complete); each community's HOA table now carries a "Fee Includes Codes" row alongside the display-text row.
+**Cross-reference:** Per-community values (fee amounts, periods, management firms, fee includes display text AND numeric codes, capital contribution amounts) live in the **Airtable Community Reference DB table** (supersedes `Lennar_Community_Reference_Database.md`, kept for history only). Fee Includes numeric codes and display text are separate fields on each community's record.
 
 ---
 
@@ -452,7 +452,7 @@ Session resolves these to fixed values for every Lennar payload:
 
 ### 5.2 Community-lookup fields (5 fields)
 
-Session resolves these from the community table below (mirrored from `Lennar_Features_Bookmarklet_Source.md` — will migrate to `Lennar_Community_Reference_Database.md` per §7):
+Session resolves these from the community table below (mirrored from `Lennar_Features_Bookmarklet_Source.md` — planned migration target is now the Airtable Community Reference DB table, not `Lennar_Community_Reference_Database.md`; not yet migrated as of 2026-08-14, see §6):
 
 | Field | Payload key |
 |---|---|
@@ -618,7 +618,7 @@ Never written for Lennar. Some are excluded from CVRMLS scope generally; others 
 
 ## 6. Community Lookup Pointer
 
-Per-community values for schools, HOA fees, management firms, fee includes (display text AND numeric codes per 2026-07-15 migration), MLS Area codes (added 2026-08-11 — previously undocumented for every community), and Features B community fields (heating, heat fuel, pool, community amenities) live in **`Lennar_Community_Reference_Database.md`** (`AAR-TC-LENNAR-DB-001`).
+**Corrected 2026-08-14 — see version history.** Schools, HOA fees, management firms, fee includes (display text AND numeric codes), and MLS Area codes live in the **Airtable Community Reference DB table** (base `app78fMUwDNBHUZ6r`, table `tbleMbM1WgY8Si2t7`) — supersedes `Lennar_Community_Reference_Database.md`, which is kept only as a historical record. **Features B community fields (heating, heat fuel, pool, community amenities) have NOT migrated to Airtable and still live in §5.2 below** — the previous version of this section incorrectly claimed they lived in the Community Reference Database doc; they never did. Confirm §5.2 directly for those five fields until they migrate.
 
 **Community keys used in Lennar payloads** (values match DB section headers by display name):
 
@@ -1044,12 +1044,13 @@ When the Standard MLS schema docs are next revised (`CVRMLS_Payload_Schema.md`, 
 | 1.1 | 2026-07-15 | Andrew Rich / Claude | Step 4 of doc realignment complete + smoke-test findings captured. Added Format Conventions section documenting the checkbox array format split (suffix-only for Fee Info/Owner; full-ID for Features A/B) — first live surfacing on 8720 Whitman Dr. §4.1 Lot corrected to SKIP-TAXID for Lennar (smoke test confirmed tax-record autofill on Harpers Mill); Year Built/Rooms/Levels/Bedrooms/Post Office confirmed as NOT autofilled and remain in the Lennar-carveout write group. §4.6 fee_includes Notes and §6 Community Lookup Pointer updated to reflect Fee Includes codes now in Community DB. §7.1 Property Details item resolved; Fee Includes item removed (Step 4 closed it). §7.2 Property details structural decision updated with Lot exception. §7.3 Steps 3 & 4 marked complete; Step 5 gains Format Conventions carry-forward note. §8.1 and §8.2 example payloads corrected to suffix-only `fee_includes` format. Retirement Notes finalized — 4 source docs deleted this session. |
 | 1.2 | 2026-07-16 | Andrew Rich / Claude | 8724 Whitman Dr smoke re-test (second Harpers Mill TH taxid listing) ran clean against v1.1 — no new bugs, confirms Fixes 1 & 2 hold. Added three standing defaults: §4.1 `listing.rooms` static fallback when absent from email (TH="8", SF="10"); §4.2 structural rule that all Lennar TH are 3-level/slab with no Basement row (confirmed via Harpers Mill TH / Arcadia); §4.2 all-full-baths-`"TS"` default. §7.1 Bath configuration item updated to reflect partial resolution — level structure now fixed, per-level counts and SF still open. |
 | 1.3 | 2026-08-11 | Andrew Rich / Claude | Cleanup pass following 6039 Blue Iris Rd intake (first Creekside Run TH taxid listing, first outside Chesterfield County). §3: Wynwood retired, Creekside Run TH migrated `new` → `taxid`. §5.1/§5.4: Siding and Flooring removed as pure statics (confirmed real per-listing selections via Cognito Form 17 — Vinyl/LVP remain the correct defaults, not universal facts) and moved to §5.4 as payload-driven with defaults. New §5.4.1 added: full Cognito Form 17 → CVRMLS crosswalk for Appl/Equip (resolves the "Range" ambiguity), Interior, Flooring, Siding, Exterior (Covered Porch → Porch), Style (SF, now a 3-option closed set instead of the full 30-option list), and Unit Placement (TH, previously undocumented). §6: Community Lookup Pointer notes Area codes now tracked. §7.1: Richmond City taxid jurisdiction confirmed working same as Chesterfield; `fee.addl_fee_desc` scope partially resolved (2 of 5 communities confirmed, not yet a blanket rule). |
+| 1.4 | 2026-08-14 | Andrew Rich / Claude | **Fixes the §6 doc-pointer bug flagged in Session 007 (2026-07-24), open for three weeks.** §6 previously claimed Features B community fields (heating, heat fuel, pool, community amenities) lived in `Lennar_Community_Reference_Database.md` — they never did; they've always lived only in §5.2 of this document. §6 now states that accurately. Separately, Schools/HOA/fee community data has migrated to the new Airtable Community Reference DB table, which supersedes `Lennar_Community_Reference_Database.md` (kept for history only) — all doc-pointer references to that file updated accordingly. Heating/Heat Fuel/Pool/Community Amenities (§5.2) explicitly flagged as NOT yet migrated to Airtable. |
 
 ---
 
 *AAR-TC Transaction Services | agentandrewrich@gmail.com | www.aar-tc.com*
 *Consolidated Lennar payload schema — runtime source of truth for Lennar CVRMLS session pack (per `Payload_Envelope.md` §3).*
 *Upstream: `docs/cvrmls/CVRMLS_Payload_Schema.md` (`AAR-TC-CVRMLS-PL-001`).*
-*Community lookup: `docs/lennar/Lennar_Community_Reference_Database.md` (`AAR-TC-LENNAR-DB-001`).*
+*Community lookup: Airtable Community Reference DB table (base `app78fMUwDNBHUZ6r`, table `tbleMbM1WgY8Si2t7`) — supersedes `docs/lennar/Lennar_Community_Reference_Database.md` (`AAR-TC-LENNAR-DB-001`, kept for history only).*
 *Full Features field map (all groups): `docs/cvrmls/CVRMLS_Features_Field_Map.md` (`AAR-TC-CVRMLS-BM-001-FEA`).*
 *This is a living document. Update version history and version_date with each revision.*

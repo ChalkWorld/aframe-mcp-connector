@@ -1,9 +1,9 @@
 ---
 title: Lennar Community Reference Database
 document_id: AAR-TC-LENNAR-DB-001
-version: 1.2
-version_date: 2026-08-11
-status: Active — Living Document
+version: 1.3
+version_date: 2026-08-14
+status: Superseded — Historical Record Only (see banner below)
 author: Andrew Rich, AAR-TC Transaction Services
 contributor: Claude (Anthropic) — AI-assisted data extraction and document assembly
 contact: agentandrewrich@gmail.com | www.aar-tc.com
@@ -12,6 +12,13 @@ project: AAR-TC Lennar MLS Intake Workflow
 
 # Lennar Community Reference Database
 ### AAR-TC Transaction Services | Document ID: AAR-TC-LENNAR-DB-001
+
+---
+
+> **SUPERSEDED 2026-08-14 — kept as historical record only, not read at runtime.**
+> This document's data has migrated to the **Airtable Community Reference DB table** (base `app78fMUwDNBHUZ6r`, table `tbleMbM1WgY8Si2t7`), which is now the source of truth for schools, HOA, fees, and MLS Area by community. Sessions should read Airtable, not this file, for community lookups.
+> Not migrated: Heating/Heat Fuel/Pool/Community Amenities data — that never lived here; it lives in `Lennar_Payload_Schema.md` §5.2 (see that schema's v1.4 fix, same date).
+> Fawncrest intentionally not carried into Airtable — parked, not yet active, per Andrew.
 
 ---
 
@@ -59,6 +66,7 @@ Data in this document was sourced and verified from the following:
 | 1.0 | 2026-06-12 | Andrew Rich / Claude | Initial document created. 4 of 6 communities fully populated. Harpers Mill SF Fee Includes and Creekside Run Fee Includes pending MLS verification. Wynwood at Fox Creek pending next listing. |
 | 1.1 | 2026-07-15 | Andrew Rich / Claude | Fee Includes numeric codes migrated from retired `Lennar_Bookmarklet_Build_Notes.md` (Step 4 of doc realignment execution). Codes format is suffix-only per `Lennar_Payload_Schema.md` §7 Format Conventions — Fee Info bookmarklet reconstructs `Input_576_XX` inline. Harpers Mill TH verified live 2026-07-15 (8720 Whitman Dr smoke test); Everstone and Watermark carry "interim mapping — verify at first live use"; Harpers Mill SF and Creekside Run remain pending display-text confirmation. |
 | 1.2 | 2026-08-11 | Andrew Rich / Claude | MLS Area codes added for all 5 active communities — previously undocumented anywhere (Harpers Mill 54, Creekside Run 60, Everstone 42, Watermark 54). Creekside Run Fee Includes resolved: Comm Ar Mnt / Common Area / Snow Removal (`["01","25","14"]`), confirmed 6039 Blue Iris Rd (MLS# 2621807) — sourced from internal HOA reference sheet, not yet cross-checked against a live MLS Fee Includes display. Creekside Run capital contribution confirmed flowing into `fee.addl_fee_desc` — second community confirmed after Harpers Mill TH (see `Lennar_Payload_Schema.md` §7.1). Wynwood at Fox Creek marked retired — community sold out, removed from Pending Items. |
+| 1.3 | 2026-08-14 | Andrew Rich / Claude | **Superseded.** Data migrated to the Airtable Community Reference DB table (base `app78fMUwDNBHUZ6r`, table `tbleMbM1WgY8Si2t7`), now source of truth for community reference data. This file kept as historical record only — not read at runtime. See banner at top of doc. |
 
 ---
 
