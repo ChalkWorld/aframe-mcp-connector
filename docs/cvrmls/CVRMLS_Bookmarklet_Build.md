@@ -706,13 +706,13 @@ Update the session protocol so payload generation is a standard output step:
 - Payload output is formatted as a copy-ready block
 - Session notes which fields need manual attention
 
-### Phase 4 — Chrome Extension (Future)
-Once bookmarklets are proven across all tabs, build a custom Chrome extension:
+### Phase 4 — Chrome Extension (In Progress — POC)
+Bookmarklets proven across all tabs; POC build underway. See `extension/Lennar_Extension_Build.md` for confirmed tab-detection signatures and current status.
 - Single toolbar button replaces 12+ bookmarks
-- Auto-detects current Matrix tab via URL or DOM signature
+- Auto-detects current Matrix tab via DOM signature — **URL confirmed not viable** (2026-08-17): Matrix uses a single opaque, unchanging `c=` state token across all tabs regardless of which is active, so tab identity cannot be read from the URL
 - Payload pasted into extension popup — no clipboard management needed
-- Supports multiple MLS systems via `payload.mls` header key
-- Supports builder customization layers via `payload.builder` header key
+- Supports multiple MLS systems via `payload.mls` header key (later phase — POC is Lennar/CVRMLS only)
+- Supports builder customization layers via `payload.builder` header key (later phase)
 - Built in Cursor; installed via `chrome://extensions` developer mode
 
 ---
