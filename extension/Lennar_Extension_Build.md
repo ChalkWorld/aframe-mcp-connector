@@ -47,6 +47,14 @@ else if (document.getElementById('Input_70')) activeTab = 'Features';
 
 Since Matrix does a full reload per tab and the extension can already detect which tab it landed on, the extension could in principle click through the tab links itself (Listing Info → wait for reload → detect → fill → click next tab → ...), turning "auto-fill per tab" into full auto-navigation with a single button press. Deliberately deferred until after the MVP is built and tested — it removes the natural per-tab checkpoint where the user visually confirms each tab before moving on, and needs its own reload-timing and conditional-tab-skipping logic (e.g. Virtual Tour Info is skipped when no tour URL is present). Worth a dedicated design pass later, not bundled into the MVP.
 
+**Eliminate manual payload paste.** The POC pastes the JSON payload into the extension popup by hand — simplest and lowest-risk for a first version, but Andrew wants this manual step removed in a later phase. No mechanism chosen yet. Candidate directions, roughly in order of how proven the pieces already are:
+
+- **Remote data store the extension polls or subscribes to.** Supabase is proven for exactly this role elsewhere in this org — the Chalk World project uses it as a typed message bus between a deployed runtime and a browser canvas (see `docs/connector/CONNECTOR_TECHNICAL_REFERENCE.md` §2). The nuance specific to *this* project: the Supabase MCP connector currently wired in here only exposes a read-only log-query tool to a Claude session (confirmed live 2026-08-17) — a session can't write to a Supabase table through a direct tool call today. That's a gap in this project's connector setup, not a limitation of Supabase itself. Chalk World's pattern points at the actual fix: a small deployed service holding its own Supabase credentials (same shape as the existing `aframe-mcp-connector` Railway app) that either a new Claude MCP tool calls, or the extension calls directly — matching how Chalk World's runtime already writes to Supabase in production. Airtable remains the lower-effort near-term option since its CRUD is already wired into this project specifically (Community Reference DB, Lennar Listings table); Supabase is the stronger long-term option given the working precedent, once a similar small write-capable service exists for it.
+- **Native-messaging host** — a small local companion process the extension talks to directly. Most capable, most setup (needs a native host manifest installed once).
+- **Localhost server** — simpler than native messaging, but needs a background process running plus `host_permissions` for `localhost`.
+
+Needs its own design pass — not part of the MVP.
+
 ---
 
 Internal layout (manifest, content scripts, popup, etc.) is finalized during the build session.
