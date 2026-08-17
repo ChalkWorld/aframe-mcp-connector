@@ -1,5 +1,5 @@
 # Lennar New Listing Protocol
-**Version 2.8** | *Last Updated: August 14, 2026*
+**Version 2.9** | *Last Updated: August 16, 2026*
 *Claude-facing SOP | Lennar new listing intake and lifecycle management*
 
 ---
@@ -71,7 +71,7 @@ This list should be kept in sync with whatever Step 12's Aframe/activation-adjac
 | System | Purpose | Notes |
 |---|---|---|
 | **Airtable — Lennar Listings table** | Source of truth for internal listing tracking (model, photos, POC, Aframe ID, Gmail thread, session notes, MLS input stage) | Base ID `app78fMUwDNBHUZ6r`, table `Lennar Listings` (`tbllTArjNE464zFGi`). **Status / Current Price / Closing Date / Price Change Date are a periodically-refreshed mirror of the Google Sheet main tab, not independently authoritative** — see Step 6 for the refresh trigger. |
-| **Airtable — Community Reference DB table** | Source of truth for schools, HOA, fees, and MLS Area by community | Base ID `app78fMUwDNBHUZ6r`, table `Community Reference DB` (`tbleMbM1WgY8Si2t7`). Supersedes `Lennar_Community_Reference_Database.md` (kept as historical record, not read at runtime — see that file's header banner). Heating/Heat Fuel/Pool/Community Amenities data has **not yet migrated** here — still lives in `Lennar_Payload_Schema.md` §5.2 until it does. |
+| **Airtable — Community Reference DB table** | Source of truth for schools, HOA, fees, MLS Area, and (as of 2026-08-16) Heating/Heat Fuel/Pool Y-N/Community Amenities by community | Base ID `app78fMUwDNBHUZ6r`, table `Community Reference DB` (`tbleMbM1WgY8Si2t7`). Supersedes `Lennar_Community_Reference_Database.md` (kept as historical record, not read at runtime — see that file's header banner). `Community` field values corrected 2026-08-16 to the short `TH`/`SF` form used everywhere else (`Lennar_Payload_Schema.md` §2.1, `Lennar Listings` table) — previously stored as `Harpers Mill — Townhome` style long-form names that a payload lookup would have silently matched against nothing. |
 | Google Sheet — main tab | Authoritative only for Status, Current Price, Closing Date, Price Change Date | Shared with Lennar sales team; **read-only for sessions** — Andrew handles all writes manually. Sessions read it to refresh those four fields in Airtable; does not need to stay in rigid sync otherwise. |
 | ~~Session Data tab~~ | **Deprecated — superseded by the Airtable Lennar Listings table.** Do not write here. | Kept in the sheet for historical rows only; no longer a session write target. |
 | Google Drive — Lennar root | Root folder for Lennar work | Folder ID: `1hIN1WhrARVrQ7Y4KCh3hlCrI0Q-JS8az` |
@@ -88,7 +88,7 @@ This list should be kept in sync with whatever Step 12's Aframe/activation-adjac
 | List bases | `Airtable:list_bases` | Confirms connection; returns `permissionLevel` |
 | List tables + fields in a base | `Airtable:list_tables_for_base` | Use to get current `tableId`/`fieldId` values each session — don't hardcode from memory even though they're stable |
 | Create a table | `Airtable:create_table` | Search phrase `"Creates a new table in an Airtable base"` (exact) — `"create table"` alone did not surface it as of 2026-08-14 |
-| Create a field | `Airtable:create_field` | |
+| Create a field (new column) | *(no tool — confirmed 2026-08-16)* | The connector has no field-creation call, despite this row previously claiming `Airtable:create_field` existed — that was wrong and is corrected here. Airtable's own API supports it (`POST /v0/meta/bases/{baseId}/tables/{tableId}/fields`, documented, all billing plans), but this connector doesn't expose it. Andrew adds new columns manually in the Airtable UI; sessions populate them afterward via normal record writes. |
 | Add choices to an existing singleSelect field | *(no direct tool)* | `Airtable:update_field`'s `options` param only supports `formula`, not `choices`, as of 2026-08-14 — attempting it returns a validation error. Add a new select value via `typecast: true` on the record write instead |
 | Create records | `Airtable:create_records_for_table` | Max 50/request |
 | Update records | `Airtable:update_records_for_table` | Max 50/request; supports `performUpsert` with `fieldIdsToMergeOn` for match-or-create in one call |
@@ -117,7 +117,7 @@ The sales rep for the community fills out Andrew's Cognito form ("Lennar VA / DC
 
 **When Andrew's current form is the source, pull the entry directly from Cognito — the email notification is not the source of truth for this form.** Confirmed form identity: Form ID `17`, internal name `LennarNewListingIntake`, display name "Lennar New Listing Intake." Check the Submitted view (`17-3`) for the newest entry, or use `get_entry` directly if the entry number is known. Reason: the email notification is a flattened, run-together text rendering of the form with no reliable field delimiters (e.g. `Street Number:6,039Street Name: Blue Iris Road` collapses two fields into one unbroken string) — meaningfully more error-prone to parse than the structured entry data available via the Cognito connector. Treat the notification email purely as a trigger ("a submission arrived"), not as the data to extract from.
 
-*Not yet live-tested with a real rep submission as of August 2026* — the form's only two entries so far are Andrew's own test submissions (Harpers Mill placeholder data, both `Entry_Status: Submitted`). Real submissions are still landing on the legacy form (Form ID `16`, `ZapierFormForLennarOLD`, 32 entries as of this writing). Treat the first genuine rep submission through Form 17 as a smoke test — verify the field-name mapping (`Intake_*`, `PropertyBasics_*`, `BedsBathsLevels_*`, `SquareFootage_*`, `Remarks_*`, `Showing_*`, `PhotosVirtualTour_*`, `BuildFeatures_*`) holds up against real data before trusting it fully.
+**Confirmed live-tested against a real rep submission (2026-08-16).** Entry #4 — Izaiah Clark (NHC), 8712 Whitman Dr, Harpers Mill TH, MLS# 2622209 — was the first genuine (non-test) submission through Form 17. The field-name mapping (`Intake_*`, `PropertyBasics_*`, `BedsBathsLevels_*`, `SquareFootage_*`, `Remarks_*`, `Showing_*`, `PhotosVirtualTour_*`, `BuildFeatures_*`) held up against real data with no surprises. Real submissions may still land on the legacy form (Form ID `16`, `ZapierFormForLennarOLD`) out of habit — steer reps to Form 17 when the opportunity comes up, per the note above.
 
 Andrew's Zap parser previously read the email and populated an internal intake form, which triggered Aframe creation automatically. **Sessions now replace that Zap** and handle Aframe creation directly.
 
@@ -194,7 +194,7 @@ The session payload includes a `"path"` key so the bookmarklet can apply the cor
 
 ## Confirmed Lennar-Wide Static Values
 
-The following are confirmed Lennar constants across all communities. These are hardcoded in the bookmarklets and do not appear in the clipboard payload.
+The following are confirmed Lennar constants across all communities — the session resolves each one to a fixed value and writes it into the clipboard payload for every Lennar listing (corrected 2026-08-16; this table previously claimed the opposite). See `Lennar_Payload_Schema.md` §5.1 (Features statics) and §8.1 (concrete example payload) for the exact payload-key mapping — this table is the plain-English reference for what the constants are, not a claim about the write mechanism.
 
 | Field | Value | Tab |
 |---|---|---|
@@ -259,7 +259,7 @@ Search Gmail for the new listing email. Read it fully before doing anything else
 Cross-check the address against the Airtable Lennar Listings table. Confirm it's not already there. Fix any number formatting errors (comma artifacts from Cognito).
 
 ### 3. Apply Gmail Label
-Create label `Lennar/[Address]` (street number + street name only, no city/state/zip). Apply to the email and any related threads.
+Check whether the label `Lennar/[Address]` (street number + street name only, no city/state/zip) already exists — it's often auto-applied via an existing Gmail filter before the session starts. If it doesn't exist, create it directly (`Gmail:create_label`) rather than flagging it as a manual task for Andrew. Apply it to the email and any related threads either way. Session-owned step end to end (confirmed 2026-08-16 — the Gmail connector supports label creation directly, not just applying existing labels).
 
 ### 4. Parse & Present Listing Data
 Extract all data from the email and present a clean summary to Andrew before doing anything else. Flag:
@@ -279,7 +279,7 @@ Populate the data sheet template (AAR-TC-LENNAR-DS-TPL-001) covering all 8 Matri
 4. HOA — from Community Reference Database
 5. Features/appliances — formatted per rules above
 6. Heating/fuel/cooling — from Community Reference Database
-7. Showing instructions — verbatim from email; if blank, use agent comments; if both blank, omit
+7. Showing instructions — verbatim from email; if blank, use agent comments; if both blank, omit. **Form 17 exception (added 2026-08-16):** this agent-comments fallback applies to legacy/email-sourced intake only. When the source is Form 17, a blank `Showing_AdditionalShowingInstructions` field is blank — full stop, no fallback to Agent Only Comments (which may contain a phone number or other text never meant to be showing-facing).
 8. Virtual tour link — verbatim; omit if not provided
 
 Include at the bottom: image note from Carly's forwarding message (if any), and a flag for any removed phone number lines.
@@ -478,15 +478,14 @@ Full field-by-field payload spec, path-specific include/omit rules, Features fie
 
 ---
 
-### 6. Sync Status/Price Deltas, Then Surface the New Row
+### 6. Sync Status/Price Deltas, Then Check or Remind on the New Row
 **Google Sheet main tab remains read-only for sessions.** Read the main tab twice this step:
-1. Confirm the new listing is not already present (duplicate check).
+1. Confirm the new listing is not already present (duplicate check) — note the result for the sub-step below.
 2. Diff Status, Current Price, Closing Date, and Price Change Date for *existing* Airtable Lennar Listings rows against what the sheet currently shows (match by MLS#) — apply any deltas found to Airtable. This is the sync point that keeps the two tools from drifting; it runs at every new-listing intake rather than on a fixed schedule, so drift never goes further back than "since the last new listing."
 
-Then surface the proposed new row to Andrew for him to add to the sheet manually, same as before:
-- Position: grouped by community, then SF or TH, descending numeric order within the group
-- Columns to populate: Address, blank MLS#, List Price, blank New Price, Community, Status = **Input in Progress**, blank Closing Date, blank Price Change Date
-- **Column A hyperlink**: the address text in Column A should be a hyperlink pointing to the MLS data sheet file in the property's Drive folder. The URL is captured in Step 8 and surfaced again in the Step 12 handoff for Andrew to apply when he adds the row.
+**Revised 2026-08-16 — replaces the formatted-row handoff.** Based on the duplicate check above:
+- **If the new listing's row is already on the sheet:** check it for accuracy against what the session knows — address, List Price, Community, position (grouped by community, then SF or TH, descending numeric order), and the Column A hyperlink to the MLS data sheet. Flag any mismatch to Andrew in the Step 12 handoff; say nothing further if it checks out.
+- **If the row isn't there yet:** give Andrew a plain reminder to add it (address, List Price, Community) in the Step 12 handoff, rather than a fully formatted copy/paste block — Andrew already knows the sheet's conventions (position, Status = **Input in Progress**, hyperlink source); the reminder only needs to flag that it's still pending.
 
 The **Airtable Lennar Listings table** (Step 7) is the session's own write target — no narration required before writing there, unlike the old Session Data tab convention.
 
@@ -576,7 +575,7 @@ Sales rep roster by community: *(stub — see Primary Contact section above)*
 
 ### 12. Session Handoff Summary
 Close every session with a clear handoff of what still needs Andrew's action:
-- [ ] Add the new listing row to the Google Sheet main tab — main tab is read-only for sessions; Andrew adds manually using the row surfaced in Step 6. **Apply the MLS data sheet URL captured in Step 8 as a hyperlink on the address text in Column A.**
+- [ ] Google Sheet main tab — per Step 6: either confirmed accurate (row already present; any mismatch flagged above) or a plain reminder to add it (address, List Price, Community; hyperlink source is the MLS data sheet URL captured in Step 8).
 - [ ] Confirm Primary Agent set to Gary Martin in Aframe (UI-only — cannot be written via connector)
 - [ ] Confirm Assistant 1 set to Andrew Rich in Aframe (UI-only — cannot be written via connector)
 - [ ] MLS data input — using the bookmarklet payload generated in Step 5b. Copy payload to clipboard, navigate to Matrix, click bookmarklet on each tab.
@@ -633,7 +632,9 @@ Session:
 
 ## Photo Notes
 
-Photos are often reused across listings within the same community. When Carly's note references another listing's images, capture that in the Session Data tab under Photo Source. Check the local Properties folder (or Google Drive once migrated) for existing photos before requesting new ones from Carly/Megan.
+Photos are often reused across listings within the same community. When Carly's note (or the Form 17 `Notes_NotesToAndrew` equivalent) references another listing's images, capture that in the Airtable Lennar Listings table under Photo Source (corrected 2026-08-16 — this used to point at the deprecated Session Data tab). Check the local Properties folder (or Google Drive once migrated) for existing photos before requesting new ones from Carly/Megan.
+
+**Virtual tour pairing (added 2026-08-16):** whenever an image-reuse instruction references a prior address, also search Gmail for that prior address's thread and check it for a virtual tour link before finalizing the data sheet — don't leave it as a separate thing for Andrew to dig up. Virtual tours are tied to model + community, so they travel with the photos more often than not. If found, add it to the data sheet's Virtual Tour section; if genuinely absent, proceed without it — but check either way, regardless of whether Andrew asked.
 
 Photo upload order in MLS: exterior first, bathroom photos to the back.
 
@@ -708,6 +709,7 @@ This protocol is designed for Lennar but intended to be builder-agnostic. When o
 | 2.6 | 2026-07-21 | Step 10 (Send the Listing Addendum) rewritten — DocuSign-pending stub replaced with the built and tested PandaDoc automation: template ID, Sender/Owner/Agent role structure, field map (`Property Address`, `Composed Clause`), recipient routing (Megan Cook → `megan.cook@lennar.com`, Gary Martin → `agentandrewrich@gmail.com`), document naming convention, and fire-and-forget send sequencing. Step 12 checklist item for manual addendum sending removed (now session-executed). "Future" section's DocuSign line replaced with signed-document retrieval automation as the remaining open item. Key IDs table gained PandaDoc template ID row. |
 | 2.7 | 2026-08-11 | Cleanup pass following 6039 Blue Iris Rd intake. Primary Contact and "How a New Listing Arrives" rewritten for the multi-rep submission model — Megan Cook is a regional director, not the intake funnel; reps (internally "NHCs" — New Home Consultants) submit directly, ideally via Andrew's current Cognito form (legacy form still in circulation). Cognito form identities confirmed via direct API lookup: current form is ID 17 (`LennarNewListingIntake`), legacy is ID 16 (`ZapierFormForLennarOLD`, 32 entries vs. 17's 2 test-only entries). New standing rule: when the current form is the source, sessions pull the entry directly from Cognito rather than parsing the email notification, which collapses field boundaries in its flattened text rendering. Matrix Entry Path Rules table updated: Wynwood at Fox Creek retired (sold out, no more listings expected); Creekside Run TH migrated `new` → `taxid` (first live confirmation: 6039 Blue Iris Rd, MLS# 2621807, first taxid pull outside Chesterfield County). Features A/B launchers marked ✅ Tested (three clean Lennar taxid runs). Step 7 POC guidance changed from a fixed name to "confirm the actual submitting rep." Step 10 annotated with current operational status — PandaDoc build retained in full as documented target state, but addenda are sent manually via TransactionDesk until the paid tier is reactivated. Stale "General Info Tax ID patch" and "Features A+B smoke test" items removed from Planned Automations as resolved. |
 | 2.8 | 2026-08-14 | Airtable adopted as source of truth for internal listing tracking (new `Lennar Listings` table, replaces the Session Data tab entirely) and for Community Reference data (new `Community Reference DB` table, supersedes `Lennar_Community_Reference_Database.md` — kept for history, not read at runtime). Google Sheet main tab narrowed to authoritative-only for Status/Current Price/Closing Date/Price Change Date; no longer needs rigid sync with Airtable otherwise. New Step 6 delta-sync: sessions diff GS against existing Airtable rows by MLS# at every new-listing intake, bounding drift to "since the last new listing." Step 7 retargeted from Session Data tab to Airtable Lennar Listings table. Systems & Reference gained an Airtable tool-call reference table (exact tool names, `typecast` usage for adding select options, and the Zapier raw-API read workaround). Session Data tab marked deprecated throughout. Heating/Heat Fuel/Pool/Community Amenities community data confirmed NOT yet migrated to Airtable — still lives in `Lennar_Payload_Schema.md` §5.2 (see that schema's §6 pointer fix, same date). |
+| 2.9 | 2026-08-16 | Closing confirmation from the first live end-to-end Airtable pipeline run (8712 Whitman Dr, MLS# 2622209): Form 17 "not yet live-tested" caveat removed from "How a New Listing Arrives" — confirmed against Entry #4 / Izaiah Clark. Confirmed Lennar-Wide Static Values table corrected — these values ARE written into the clipboard payload (see `Lennar_Payload_Schema.md` §5.1/§8.1); the doc previously claimed the opposite. Step 3 (Gmail label) now session-owned end to end — create the label directly if an existing filter hasn't already applied it, rather than flagging for Andrew. Step 5 showing-instructions agent-comments fallback now scoped to legacy/email-sourced intake only — Form 17's blank `Showing_AdditionalShowingInstructions` stays blank, no fallback. Step 6 rewritten — session now checks the GS main-tab row for accuracy if already present, or gives a plain reminder if not, instead of surfacing a fully formatted copy/paste block; Step 12 checklist item updated to match. Photo Notes section fixed (stale Session Data tab reference → Airtable Lennar Listings table) and gained a standing rule: check the prior address's Gmail thread for a virtual tour link whenever a photo-reuse instruction is given. Systems & Reference updated: Community Reference DB row now reflects the completed Heating/Heat Fuel/Pool/Community Amenities migration and the `Community` field naming fix (long-form → short `TH`/`SF` form); the Airtable tool-reference table's stale `Airtable:create_field` row corrected — that tool doesn't exist on the connector, confirmed this session. See `SESSION-HANDOFF-2026-08-14-ADDENDUM-live-session-findings.md` for source findings. |
 
 ---
 

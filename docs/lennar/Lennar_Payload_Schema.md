@@ -1,8 +1,8 @@
 ---
 title: Lennar Payload Schema
 document_id: AAR-TC-LENNAR-PL-001
-version: 1.4
-version_date: 2026-08-14
+version: 1.5
+version_date: 2026-08-16
 status: Active — Living Document
 author: Andrew Rich, AAR-TC Transaction Services
 contributor: Claude (Anthropic) — AI-assisted document assembly
@@ -15,7 +15,7 @@ project: AAR-TC Lennar CVRMLS Matrix Intake
 
 **Base upstream:** `docs/cvrmls/CVRMLS_Payload_Schema.md` (`AAR-TC-CVRMLS-PL-001`)
 **Envelope contract:** `docs/Payload_Envelope.md` (`AAR-TC-ENV-001`)
-**Community lookup source:** Airtable Community Reference DB table (base `app78fMUwDNBHUZ6r`, table `tbleMbM1WgY8Si2t7`) — supersedes `docs/lennar/Lennar_Community_Reference_Database.md` (`AAR-TC-LENNAR-DB-001`, kept for history only). Features B community fields (heating, heat fuel, pool, amenities) remain in §5.2 of this doc — not yet migrated.
+**Community lookup source:** Airtable Community Reference DB table (base `app78fMUwDNBHUZ6r`, table `tbleMbM1WgY8Si2t7`) — supersedes `docs/lennar/Lennar_Community_Reference_Database.md` (`AAR-TC-LENNAR-DB-001`, kept for history only). Features B community fields (heating, heat fuel, pool, community amenities) migrated to Airtable 2026-08-16 — see §6 and §5.2.
 
 ---
 
@@ -147,7 +147,7 @@ Coverage is complete for all Matrix tabs a Lennar session touches. Room Info is 
 | `listing.street_dir` | `Input_35` | Dynamic (email) / *skip* on taxid | Blank string if none |
 | `listing.street_name` | `Input_36` | Dynamic (email) / *skip* on taxid | |
 | `listing.street_suffix` | `Input_37` | Dynamic (email) / *skip* on taxid | Stored option value — see §7 Open Verification Items |
-| `listing.year_built` | `Input_44` | Dynamic (email) | Always written for Lennar — Lennar new-construction parcels lack this in tax record (confirmed 2026-07-15) |
+| `listing.year_built` | `Input_44` | Dynamic (email) — defaults to the current calendar year if absent | Always written for Lennar — Lennar new-construction parcels lack this in tax record (confirmed 2026-07-15). **Standing default (added 2026-08-16):** if not stated in the email/form, default to the current calendar year (e.g. `"2026"`) — inferred on 8712 Whitman Dr from the remarks' completion-date language plus `year_built_desc: "UNDCON"`. Good enough through the rest of 2026; flagged for a deliberate revisit as the calendar approaches Q4, since a listing taken in Nov/Dec could complete construction the following year and "current year at intake" may start to diverge from actual year built near the Dec/Jan boundary. |
 | `listing.rooms` | `Input_48` | Dynamic (email) — static fallback if absent | Always written for Lennar — same reason as year_built. **Standing default (added 2026-07-16):** if Rooms isn't stated in the email, use `"8"` for Townhouse / `"10"` for Single Family. Low-stakes field Matrix requires regardless. |
 | `listing.levels` | `Input_49` | Dynamic (email) | Always written for Lennar — same reason |
 | `listing.lot` | `Input_622` | Dynamic (email) / *skip* on taxid | Matrix pre-populates from tax record on Harpers Mill taxid path (confirmed 2026-07-15). SKIP-TAXID for Lennar too, same as standard listings. |
@@ -452,25 +452,19 @@ Session resolves these to fixed values for every Lennar payload:
 
 ### 5.2 Community-lookup fields (5 fields)
 
-Session resolves these from the community table below (mirrored from `Lennar_Features_Bookmarklet_Source.md` — planned migration target is now the Airtable Community Reference DB table, not `Lennar_Community_Reference_Database.md`; not yet migrated as of 2026-08-14, see §6):
+**Migrated to Airtable 2026-08-16.** Session resolves these from the **Airtable Community Reference DB table** (base `app78fMUwDNBHUZ6r`, table `tbleMbM1WgY8Si2t7`) — fields `Heating`, `Heating Fuel`, `Pool Y/N`, `Community Amenities`, `Community Amenities Codes`. Match the row by the `community` payload key against the table's `Community` field (short `TH`/`SF` form — corrected 2026-08-16 to match this doc's convention, see §6).
 
-| Field | Payload key |
-|---|---|
-| Heating | `features_b.heating` |
-| Heat Fuel | `features_b.heat_fuel` |
-| Pool Y/N | `features_b.pool_yn` |
-| Pool Description | `features_b.pool_desc` (conditional on Pool Y/N = `"1"`) |
-| Community Amenities | `features_b.community_amenities` |
+| Field | Payload key | Airtable source |
+|---|---|---|
+| Heating | `features_b.heating` | `Heating` column — display value (e.g. `"Forced Hot Air"`); map to the Input ID via the Heating checkbox group in `CVRMLS_Features_Field_Map.md` Chunk 7 |
+| Heat Fuel | `features_b.heat_fuel` | `Heating Fuel` column — same pattern, Chunk 8 |
+| Pool Y/N | `features_b.pool_yn` | `Pool Y/N` column — `"Yes"`/`"No"` text; write `"1"`/`"0"` into the payload |
+| Pool Description | `features_b.pool_desc` (conditional on Pool Y/N = `"1"`) | **Not stored in Airtable — session-derived.** **Standing rule (confirmed 2026-08-16, permanent — not a per-community guess):** whenever Pool Y/N is Yes, Pool Description is always `["Input_91_02"]` (Community/Off Site), for every current and future Lennar community. When Pool Y/N is No, `pool_desc` is `[]`. |
+| Community Amenities | `features_b.community_amenities` | `Community Amenities Codes` column — comma-separated suffix list (e.g. `"01,03,04,22,47"`); map each to `Input_534_<code>` for the payload array |
 
-**Per-community resolution table:**
+**Community Amenities code labels (resolved 2026-08-16):** `Input_534_01` = Association, `_03` = Clubhouse, `_04` = Common Area, `_22` = Playground, `_46` = Picnic Area, `_47` = Pool. Source: `CVRMLS_Features_Field_Map.md` Chunk 6 (`Community Amenities` checkbox group, 44 options). Kept here as the reference table since Airtable stores codes, not labels.
 
-| Community | Heating | Heat Fuel | Pool Y/N | Pool Desc | Community Amenities |
-|---|---|---|---|---|---|
-| Harpers Mill TH | `["Input_86_07"]` (Forced Hot Air) | `["Input_87_05"]` (Natural Gas) | `"1"` | `["Input_91_02"]` (Community/Off Site) | `["Input_534_01","Input_534_03","Input_534_04","Input_534_22","Input_534_47"]` |
-| Harpers Mill SF | Same as HM TH | Same | Same | Same | Same |
-| Creekside Run TH | `["Input_86_08"]` (Heat Pump) | `["Input_87_02"]` (Electric) | `"0"` | `[]` | `["Input_534_01","Input_534_04","Input_534_46","Input_534_22"]` |
-| Everstone SF | Same as Creekside Run | Same | Same | Same | Same |
-| Watermark SF | `["Input_86_07"]` (Forced Hot Air) | `["Input_87_05"]` (Natural Gas) | `"1"` | `["Input_91_02"]` (Community/Off Site) | `["Input_534_01"]` |
+All 5 current communities (Harpers Mill TH, Harpers Mill SF, Creekside Run TH, Everstone SF, Watermark SF) are populated as of 2026-08-16.
 
 ### 5.3 Conditional resolutions (2 fields)
 
@@ -618,18 +612,20 @@ Never written for Lennar. Some are excluded from CVRMLS scope generally; others 
 
 ## 6. Community Lookup Pointer
 
-**Corrected 2026-08-14 — see version history.** Schools, HOA fees, management firms, fee includes (display text AND numeric codes), and MLS Area codes live in the **Airtable Community Reference DB table** (base `app78fMUwDNBHUZ6r`, table `tbleMbM1WgY8Si2t7`) — supersedes `Lennar_Community_Reference_Database.md`, which is kept only as a historical record. **Features B community fields (heating, heat fuel, pool, community amenities) have NOT migrated to Airtable and still live in §5.2 below** — the previous version of this section incorrectly claimed they lived in the Community Reference Database doc; they never did. Confirm §5.2 directly for those five fields until they migrate.
+**Corrected 2026-08-16 — see version history.** Schools, HOA fees, management firms, fee includes (display text AND numeric codes), MLS Area codes, **and now Heating/Heat Fuel/Pool Y-N/Community Amenities** all live in the **Airtable Community Reference DB table** (base `app78fMUwDNBHUZ6r`, table `tbleMbM1WgY8Si2t7`) — supersedes `Lennar_Community_Reference_Database.md`, which is kept only as a historical record. §5.2 documents the field-by-field mapping for the Features B community fields; this section is now the single pointer for all per-community data — nothing community-driven lives hardcoded in this doc anymore.
 
-**Community keys used in Lennar payloads** (values match DB section headers by display name):
+**Community field naming corrected 2026-08-16:** the Airtable table's `Community` field previously stored long-form names (`"Harpers Mill — Townhome"`) that didn't match this doc's `community` payload key convention or the `Lennar Listings` table's values — a lookup by the payload's `community` string would have silently found nothing. Renamed to match the short form below.
+
+**Community keys used in Lennar payloads** (values now match the Airtable `Community` field exactly, by design):
 
 - `"Harpers Mill TH"` — Harpers Mill (Townhome)
 - `"Harpers Mill SF"` — Harpers Mill (Single Family)
 - `"Creekside Run TH"` — Creekside Run (Townhome)
 - `"Everstone SF"` — Everstone (Single Family)
 - `"Watermark SF"` — Watermark (Single Family)
-- `"Wynwood at Fox Creek SF"` — pending (no active listings)
+- `"Wynwood at Fox Creek SF"` — pending (no active listings; retired per Protocol Matrix Entry Path Rules table)
 
-Session workflow: read the `community` key from the payload envelope area, look up the corresponding section in the DB, resolve all community-driven fields (Listing Info location cascade, Fee Info values, Features B community fields), and write the resolved concrete values into the appropriate tab keys before generating the final payload.
+Session workflow: read the `community` key from the payload envelope area, look up the matching row in the Airtable Community Reference DB table by the `Community` field, resolve all community-driven fields (Listing Info location cascade, Fee Info values, Features B community fields per §5.2), and write the resolved concrete values into the appropriate tab keys before generating the final payload.
 
 Bookmarklets never read the `community` key — every community-derived value in the payload is already resolved to a concrete final value.
 
@@ -1045,6 +1041,7 @@ When the Standard MLS schema docs are next revised (`CVRMLS_Payload_Schema.md`, 
 | 1.2 | 2026-07-16 | Andrew Rich / Claude | 8724 Whitman Dr smoke re-test (second Harpers Mill TH taxid listing) ran clean against v1.1 — no new bugs, confirms Fixes 1 & 2 hold. Added three standing defaults: §4.1 `listing.rooms` static fallback when absent from email (TH="8", SF="10"); §4.2 structural rule that all Lennar TH are 3-level/slab with no Basement row (confirmed via Harpers Mill TH / Arcadia); §4.2 all-full-baths-`"TS"` default. §7.1 Bath configuration item updated to reflect partial resolution — level structure now fixed, per-level counts and SF still open. |
 | 1.3 | 2026-08-11 | Andrew Rich / Claude | Cleanup pass following 6039 Blue Iris Rd intake (first Creekside Run TH taxid listing, first outside Chesterfield County). §3: Wynwood retired, Creekside Run TH migrated `new` → `taxid`. §5.1/§5.4: Siding and Flooring removed as pure statics (confirmed real per-listing selections via Cognito Form 17 — Vinyl/LVP remain the correct defaults, not universal facts) and moved to §5.4 as payload-driven with defaults. New §5.4.1 added: full Cognito Form 17 → CVRMLS crosswalk for Appl/Equip (resolves the "Range" ambiguity), Interior, Flooring, Siding, Exterior (Covered Porch → Porch), Style (SF, now a 3-option closed set instead of the full 30-option list), and Unit Placement (TH, previously undocumented). §6: Community Lookup Pointer notes Area codes now tracked. §7.1: Richmond City taxid jurisdiction confirmed working same as Chesterfield; `fee.addl_fee_desc` scope partially resolved (2 of 5 communities confirmed, not yet a blanket rule). |
 | 1.4 | 2026-08-14 | Andrew Rich / Claude | **Fixes the §6 doc-pointer bug flagged in Session 007 (2026-07-24), open for three weeks.** §6 previously claimed Features B community fields (heating, heat fuel, pool, community amenities) lived in `Lennar_Community_Reference_Database.md` — they never did; they've always lived only in §5.2 of this document. §6 now states that accurately. Separately, Schools/HOA/fee community data has migrated to the new Airtable Community Reference DB table, which supersedes `Lennar_Community_Reference_Database.md` (kept for history only) — all doc-pointer references to that file updated accordingly. Heating/Heat Fuel/Pool/Community Amenities (§5.2) explicitly flagged as NOT yet migrated to Airtable. |
+| 1.5 | 2026-08-16 | Andrew Rich / Claude | Closing findings from the 8712 Whitman Dr live session, plus same-day completion of the Heating/Heat Fuel/Pool/Community Amenities → Airtable migration. `listing.year_built` gained a standing default (current calendar year when absent from the source), flagged for revisit near Q4. §5.2 rewritten — Heating, Heat Fuel, Pool Y/N, and Community Amenities now sourced from the Airtable Community Reference DB table (5 new columns: Heating, Heating Fuel, Pool Y/N, Community Amenities, Community Amenities Codes) instead of the inline per-community table, which is removed. Pool Description is not stored in Airtable — confirmed as a permanent derivation rule instead (Pool Y/N Yes → always Community/Off Site, for all current and future communities, not a per-community guess). Community Amenities code labels resolved and kept in §5.2 as reference (`Input_534_47` = Pool, closing the Harpers Mill TH gap). §6 rewritten to match — single pointer section for all per-community data, no more split with §5.2. Airtable `Community` field values corrected from long-form (`Harpers Mill — Townhome`) to the short `TH`/`SF` form used everywhere else, closing a silent-lookup-failure risk (the payload's `community` key would have matched nothing against the old values). |
 
 ---
 

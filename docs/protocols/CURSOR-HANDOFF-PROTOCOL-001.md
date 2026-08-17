@@ -1,8 +1,8 @@
 ---
 title: Aframe Connector — Cursor Handoff Protocol
 document_id: CURSOR-HANDOFF-PROTOCOL-001
-version: 1.0
-version_date: 2026-06-19
+version: 1.1
+version_date: 2026-08-16
 status: Active — Living Document
 author: Andrew Rich, AAR-TC Transaction Services
 contributor: Claude (Anthropic) — AI-assisted document assembly
@@ -28,6 +28,7 @@ It is not a one-time procedure — it is the repeating pattern used whenever a C
 | Version | Date | Author | Notes |
 |---|---|---|---|
 | 1.0 | 2026-06-19 | Andrew Rich / Claude | Initial document. Extracted from v0.4.0 build session pattern. Document ID: CURSOR-HANDOFF-PROTOCOL-001. |
+| 1.1 | 2026-08-16 | Andrew Rich / Claude | Added a session-log-specific Add-pattern convention for `Project_Session_Log_v2.md` entries — log-entry handoffs now anchor on the stable closing-footer line instead of the previous entry's content, removing the need to reconstruct a fragile Find block from search chunks (see `SESSION-HANDOFF-2026-08-14-airtable-lockdown-and-cvrmls-migration.md` for the incident that surfaced this). |
 
 ---
 
@@ -155,6 +156,16 @@ The Find block must match exactly one location in the target file. Guidelines:
 - **Never use line numbers.** Line numbers shift whenever the file changes. Find/replace on content only.
 - **Match whitespace exactly.** Indentation is part of the match. Copy the string from the file as-is; do not reformat it in the Find block.
 - **Prefer longer matches over shorter ones.** A 5-line Find block that is definitely unique is better than a 1-line block that might not be.
+
+---
+
+## Special Case: `Project_Session_Log_v2.md` Entries
+
+Log-entry handoffs are a pure append — a new `## Session N` section, added before the closing document footer — and never need surgical Find/Replace precision against the *previous* entry's exact text. That's exactly the fragile, changes-every-session content that's hardest for a session working from search chunks to reconstruct reliably.
+
+**Standing rule:** every `Project_Session_Log_v2.md` handoff uses the **Add** pattern, anchored on the closing footer line (e.g. `*Log started July 15, 2026...*` — stable and doesn't change), not on the previous session entry's content. Instruct Cursor to insert the new section immediately before that footer. Cursor has direct repo access and can locate that stable anchor itself; the authoring session should not reconstruct a Find block from the prior entry.
+
+This is narrower than the general Find/Replace discipline above, which is still correct for every other doc type and for non-append edits to the log itself (e.g. correcting a typo in an existing entry).
 
 ---
 
