@@ -1,5 +1,5 @@
 # Repo Structure — Quick Reference
-**Last Updated:** June 27, 2026 (Session 017 restructure)
+**Last Updated:** August 17, 2026 (extension/ directory reserved for Chrome extension POC)
 
 ---
 
@@ -9,6 +9,7 @@
 aframe-mcp-connector/
 ├── bookmarklets/       ← HTML launcher files — one per Matrix tab
 ├── docs/               ← All documentation — see breakdown below
+├── extension/          ← Chrome extension (POC) — see extension/ section below
 ├── handoffs/           ← Cursor handoff files
 │   ├── applied/        ← Committed and executed handoffs (historical record)
 │   └── incoming/       ← Staging area for handoffs awaiting execution
@@ -23,6 +24,14 @@ aframe-mcp-connector/
 ## `bookmarklets/`
 
 Universal CVRMLS Matrix tab launchers. One HTML file per tab. Builder-specific launchers (e.g. `lennar_features.html`) are the exception — named explicitly.
+
+---
+
+## `extension/`
+
+Chrome extension (Manifest V3) — POC consolidating the bookmarklet-per-tab system into one tool. Auto-detects the current Matrix tab and fills its fields on click, replacing the need to click a separate bookmark per tab. Scoped to Lennar/CVRMLS only for the POC — the `payload.mls` / `payload.builder` envelope keys and multi-MLS/multi-builder routing are a later-phase decision, not built into the POC.
+
+Internal layout (manifest, content scripts, popup, etc.) is finalized during the build session — this entry reserves the top-level location and scope statement ahead of that work.
 
 ---
 
