@@ -417,3 +417,9 @@ chrome.runtime.onMessage.addListener(function(message, sender, sendResponse) {
     return true; // keep the message channel open for the async sendResponse above
   }
 });
+
+// ---------- Announce detected tab on load ----------
+// Content script re-injects fresh on every Matrix page load (full reload per
+// tab click, confirmed). Announcing immediately is what lets the side panel
+// react without the user clicking anything — this is the auto-fill trigger.
+chrome.runtime.sendMessage({ type: 'TAB_DETECTED', tab: detectTab() });

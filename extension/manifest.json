@@ -1,11 +1,15 @@
 {
   "manifest_version": 3,
   "name": "Lennar CVRMLS Matrix Filler (POC)",
-  "version": "0.1.0",
-  "description": "Detects the active CVRMLS Matrix tab and fills it from a pasted JSON payload. Lennar/CVRMLS scoped POC — see extension/Lennar_Extension_Build.md.",
-  "permissions": ["activeTab"],
-  "action": {
-    "default_popup": "popup.html"
+  "version": "0.2.0",
+  "description": "Side panel that detects the active CVRMLS Matrix tab and fills it from a pasted JSON payload. Persists across Matrix's per-tab page reload. Lennar/CVRMLS scoped POC.",
+  "permissions": ["activeTab", "sidePanel", "storage"],
+  "action": {},
+  "background": {
+    "service_worker": "background.js"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
   },
   "content_scripts": [
     {

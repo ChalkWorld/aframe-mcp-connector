@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>Matrix Filler</title>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 12px; margin: 0; }
+  h1 { font-size: 14px; margin: 0 0 10px; }
+  textarea { width: 100%; height: 100px; font-family: ui-monospace, monospace; font-size: 11px; box-sizing: border-box; }
+  .toggle-row { display: flex; align-items: center; gap: 8px; margin: 10px 0; font-size: 12px; }
+  #fillBtn { width: 100%; padding: 8px; font-size: 13px; cursor: pointer; margin-bottom: 4px; }
+  #fillBtn:disabled { opacity: 0.4; cursor: default; }
+  #currentStatus { font-size: 12px; padding: 6px 8px; border-radius: 4px; margin-bottom: 10px; background: #eee; }
+  #currentStatus.detected { background: #d4edda; color: #155724; }
+  #currentStatus.undetected { background: #f8d7da; color: #721c24; }
+  #tabList { display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+  .tab-btn { padding: 6px 8px; border-radius: 4px; font-size: 12px; border: 2px solid transparent; }
+  .tab-btn.current { border-color: #333; }
+  .tab-btn.status-unvisited { background: #eee; color: #555; }
+  .tab-btn.status-pending { background: #fff3cd; color: #856404; }
+  .tab-btn.status-error { background: #f8d7da; color: #721c24; }
+  .tab-btn.status-filled { background: #d4edda; color: #155724; }
+</style>
+</head>
+<body>
+  <h1>Lennar CVRMLS Matrix Filler</h1>
+
+  <textarea id="payload" placeholder="Paste JSON payload here — stays in place as you move between tabs"></textarea>
+
+  <div class="toggle-row">
+    <label><input type="checkbox" id="autoFillToggle"> Auto-fill on tab detection</label>
+  </div>
+
+  <div id="currentStatus">Checking tab…</div>
+  <button id="fillBtn">Fill current tab</button>
+
+  <div id="tabList"></div>
+
+  <script src="sidepanel.js"></script>
+</body>
+</html>
