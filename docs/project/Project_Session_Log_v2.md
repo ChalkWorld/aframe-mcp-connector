@@ -715,6 +715,98 @@ Close out every item from `SESSION-HANDOFF-2026-08-14-ADDENDUM-live-session-find
 
 ---
 
+## Session 013 — August 17, 2026 (Scoping) / Session 014 — August 18, 2026 (Build & Live Test)
+
+### Session 013 Focus
+Scope the Chrome extension build (POC vs. universal multi-MLS tool), update repo structure to house it, and close out the one genuinely new technical unknown blocking the build — tab detection — via a live Claude-in-Chrome session against Matrix.
+
+### Session 013 — What Was Accomplished
+- Extension scope decided: basic POC first (auto-detect the active Matrix tab, fill on click), not the full universal/multi-MLS tool from the roadmap. Clicking through tabs stays manual for now; full auto-navigation deliberately deferred.
+- `extension/` added as a new top-level repo directory in `REPO_STRUCTURE.md`, sibling to `bookmarklets/`, `docs/`, `handoffs/`, `src/`.
+- Build doc created as `extension/README.md`, then renamed to `extension/Lennar_Extension_Build.md` to match the repo's existing naming convention.
+- Tab-detection fully extracted: candidate signature IDs pulled from the already-completed payload schema, live-tested for presence/absence across all 11 Lennar-scoped tabs, cross-checked against the full ~605-field Features map — zero `Input_N` collisions found anywhere in the system.
+- Key findings: URL-based tab detection ruled out (Matrix uses one static, opaque `c=` state token, byte-identical across every tab); Matrix does a full page reload on every tab click, so a content script re-injects fresh automatically with no polling/MutationObserver needed; Features confirmed as one physical Matrix tab, not two — the `features_a`/`features_b` split was a build-organization choice never recombined, confirmed by `Input_70` and `Input_571` both present together on the same page; `CVRMLS_Bookmarklet_Build.md`'s stale Phase 4 "auto-detects via URL or DOM signature" claim corrected.
+
+### Session 013 — Decisions Made
+- Full auto-navigation and eliminating the manual payload paste both deliberately deferred post-MVP — captured in `extension/Lennar_Extension_Build.md`'s Future Considerations so they aren't lost.
+
+### Session 013 — Documents Created / Updated
+| Document | Change |
+|---|---|
+| `extension/Lennar_Extension_Build.md` | Created — canonical copy of tab-detection signatures, architectural findings, Future Considerations |
+| `REPO_STRUCTURE.md` | `extension/` directory added |
+| `CVRMLS_Bookmarklet_Build.md` | Phase 4 roadmap corrected |
+
+### Session 013 — Open Verification Items (Carried Forward)
+- Whether to hand Cursor the full POC build spec in one shot, or start narrower (detection only, then layer in fill logic) — left as the explicit open decision for the build session. Resolved in Session 014 below.
+
+### Session 013 — Key References
+Confirmed detection signatures (11 tabs): Listing Info `Input_29`, Bath Info `Input_57`, Features `Input_70`/`Input_571`, General Info `Input_94`, Remarks `Input_107`, Fee Info `Input_109`, Owner Info `Input_118`, Agent/Office Info `Input_163`, Showing Instructions `Input_136`, Virtual Tour Info `Input_610`, Internet Display Info `Input_227`.
+
+### Session 013 — Session Handoff Produced
+`SESSION-HANDOFF-2026-08-17-extension-poc-scoping-and-tab-detection.md` — bridge doc for the build session. This log entry was backfilled during Session 014 after being missed at the time.
+
+---
+
+### Session 014 Focus
+Resolve the one-shot-vs-Cursor build-ownership question, author and execute two Cursor handoffs (initial popup-based POC, then a side-panel rebuild after live testing surfaced a workflow defect), and complete live field-level verification in Matrix.
+
+### Session 014 — What Was Accomplished
+- Decided extension code generation happens via Cursor — direct repo access, same-tier model reasoning (Sonnet 5 High in both surfaces), no chat-token cost — while design judgment (architecture, field-write logic, exact commit messages) stays in the authoring Claude session per `CURSOR-HANDOFF-PROTOCOL-001`'s core principle. Explicit, reasoned deviations from the protocol were flagged inline in both handoffs rather than applied silently: multiple new interdependent files bundled into one handoff (splitting them would let one land without the others and break silently), and Features fill logic delegated to Cursor reading the live bookmarklet files directly rather than pre-written in-session.
+- `HANDOFF-2026-08-17-extension-poc-build.md` authored and executed: created `extension/manifest.json`, `content.js` (10 of 11 tabs ported verbatim from `CVRMLS_Bookmarklet_Source.md` v0.6, uploaded this session; Features left as a sourced stub), `popup.html`, `popup.js`. Confirmed via the Session 021 `lennar_features.html` retirement record that Features routes universally through `features_a.html`/`features_b.html` for every builder including Lennar — closing an ambiguity before Cursor executed rather than leaving it in the handoff.
+- Cursor ported `fillFeaturesA`/`fillFeaturesB` directly from the live `bookmarklets/features_a.html`/`features_b.html` files and verified the port programmatically — diffed every checkbox-group array and scalar field against the deployed source; 18 groups + 9 scalars (Features A) and 16 groups + 6 scalars (Features B) confirmed byte-for-byte, in order, against the same payload keys.
+- Live testing surfaced a real workflow defect in the popup architecture: Matrix's full-page-reload-per-tab-click closes Chrome popups, wiping the pasted payload on every tab switch — worse than the bookmarklets it was meant to replace.
+- `HANDOFF-2026-08-18-extension-sidepanel-conversion.md` authored and executed: converted popup → `chrome.sidePanel` architecture (persists across Matrix's per-tab reload, confirmed via 2026 Chrome docs — `openPanelOnActionClick` is set at runtime via `background.js`, not a manifest field). Added an auto-fill/manual-confirm toggle, a per-tab status list (unvisited/pending/filled/error), and field-write logging (`__writeLog`) so a detection miss, a messaging miss, and a field-write miss each surface distinctly instead of all looking like silent success. `content.js`'s existing fill functions and `TAB_SIGNATURES` table confirmed unchanged via `git diff` — exactly one line appended.
+- Live end-to-end testing by Andrew confirmed: side-panel persistence fixed (payload survives tab switches without re-pasting), manual fill works, auto-fill works, Features tab exercised live.
+- One live-test finding surfaced and triaged, not yet resolved: a General Info fill on a taxid-path test listing reported `Input_102_POTCLZ` as a missing field. Confirmed not a transcription error — the ported code is byte-identical to the pre-existing disclosures-checkbox uncheck loop in `CVRMLS_Bookmarklet_Source.md`, which always attempts all 12 IDs on every fill regardless of payload content. Root cause undetermined — possibly a stale field ID never previously surfaced (bookmarklets never logged write failures, so this may be the first time anyone's actually seen it fail), possibly a conditionally-rendered checkbox, possibly path-specific (taxid vs. new). Parked per Andrew's direction; live DOM inspection is the agreed next step, not a payload check.
+
+### Session 014 — Decisions Made
+- This project's Cursor handoffs may bundle multiple new, interdependent files into a single handoff document when splitting them would let one land without the others and break silently — an explicit, reasoned deviation from `CURSOR-HANDOFF-PROTOCOL-001`'s "one file per handoff" principle for net-new multi-file builds specifically, not a general relaxation of it for surgical edits.
+- Handoffs authoring a genuinely new (not surgical-edit) build should open with a plain-English "What This Is / Why It Exists" section, beyond the protocol's existing per-change "what and why" requirement. Surfaced when Andrew pointed out the first extension handoff gave Cursor mechanism (an Architecture section) without ever stating the extension's actual purpose. Applied to the second handoff; worth carrying forward as a standing addition to `CURSOR-HANDOFF-PROTOCOL-001` for future generative handoffs — not yet made to the protocol doc itself this session.
+- **`handoffs/incoming/` vs. flat `handoffs/` discrepancy identified and explained**, not just noted as unknown: `REPO_STRUCTURE.md` (updated 2026-08-17) documents `handoffs/applied/` and `handoffs/incoming/` subfolders; `CURSOR-HANDOFF-PROTOCOL-001` v1.1 (updated 2026-08-16, one day earlier) still describes a flat `handoffs/` with a plain `git rm`. The first extension handoff used the `incoming/` path per `REPO_STRUCTURE.md`; Cursor found the file untracked regardless of path and deleted it directly with no functional issue. The protocol doc itself was not updated to match this session — flagged below as carried-forward work.
+
+### Session 014 — Documents Created / Updated
+| Document | Change |
+|---|---|
+| `extension/manifest.json` | Created (v0.1.0) — popup + static content script; replaced (v0.2.0) — side panel + background worker |
+| `extension/content.js` | Created (10/11 tabs ported + Features stub); Cursor-ported Features live and diff-verified; one line appended (`TAB_DETECTED` announce-on-load) |
+| `extension/popup.html`, `extension/popup.js` | Created, then deleted (superseded by side panel) |
+| `extension/background.js` | Created — registers `openPanelOnActionClick` |
+| `extension/sidepanel.html`, `extension/sidepanel.js` | Created — payload/toggle persistence, per-tab status list, auto-fill/manual-confirm logic |
+
+### Session 014 — Cursor Handoffs Produced This Session
+| Handoff | Target | Purpose |
+|---|---|---|
+| `HANDOFF-2026-08-17-extension-poc-build.md` | `extension/manifest.json`, `content.js`, `popup.html`, `popup.js` | Initial POC build — 10/11 tabs ported verbatim; Features stub sourced to live bookmarklet files |
+| `HANDOFF-2026-08-18-extension-sidepanel-conversion.md` | `extension/manifest.json`, `content.js`, `background.js` (new), `sidepanel.html`/`sidepanel.js` (new), `popup.html`/`popup.js` (deleted) | Popup → side panel conversion after live-test payload-loss defect found; commit `828c4e6` |
+| `HANDOFF-2026-08-18-session-log-v2-013-014.md` | `docs/project/Project_Session_Log_v2.md` | This entry |
+
+### Session 014 — Discrepancies Surfaced (Not Fixed This Session)
+- `Input_102_POTCLZ` (General Info disclosures group) reported missing on a live taxid-path test — not yet root-caused; live DOM inspection needed before treating it as a bug in either direction.
+- `handoffs/incoming/` vs. `CURSOR-HANDOFF-PROTOCOL-001`'s flat `handoffs/` — root cause identified (see Decisions Made above) but the protocol doc itself was not updated to match `REPO_STRUCTURE.md` this session.
+- "What This Is / Why It Exists" framing addition to generative handoffs — applied ad hoc this session, not yet written back into `CURSOR-HANDOFF-PROTOCOL-001` as a standing rule.
+
+### Session 014 — Open Verification Items (Carried Forward)
+- `Input_102_POTCLZ` — pending Andrew's live DOM inspection of the corresponding checkbox on the General Info tab.
+- Whether the taxid path specifically (vs. new-construction path) affects the POTCLZ result — untested variable, flagged by Andrew, not yet isolated.
+- Per-tab status persistence across side-panel close/reopen — deliberately left in-memory-only this session as a known, stated limitation; not yet requested as a follow-up.
+- A full end-to-end run on a single real listing, tab to tab — spot-checks and individual-tab tests done; no complete single-listing pass yet.
+
+### Session 014 — Key References
+- `extension/manifest.json` v0.2.0
+- `extension/content.js` — 10/11 tabs live-verified; Features ported and diff-verified against live source
+- Live test listing: taxid path, General Info tab (POTCLZ finding)
+- Cursor commit: side panel conversion `828c4e6` on `origin/main`
+
+### Session 014 — Session Handoff Produced
+`SESSION-HANDOFF-2026-08-18-extension-sidepanel-and-live-testing.md` — bridge doc for the next session (POTCLZ investigation, full end-to-end listing run, and the two carried-forward protocol-doc updates).
+
+---
+
+*Next session: Live DOM inspection of `Input_102_POTCLZ` on the General Info tab — check whether the real field ID differs from the ported one, or whether the checkbox is conditionally rendered. Then a full tab-to-tab run on one real listing before calling the POC validated end to end.*
+
+---
+
 *Log started July 15, 2026. Post-realignment doc architecture in effect. Old log (`docs/project/Project_Session_Log.md`) preserved as pre-realignment archive.*
 
 ---
