@@ -79,6 +79,8 @@ docs/
 
 **`docs/lennar/`** — anything Lennar-specific: hardcoded statics, community lookup tables, `isLennar` flag behavior, listing protocol tied to Carly/Megan emails. Future builders follow the same pattern: `docs/[builder]/`, referencing the relevant MLS layer.
 
+**`docs/operational/`** — Operational doc sets for downstream Claude projects that execute (rather than author) builder-specific workflows. Each subdirectory (`docs/operational/lennar/`, future `docs/operational/<builder>/`) contains a scoped, self-contained set of docs derived from the corresponding authoring folder. Operational sets are the current edit target once created; corresponding authoring folders (e.g. `docs/lennar/`) freeze as historical reference after their operational counterpart stands up.
+
 **`bookmarklets/`** — deployment artifacts generated from the source files in `docs/cvrmls/`. Universal tabs have generic names; builder-specific launchers are named explicitly.
 
 ---
