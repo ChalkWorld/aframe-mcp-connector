@@ -893,6 +893,101 @@ Next authoring session in this project should close the two pre-split items (`In
 
 ---
 
+## Session 016 — Operational Preseed Closeout + Aframe Live Exploration
+**Date:** August 20, 2026
+
+### Focus
+Two operational threads and one architectural discussion. First: close out the pre-standup items blocking the seeding of the new operational Lennar Claude.ai project — silent-write fixes in the extension and CVRMLS source, always-manual list corrections, small doc-fixes from Session 015's post-execution report. Second: live exploration of the Aframe connector against the 1 POC Lane test file, confirming API behavior around task materialization. Third: an extended philosophical discussion about the shape of AI-assisted TC work and where the harness discipline built for Lennar can and cannot transfer.
+
+### What Was Accomplished
+
+**Wave 3 operational preseed closeout — consolidated Cursor handoff drafted.**
+
+Six files, eleven surgical change blocks, single commit. Bundles two silent-write fixes (POTCLZ → APCZ in the disclosures array; `agent_related_to_seller` → `agent_related` canonical key alignment) across both the extension and the CVRMLS source doc, plus the always-manual list corrections across all three docs that reference it (Payload Schema §4.1, Project Protocol §2.2, Extension Reference §5), plus three small doc-fixes surfaced in Session 015's post-execution report (Airtable Listings table ID in Project Protocol §6.3, unnumber "Step 13" reference in §5.3, resolve Step 6 Column A hyperlink open item), plus a Directions community-static future-use stub note in Payload Schema §4.1 and a paired simplification of the New Listing Protocol Step 11 stub. Handoff explicitly notes its own multi-file bundling as a deliberate exception to the one-file-per-handoff rule, at Andrew's direction.
+
+**POTCLZ → APCZ hypothesis confirmed via live DOM inspection.**
+
+Live inspection on a new-path Matrix listing (existing listing with data loaded, General Info tab) returned 12 `Input_102_*` elements matching the field map exactly: 5 disclosures + 3 AICUZ zones (including `APCZ`) + 4 AICUZ noise levels. `Input_102_POTCLZ` confirmed absent. The stale ID in the extension's disclosures array was surfacing in the write log on every General Info fill since Session 014's write logging landed; runtime impact was ~zero (no-op on a null element) but the noise obscured other real field-write failures.
+
+**`owner.agent_related` canonical drift confirmed in extension source.**
+
+Extension `content.js` line 259 reads `d.agent_related_to_seller` (legacy Lennar Customization key); schema canonical is `owner.agent_related`. Silent-write bug — payloads emitting the canonical key hit the `|| "0"` fallback. Happens to match the Lennar static default (always No), so no visible defect on Lennar; would silently miscategorize on non-Lennar dynamic use. Same drift exists in `CVRMLS_Bookmarklet_Source.md` (the extension's port origin); Wave 3 handoff fixes both.
+
+**Data-integrity finding on 8600 Clemet Dr.**
+
+MLS listing sheet uploaded during Wave 2 investigation showed `Agt Related to Seller: Yes` on a Lennar listing where the standard is always No. Not a bug the Wave 3 handoff causes or fixes — a data-entry issue predating the current work. Flagged for Andrew to correct in Matrix and to spot-check 2-3 other recent Lennar listings against.
+
+**Aframe connector live-verified end-to-end.**
+
+Confirmed authenticated and functional via `list_participant_roles` (22 roles including the intentional splits like Buyer/Buyer (Other Side), Lender/Lender Processor, TC (Other Side), Referral Agent), `search_transactions`, `get_transaction`, and `search_tasks` on the 1 POC Lane test file (xactionId 551669). File was in Draft state with 8 visible tasks; Andrew added acceptance date and close date live during the session, then re-queried — task list expanded to 41 (33 previously-invisible "waiting" tasks materialized). Confirmed the API behavior Andrew flagged: `search_tasks` does not return tasks in waiting status. The API returns only tasks whose anchor merge fields have been populated.
+
+**Two project-hygiene issues surfaced during Wave 3 authoring.**
+
+`Lennar_New_Listing_Protocol.md` in the authoring project's uploaded file set is a GitHub 500 error page (HTML starting with `<!DOCTYPE html><html><head>`), not the actual doc content — a silent sync failure at upload time. `Lennar_Payload_Schema.md` in the same file set is v1.5 at 1054 lines, appearing to be the pre-trim frozen `docs/lennar/` version rather than the operational `docs/operational/lennar/` trimmed version (630 lines per Session 015). Both required Andrew to re-upload the correct files mid-authoring; both are worth flagging as failure modes to check for when seeding the new operational project.
+
+### Decisions Made
+
+- **Directions field: stub as always-manual with community-static future-use note** rather than immediately reversing its exclusion. Historically framed as address-specific in `CVRMLS_Bookmarklet_Build.md`; reframing to community-static (highway/main-road directions to the community entrance) would make it a candidate for community-lookup treatment alongside Subdivision and Post Office. Stubbed with a documented reactivation trigger — capture Input ID and 215-char content on a future live DOM inspection when sales reps request it. Preserves current behavior without prematurely committing engineering budget.
+- **Column A hyperlink source: resolved to Matrix-exported MLS PDF, saved to Drive post-activation.** Fully manual step outside session scope. Session responsibility limited to including a post-activation reminder line in the Step 10 handoff checklist. Wave 3 handoff patches both Step 6 (resolves the open item) and Step 10 (adds the reminder).
+- **PandaDoc activation deferred until after the 3 queued listings run.** Rationale: variable isolation during operational project smoke-test period; retrieval-side is manual regardless of PandaDoc state so send-side automation isn't a full close-the-loop win; friction data from running 3 listings manually will empirically justify (or not) the subscription cost.
+- **Wave 3 handoff bundling** — six files in one handoff, deliberate exception to the standing one-file-per-handoff rule. Rationale captured in the handoff's own "What This Is / Why It Exists" and "Note on Bundling" sections: the silent-write fixes in extension and CVRMLS source must land together to keep source and port aligned; the always-manual list reductions across three docs must be consistent; individual changes are surgical enough that failure isolation is preserved by rollback rather than by file splitting.
+
+### Documents Created / Updated
+
+None directly this session. All doc updates are staged for Wave 3 Cursor apply.
+
+### Cursor Handoffs Produced
+
+| Handoff | Target Files | Purpose |
+|---|---|---|
+| `HANDOFF-2026-08-20-operational-preseed-closeout.md` | `extension/content.js`; `docs/cvrmls/CVRMLS_Bookmarklet_Source.md`; `docs/operational/lennar/Lennar_Payload_Schema.md`; `docs/operational/lennar/Lennar_New_Listing_Protocol.md`; `docs/operational/lennar/Lennar_Project_Protocol.md`; `docs/operational/lennar/Lennar_Extension_Reference.md` | Wave 3 preseed closeout — silent-write fixes, always-manual list corrections, Session 015 post-execution report doc-fixes, Directions stub |
+| `HANDOFF-2026-08-20-session-log-v2-016.md` | `docs/project/Project_Session_Log_v2.md` | This entry |
+
+### Discrepancies Surfaced (Not Fixed This Session)
+
+- **`Lennar_New_Listing_Protocol.md` in authoring project file set is a GitHub 500 error page.** Silent upload failure. Andrew re-uploaded mid-session. Worth adding a `head`-check discipline to the operational project seeding procedure (Wave 4) — any file that came in as an HTML error page would break session behavior invisibly on first use.
+- **`Lennar_Payload_Schema.md` in authoring project file set appears to be pre-trim v1.5** (1054 lines), not the operational trimmed version (630 lines). Also re-uploaded mid-session. Related to the same class of sync issue.
+- **8600 Clemet Dr Matrix listing has `Agt Related to Seller: Yes`** where the Lennar standard is always No. Not a Wave 3 code fix — a data-entry issue on that specific listing. Andrew to correct in Matrix and spot-check 2-3 other recent Lennar listings.
+- **`CURSOR-HANDOFF-PROTOCOL-001` still describes flat `handoffs/`** vs. `REPO_STRUCTURE.md`'s `handoffs/incoming/` and `handoffs/applied/`. Carried forward unchanged from Session 015 §5.
+- **`CURSOR-HANDOFF-PROTOCOL-001` still missing the "What This Is / Why It Exists" standing addition for generative handoffs.** Applied ad hoc in the Wave 3 handoff (used for the bundling rationale). Carried forward unchanged from Session 015 §5.
+- **`docs/lennar/` frozen-as-historical convention** still not codified in `CURSOR-HANDOFF-PROTOCOL-001`. Carried forward unchanged from Session 015 §6.
+
+### Open Verification Items
+
+- Wave 3 Cursor apply pending — Andrew to run.
+- Post-Wave 3 verification: extension write log should no longer report `Input_102_POTCLZ` as missing on General Info fills.
+- 8600 Clemet Dr data-integrity fix, plus spot-check of 2-3 other recent Lennar listings for the same "Yes" mistake.
+- New operational Lennar Claude.ai project seeding (Wave 4) — carried forward from Session 015. Now unblocked by Wave 3 landing.
+- Three Lennar listings queued to run through the operational project once seeded — deferred smoke-test-first (Wave 4 will run one light smoke-test session before touching the queue).
+
+### Key References
+
+- Wave 3 handoff: `HANDOFF-2026-08-20-operational-preseed-closeout.md`
+- Aframe test file: 1 POC Lane, Richmond VA (xactionId 551669); Buyer side; Cash; $250,000; effective 2026-08-20, closing 2026-09-30
+- Aframe live behavior confirmed: `search_tasks` filters out waiting-status tasks; task materialization is driven by anchor merge field population (`d_ClosingDate`, `d_EarnestMoneyDue`, `d_inspectiondeadline`)
+- Buyer-side session protocol (surfaced late in session): `docs/protocols/New_Buyer_Side_Session_Protocol.md` (WORKFLOWS-BUYER-001) v1.3
+- Companion seller-side protocol: `docs/protocols/Seller_Under_Contract_Session_Protocol.md` (WORKFLOWS-SELLER-001) v1.2+
+- Priority use case reference: `docs/project/PROJECT_VISION.md` — buyer-side contract intake as Priority 1 for the current connector tool set
+
+### Philosophical / Architectural Discussion — High-Level Notes
+
+An extended discussion about the shape of AI-assisted work in this project ran alongside the operational threads. High-level takeaways:
+
+- **The Lennar operational project is the "training wheels" case, not the point of the whole exercise.** Its value is proving out the harness patterns (Payload Envelope, session lifecycle, Issue Reports, authoring/operational split, Airtable-as-truth, extension write log) against a stripped-down deterministic slice, so those patterns can be applied to harder cases with confidence.
+- **The Aframe file, once dates are populated, functions as the transaction's own KB.** Templates encode conditional workflow at file-creation time; the file's task list is the deterministic per-transaction workflow already resolved. A session reading a live file isn't reasoning about "what TC work looks like generally" — it's reading pre-computed state that Aframe already scoped down. This substantially reduces the doc-set burden compared to encoding TC domain knowledge from scratch.
+- **The API's "waiting-status invisibility" property has real harness implications.** A session hitting a file at intake time (dates not set) sees ~20% of the actual workflow; a session hitting after date population sees the full picture. Harness must teach sessions to check whether anchor dates are set before drawing conclusions about task list completeness, and to re-query on every beat rather than caching prior context.
+- **Lifecycle-assistance for TC work is not viable given current Aframe API constraints.** Read-only + advice against a rapidly-changing operational surface, combined with the mode-switch cost of dropping into a Claude session, produces net-negative value. Watch the Aframe API roadmap for `complete_task`, `send_task_letter`, and merge-field write access before revisiting.
+- **Setup-assistance IS viable, high-leverage, and shape-compatible with the Lennar operational pattern.** File creation, participant tree population, template selection based on deal type, merge field population, initial attachment routing — all deterministic transformations of structured input (Cognito form + contract PDF + email intake) into structured Aframe file state. Every action needed for setup has a real API endpoint (`create_transaction`, `bulk_add_transaction_participants`, `apply_task_templates`, `bulk_update_custom_fields`, `upload_transaction_attachment_file`). Doesn't require the write-access limitations to be fixed because setup is the intake beat, not lifecycle assistance.
+- **`New_Buyer_Side_Session_Protocol.md` v1.3 already exists and covers this use case.** Surfaced late in the discussion — session was speculating from first principles when a real, actively-maintained protocol was 2 tool calls away. `PROJECT_VISION.md` names buyer-side contract intake as Priority 1 for the current connector tool set for the same reasons the session independently derived. Reinforces the standing rule: search project knowledge before reasoning from first principles about workflow shape.
+
+None of the above generated documents this session — the discussion was scoping context, not authoring work. Captured here for continuity into whatever future authoring session picks up the TC-setup thread.
+
+### Session Handoff Produced
+
+None. Session closes with clear next actions in the operational thread (Andrew runs Wave 3 in Cursor → seeds the operational Lennar Claude.ai project per Wave 4 → runs light smoke-test session → runs the 3 queued listings). No bridge doc needed.
+
+---
+
 *Log started July 15, 2026. Post-realignment doc architecture in effect. Old log (`docs/project/Project_Session_Log.md`) preserved as pre-realignment archive.*
 
 ---
