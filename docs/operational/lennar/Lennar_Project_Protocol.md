@@ -42,7 +42,7 @@ Andrew is directly responsible and accountable for the accuracy of all data ente
 
 CVRMLS (Central Virginia Regional Multiple Listing Service) is the MLS covering the Central Virginia market. Matrix is the web application that CVRMLS members use to input, manage, and search MLS listings. It is the source system for what appears on IDX feeds (Realtor.com, Zillow, brokerage sites) and in agent MLS searches — a listing does not exist to the wider market until it exists in Matrix. Accurate, timely Matrix input is therefore the point of AAR-TC's Lennar work.
 
-Matrix organizes listing data across a set of tabs, each covering a category of information — the property basics, bathroom breakdown, features and community amenities, HOA and fee data, showing instructions, and so on. The tab structure reflects how MLS data has evolved into distinct validated categories over time. For Lennar new construction listings, 11 tabs are in scope; Room Info is skipped by Lennar convention. A small handful of Matrix fields (Map, Directions, Subdivision, Post Office) require Andrew to interact with Matrix directly and are not covered by any fill mechanism (see `Lennar_Extension_Reference.md` §5).
+Matrix organizes listing data across a set of tabs, each covering a category of information — the property basics, bathroom breakdown, features and community amenities, HOA and fee data, showing instructions, and so on. The tab structure reflects how MLS data has evolved into distinct validated categories over time. For Lennar new construction listings, 11 tabs are in scope; Room Info is skipped by Lennar convention. A small handful of Matrix fields (Map and Directions) require Andrew to interact with Matrix directly and are not covered by any fill mechanism (see `Lennar_Extension_Reference.md` §5).
 
 The 11 in-scope tabs collectively hold several hundred fields. Most Lennar values follow predictable patterns per community and per home type, which is what makes the payload-plus-extension model viable. Per-tab field detail — every field ID, every static value, every path-specific rule — lives in the Payload Schema. Sessions consult the schema for that detail, not this section.
 
@@ -233,7 +233,7 @@ Fix-and-improve work is the authoring project's responsibility. That separation 
 
 The following are known future capabilities not yet in scope. When a session encounters a request that would need one of these, the session flags it clearly ("that's a documented future capability, not currently in scope") rather than either guessing or acting like the request is unexpected.
 
-- **Active Listing Email (Step 13).** When a listing goes Active, the session composes and sends an email to the appropriate Lennar reps with an MLS listing PDF attached. Trigger, recipient roster, template, and attachment method to be defined. This replaces functionality that was previously handled through Aframe.
+- **Active Listing Email.** When a listing goes Active, the session composes and sends an email to the appropriate Lennar reps with an MLS listing PDF attached. Trigger, recipient roster, template, and attachment method to be defined. This replaces functionality that was previously handled through Aframe. See `Lennar_New_Listing_Protocol.md` §11 for the current stub.
 - **Formal Reverse Prospecting protocol document.** The work itself is in scope (see §5.1) — Andrew handles rep requests as they come in. A dedicated reference doc capturing the procedure end-to-end is planned once the pattern is formalized. Until then, sessions coordinate with Andrew directly on each request.
 
 ---
@@ -254,7 +254,7 @@ The following are known future capabilities not yet in scope. When a session enc
 ### 6.3 Not Loaded — Reached via Connector
 
 - **Airtable Community Reference DB** — community data lookups at payload-generation time. Base `app78fMUwDNBHUZ6r`, table `tbleMbM1WgY8Si2t7`.
-- **Airtable Listings table** — listing state read/write across all beats. Base `app78fMUwDNBHUZ6r`, table TBD (session confirms table on first access).
+- **Airtable Listings table** — listing state read/write across all beats. Base `app78fMUwDNBHUZ6r`, table `tbllTArjNE464zFGi`.
 - **Google Drive** — property folders, saved documents.
 - **Google Sheet** — Lennar main tab.
 - **Gmail** — rep intake and lifecycle emails.

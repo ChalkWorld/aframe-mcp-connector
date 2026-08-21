@@ -198,7 +198,7 @@ Then, based on the duplicate check:
 - **Row already on the sheet:** check it for accuracy — address, List Price, Community, position (grouped by community, then SF or TH, descending numeric order), and the Column A hyperlink. Flag any mismatch in the Step 10 handoff; say nothing further if it checks out.
 - **Row not there yet:** give Andrew a plain reminder to add it (address, List Price, Community) in the Step 10 handoff. He knows the sheet's conventions — the reminder only needs to flag that it's still pending.
 
-> **Open item — Column A hyperlink source.** The hyperlink on the address text in Column A previously pointed at the MLS data sheet saved to Drive. That artifact no longer exists. Until the replacement target is confirmed, treat the hyperlink as Andrew's call and surface it in the handoff rather than asserting a source. Worth an Issue Report the first time it comes up on a live intake.
+> **Column A hyperlink source.** The hyperlink on the address text in Column A points to the MLS listing PDF that Andrew exports from Matrix once the listing is Active and saves to the Google Drive property folder. Session does not touch the sheet or the hyperlink — this is Andrew's manual post-activation step (see Step 10). The session's responsibility is to include the post-activation reminder in the Step 10 handoff.
 
 ### 7. Add the New Row to Airtable
 
@@ -237,17 +237,18 @@ Close every beat with a clear handoff of what still needs Andrew's action:
 
 - [ ] Google Sheet main tab — per Step 6: either confirmed accurate, with any mismatch flagged, or a plain reminder to add the row
 - [ ] MLS data input — paste the Step 5 payload into the extension side panel and click through the Lennar-scoped tabs
-- [ ] Manual Matrix fields the extension never touches: **Map**, **Directions**, **Subdivision**, **Post Office** — enter these while reviewing the extension's fills (`Lennar_Extension_Reference.md` §5)
+- [ ] Manual Matrix fields the extension never touches: **Map** and **Directions** — enter these while reviewing the extension's fills (`Lennar_Extension_Reference.md` §5)
 - [ ] ShowingTime — set Allowing Online Requests to "No". Keeps buyer agents from contacting Gary Martin directly to request showings
 - [ ] Photos — download/save, then upload and reorder in MLS: exterior first, bathrooms to the back
 - [ ] Save the MLS# back to Airtable once assigned, and surface it for manual entry on the Google Sheet main tab
 - [ ] Save the signed addendum to the Google Drive property folder once returned
 - [ ] Activate the listing in MLS once the signed addendum is on file
+- [ ] Post-activation: export the MLS listing PDF from Matrix, save it to the property Drive folder, and hyperlink the address in Column A of the Google Sheet main tab to that PDF
 - [ ] Send the active listing email to the community sales rep(s)
 
 ### 11. Active Listing Email — Stub
 
-*Not yet fully specified. Do not treat as executable guidance. Parked as a future addition per `Lennar_Project_Protocol.md` §5.3, which refers to this step by its former number, Step 13.*
+*Not yet fully specified. Do not treat as executable guidance. Parked as a future addition per `Lennar_Project_Protocol.md` §5.3.*
 
 When Andrew reports the listing has gone Active, the session composes and sends the "now active" notification to the appropriate community sales rep(s).
 

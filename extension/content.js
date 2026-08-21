@@ -164,7 +164,7 @@ function fillGeneralInfo(payload) {
   setField('Input_248', d.assd_improvement || "0");
 
   var disclosureIds = ['LISTAT','NOFORM','NOTREQ','OFFICE','PROPTY',
-    'APZ1','APZ2','LESS65','75PLUS','65TO70','70TO75','POTCLZ'];
+    'APZ1','APZ2','LESS65','75PLUS','65TO70','70TO75','APCZ'];
   disclosureIds.forEach(function(v) { setCheck('Input_102_' + v, false); });
   (d.disclosures || []).forEach(function(v) { setCheck('Input_102_' + v, true); });
 
@@ -256,7 +256,7 @@ function fillOwnerInfo(payload) {
   setField('Input_857', d.owner_name_2   || "");
   setField('Input_123', d.occupant_phone || "");
   setField('Input_124', d.owner_agent             || "0");
-  setField('Input_707', d.agent_related_to_seller || "0");
+  setField('Input_707', d.agent_related           || "0");
 }
 
 function fillAgentOfficeInfo(payload) {

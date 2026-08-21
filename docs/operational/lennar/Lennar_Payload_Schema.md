@@ -144,7 +144,8 @@ Coverage is complete for all Matrix tabs a Lennar session touches. Room Info is 
 
 **Fields excluded from payload entirely:**
 - No Show Until (`Input_33`), Expected OnMkt Date (`Input_782`) — always manual
-- Latitude, Longitude, Directions — always manual
+- Latitude, Longitude — always manual (Matrix map pin placement)
+- Directions — always manual for now. Historically treated as address-specific and unused for Lennar. Candidate for community-static treatment (highway/main-road directions to the community entrance) if sales reps request it. Capture Input ID and 215-char content on a future live DOM inspection if the trigger comes.
 
 ---
 

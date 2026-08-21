@@ -78,9 +78,7 @@ Listing Info, Bath Info, Features (single physical tab with A and B fill functio
 Some Matrix fields must be entered by Andrew directly and are never touched by the payload or the extension:
 
 - **Map** (map pin placement)
-- **Directions** (driving directions text)
-- **Subdivision** (dropdown selection that requires Matrix's live subdivision lookup)
-- **Post Office** (dropdown selection)
+- **Directions** (driving directions text — see `Lennar_Payload_Schema.md` §4.1 for future community-static treatment note)
 
 Sessions should flag these in the intake handoff so Andrew enters them when he's in Matrix reviewing the extension's fills. They are not extension defects when unfilled — they were never in scope for any fill mechanism.
 

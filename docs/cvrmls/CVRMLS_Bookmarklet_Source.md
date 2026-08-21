@@ -388,7 +388,7 @@ See `AAR-TC-LENNAR-BM-SRC-001-FEA` (`docs/AAR-TC-LENNAR-BM-SRC-001-FEA.md`) — 
     // Disclosures checkbox group — set from payload array
     // Uncheck all first, then check selected
     var disclosureIds = ['LISTAT','NOFORM','NOTREQ','OFFICE','PROPTY',
-      'APZ1','APZ2','LESS65','75PLUS','65TO70','70TO75','POTCLZ'];
+      'APZ1','APZ2','LESS65','75PLUS','65TO70','70TO75','APCZ'];
     disclosureIds.forEach(function(v) { setCheck('Input_102_' + v, false); });
     (d.disclosures || []).forEach(function(v) { setCheck('Input_102_' + v, true); });
 
@@ -602,7 +602,7 @@ No builder branch — the bookmarklet writes whatever the session provides, or l
 
     // Owner Agent, Agent Related to Seller
     setField('Input_124', d.owner_agent           || "0");
-    setField('Input_707', d.agent_related_to_seller || "0");
+    setField('Input_707', d.agent_related           || "0");
 
   }).catch(function(e) {
     alert('Owner Info error: ' + e.message);
