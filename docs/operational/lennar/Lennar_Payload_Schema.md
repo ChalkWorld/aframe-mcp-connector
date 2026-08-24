@@ -1,8 +1,8 @@
 ---
 title: Lennar Payload Schema
 document_id: LENNAR-OPS-SCHEMA-001
-version: 1.0
-version_date: 2026-08-19
+version: 1.1
+version_date: 2026-08-24
 status: Active
 author: Andrew Rich, AAR-TC Transaction Services
 contributor: Claude (Anthropic) — AI-assisted authoring
@@ -105,7 +105,7 @@ Coverage is complete for all Matrix tabs a Lennar session touches. Room Info is 
 
 | Payload key | Input ID | Value / Source | Notes |
 |---|---|---|---|
-| `listing.county_city` | `Input_29` | Community lookup | Fires the location cascade — **always write, both paths** |
+| `listing.county_city` | `Input_29` | Community lookup | Fires the location cascade — **always write, both paths**. Airtable's `County` column must hold the exact CVRMLS stored value for `Input_29` (per `docs/cvrmls/CVRMLS_County_City_Reference.md`), not a human-readable county/city name. **2026-08-24 incident:** Creekside Run TH's `County` held `"Richmond City"` instead of the stored value `"Richmond"`. Because this is the one field always actively written to fire the cascade, the bad value silently clobbered Matrix's own taxid pre-population and blanked Area/ZIP/Post Office/Subdivision/Schools with no logged error — read at the time as a path mismatch, which it was not. Corrected in Airtable; every other active community's `County` already matched its stored value exactly. Any future community in a jurisdiction where display text and stored value diverge (e.g. Colonial Heights → `ColonialHeights`, New Kent → `NewKent`) needs its `County` value entered as the stored value directly. |
 | `listing.area` | `Input_30` | Community lookup | Written after county_city cascade settles (~1500ms) |
 | `listing.zip` | `Input_635` | Community lookup | Written after Area cascade settles (~800ms) |
 | `listing.post_office` | `Input_41` | Community lookup | Written after cascade |
@@ -410,19 +410,21 @@ Siding and Flooring are **not** statics — both are real per-listing selections
 
 ### 5.2 Community-lookup fields (5 fields)
 
-Session resolves these from the Airtable Community Reference DB table (base `app78fMUwDNBHUZ6r`, table `tbleMbM1WgY8Si2t7`) — fields `Heating`, `Heating Fuel`, `Pool Y/N`, `Community Amenities`, `Community Amenities Codes`. Match the row by the `community` payload key against the table's `Community` field (short `TH`/`SF` form).
+Session resolves these from the Airtable Community Reference DB table (base `app78fMUwDNBHUZ6r`, table `tbleMbM1WgY8Si2t7`) — fields `Heating`, `Heating Codes`, `Heating Fuel`, `Heating Fuel Codes`, `Pool Y/N`, `Community Amenities`, `Community Amenities Codes`. Match the row by the `community` payload key against the table's `Community` field (short `TH`/`SF` form).
 
 | Field | Payload key | Airtable source |
 |---|---|---|
-| Heating | `features_b.heating` | `Heating` column — display value (e.g. `"Forced Hot Air"`); write the matching `Input_86_*` code |
-| Heat Fuel | `features_b.heat_fuel` | `Heating Fuel` column — same pattern, `Input_87_*` |
+| Heating | `features_b.heating` | `Heating Codes` column — holds the exact CVRMLS stored value directly (e.g. `"Input_86_08"`); write it into the payload array as-is. `Heating` (display text, e.g. `"Heat Pump"`) is for human reference only — never write it into the payload. |
+| Heat Fuel | `features_b.heat_fuel` | `Heating Fuel Codes` column — same pattern (e.g. `"Input_87_02"`). `Heating Fuel` is display text only. |
 | Pool Y/N | `features_b.pool_yn` | `Pool Y/N` column — `"Yes"`/`"No"` text; write `"1"`/`"0"` into the payload |
 | Pool Description | `features_b.pool_desc` (conditional on Pool Y/N = `"1"`) | **Not stored in Airtable — session-derived.** **Standing rule:** whenever Pool Y/N is Yes, Pool Description is always `["Input_91_02"]` (Community/Off Site), for every current and future Lennar community. When Pool Y/N is No, `pool_desc` is `[]`. |
 | Community Amenities | `features_b.community_amenities` | `Community Amenities Codes` column — comma-separated suffix list (e.g. `"01,03,04,22,47"`); map each to `Input_534_<code>` for the payload array |
 
+**2026-08-24 incident:** this section previously said only "write the matching `Input_86_*`/`Input_87_*` code" with no source for what that code was. On Creekside Run TH (6122 Hull Street Road), a session copied `Input_86_07`/`Input_87_05` from an unrelated example in `Lennar_Payload_Examples.md` — those are the correct codes for Forced Hot Air/Natural Gas, but Creekside Run TH's actual values are Heat Pump/Electric (`Input_86_08`/`Input_87_02`). The wrong codes were written to a live Matrix listing and had to be corrected by hand. `Heating Codes`/`Heating Fuel Codes` now hold the exact stored value directly, same pattern as `Community Amenities Codes`, closing the gap. All 5 active communities currently resolve to one of exactly two pairs: Forced Hot Air/Natural Gas (`Input_86_07`/`Input_87_05` — Harpers Mill TH, Harpers Mill SF, Watermark SF) or Heat Pump/Electric (`Input_86_08`/`Input_87_02` — Creekside Run TH, Everstone SF).
+
 **Community Amenities code labels:** `Input_534_01` = Association, `_03` = Clubhouse, `_04` = Common Area, `_22` = Playground, `_46` = Picnic Area, `_47` = Pool. Kept here as the reference table because Airtable stores codes, not labels.
 
-All five active communities are populated in Airtable.
+All five active communities are populated in Airtable, including the new Heating/Heat Fuel code columns (2026-08-24).
 
 ### 5.3 Conditional resolutions (2 fields)
 
@@ -625,6 +627,7 @@ Checkbox array fields carry stored option values as JSON arrays. The array's ele
 | Version | Date | Notes |
 |---|---|---|
 | 1.0 | 2026-08-19 | Initial operational version. Derived from `docs/lennar/Lennar_Payload_Schema.md` v1.5 (frozen as historical reference). Payload examples split to `Lennar_Payload_Examples.md`. |
+| 1.1 | 2026-08-24 | Two related fixes from the same 6122 Hull Street Road (Creekside Run TH) intake, both traced to the Airtable Community Reference DB holding display text where Matrix needed an exact stored value. §4.1 `listing.county_city`: documents the `County` column's stored-value requirement after Airtable's `"Richmond City"` (display text) silently broke the Listing Info cascade instead of `"Richmond"` (stored value) — no path mismatch, as first suspected. §5.2 Heating/Heat Fuel: replaces the unsourced "write the matching code" instruction with the new `Heating Codes`/`Heating Fuel Codes` Airtable columns, after a session copied the wrong pair of codes from an unrelated example and wrote them to a live listing. |
 
 ---
 
