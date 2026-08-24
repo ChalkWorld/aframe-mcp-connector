@@ -1,5 +1,5 @@
 # Repo Structure — Quick Reference
-**Last Updated:** August 17, 2026 (extension/ directory reserved for Chrome extension POC)
+**Last Updated:** August 24, 2026 (regenerated from actual repo structure — see Layer Logic for `docs/operational/` note)
 
 ---
 
@@ -9,7 +9,7 @@
 aframe-mcp-connector/
 ├── bookmarklets/       ← HTML launcher files — one per Matrix tab
 ├── docs/               ← All documentation — see breakdown below
-├── extension/          ← Chrome extension (POC) — see extension/ section below
+├── extension/          ← Chrome extension (Lennar/CVRMLS POC, Manifest V3, side panel) — see extension/ section below
 ├── handoffs/           ← Cursor handoff files
 │   ├── applied/        ← Committed and executed handoffs (historical record)
 │   └── incoming/       ← Staging area for handoffs awaiting execution
@@ -39,36 +39,54 @@ Internal layout (manifest, content scripts, popup, etc.) is finalized during the
 
 ```
 docs/
+├── Payload_Envelope.md ← Cross-MLS/cross-builder runtime payload envelope contract
+│
 ├── cvrmls/             ← Universal CVRMLS Matrix layer
-│   ├── Bookmarklet build roadmap and field maps
+│   ├── Bookmarklet build roadmap
 │   ├── Bookmarklet source JS (universal variants)
 │   ├── Features tab field map
-│   ├── Payload schema (universal baseline)
-│   └── aframe-api-reference/   ← Aframe API endpoint reference (subdocs)
+│   ├── County/city reference table
+│   └── Payload schema (universal baseline)
 │
-├── lennar/             ← Lennar builder implementation layer
-│   ├── Bookmarklet customization (Lennar variants + community lookup tables)
-│   ├── Bookmarklet build notes (community tables, fee data, launcher status)
-│   ├── Features bookmarklet source (Lennar variant JS)
-│   ├── Features payload schema (Lennar authority — HC/DYN/CL/EXCL)
-│   └── New listing protocol
+├── lennar/             ← Lennar builder authoring layer — frozen historical reference now that
+│   │                      docs/operational/lennar/ has stood up (see Layer Logic)
+│   ├── Community reference database (frozen — superseded by Airtable Community Reference DB)
+│   ├── New listing protocol (frozen v2.9 — superseded by docs/operational/lennar/Lennar_New_Listing_Protocol.md)
+│   ├── Payload schema (frozen v1.5 — superseded by docs/operational/lennar/Lennar_Payload_Schema.md)
+│   └── Photo preprocessing (local AI photo sorter — not superseded, still active)
+│
+├── operational/        ← Operational doc sets for downstream Claude projects that execute
+│   │                      (rather than author) builder-specific workflows
+│   └── lennar/         ← Lennar operational doc set — current edit target (AAR-TC Lennar Operational Project)
+│       ├── Extension reference (LENNAR-OPS-EXT-REF-001)
+│       ├── New listing protocol (LENNAR-OPS-PROTOCOL-002)
+│       ├── Payload examples (LENNAR-OPS-EXAMPLES-001)
+│       ├── Payload schema (LENNAR-OPS-SCHEMA-001)
+│       └── Project protocol (LENNAR-OPS-PROTOCOL-001)
+│
+├── mls-input/          ← MLS-side input/extraction procedures
+│   └── Aframe Swagger endpoint extraction procedure
 │
 ├── connector/          ← Aframe connector technical reference
 │   ├── Technical reference
-│   └── Tool roadmap
+│   ├── Tool roadmap
+│   └── aframe-api-reference/   ← Aframe API endpoint reference (19 endpoint subdocs + README)
 │
 ├── protocols/          ← Session and workflow protocols
-│   ├── General operations protocol
-│   ├── Buyer-side session protocol
+│   ├── General operations protocol (AAR-TC)
+│   ├── New buyer-side session protocol
+│   ├── New seller-side session protocol
+│   ├── Seller under-contract session protocol
 │   ├── Transaction workflows framework
 │   ├── Gmail-to-Aframe workflow
-│   ├── Cursor handoff protocol
-│   └── Extraction procedure
+│   └── Cursor handoff protocol
 │
 └── project/            ← Project-level tracking and vision
+    ├── Agent profiles
+    ├── Pre-automation notes
     ├── Project vision
-    ├── Session log
-    └── Pre-automation notes
+    ├── Session log (v1, archived)
+    └── Session log v2 (current)
 ```
 
 ---
@@ -77,9 +95,11 @@ docs/
 
 **`docs/cvrmls/`** — anything that describes CVRMLS Matrix itself: field IDs, option values, tab structure, cascade behavior, universal JS variants. Anyone working any CVRMLS listing uses these docs. Future MLS systems follow the same pattern: `docs/rein/`, `docs/bright/`, etc.
 
-**`docs/lennar/`** — anything Lennar-specific: hardcoded statics, community lookup tables, `isLennar` flag behavior, listing protocol tied to Carly/Megan emails. Future builders follow the same pattern: `docs/[builder]/`, referencing the relevant MLS layer.
+**`docs/lennar/`** — anything Lennar-specific: hardcoded statics, community lookup tables, `isLennar` flag behavior, listing protocol tied to Carly/Megan emails. This is the authoring-lineage layer, tracked in this same repo. Now that `docs/operational/lennar/` has stood up, the two docs it explicitly supersedes — `Lennar_Payload_Schema.md` (frozen at v1.5) and `Lennar_New_Listing_Protocol.md` (frozen at v2.9) — are frozen historical reference at their original paths (not moved, not archived elsewhere). `Lennar_Community_Reference_Database.md` is separately superseded by the Airtable Community Reference DB table. `Lennar_Photo_Preprocessing.md` is not superseded by anything and remains active. Future builders follow the same pattern: `docs/[builder]/`, referencing the relevant MLS layer.
 
-**`docs/operational/`** — Operational doc sets for downstream Claude projects that execute (rather than author) builder-specific workflows. Each subdirectory (`docs/operational/lennar/`, future `docs/operational/<builder>/`) contains a scoped, self-contained set of docs derived from the corresponding authoring folder. Operational sets are the current edit target once created; corresponding authoring folders (e.g. `docs/lennar/`) freeze as historical reference after their operational counterpart stands up.
+**`docs/operational/`** — Operational doc sets for downstream Claude projects that execute (rather than author) builder-specific workflows. Each subdirectory (`docs/operational/lennar/`, future `docs/operational/<builder>/`) contains a scoped, self-contained set of docs derived from the corresponding authoring folder. Operational sets are the current edit target once created; corresponding authoring folders (e.g. `docs/lennar/`) freeze as historical reference after their operational counterpart stands up. **All five `docs/operational/lennar/` docs are tracked in this git repo** — they are not maintained externally. `Issue_Report_Resolution_Log.md` (referenced elsewhere in the AAR-TC Lennar Operational Project) does not exist anywhere in this repo, tracked or untracked, as of this update — confirm with the operational project owner whether it lives outside git or hasn't been created yet.
+
+**`docs/mls-input/`** — MLS-side input/extraction procedures not specific to any one MLS or builder (currently: the Aframe Swagger endpoint extraction procedure).
 
 **`bookmarklets/`** — deployment artifacts generated from the source files in `docs/cvrmls/`. Universal tabs have generic names; builder-specific launchers are named explicitly.
 
