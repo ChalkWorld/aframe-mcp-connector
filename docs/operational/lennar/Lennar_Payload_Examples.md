@@ -77,7 +77,7 @@ Illustrates: taxid path omits (street fields, pid, acres, tax_year, legal); Addl
     "golf_frontage_yn":   "0",
     "water":              ["Input_676_PW"],
     "sewer":              ["Input_670_PBLCSR"],
-    "parking":            ["Input_519_02"],
+    "parking":            [],
     "exterior":           ["Input_570_03"],
     "interior":           ["Input_568_11"],
     "garage_yn":          "1",
@@ -321,6 +321,7 @@ Illustrates: new path includes street fields, pid, tax_year, legal; Addl HOA = N
 | Version | Date | Notes |
 |---|---|---|
 | 1.0 | 2026-08-19 | Initial version. Examples extracted from `docs/lennar/Lennar_Payload_Schema.md` v1.5 §8 during the operational doc set standup. |
+| 1.1 | 2026-08-27 | Removed misleading `Input_519_02` (Carport) from `features_a.parking` in the Harpers Mill TH `taxid` example. The value was an illustrative pick, not a rule; no Lennar TH actually uses Carport. Its presence caused the Session 026 confusion documented in `Lennar_Session_Findings_Brief_2026-08-26.md` Finding 2. Companion to `Lennar_Payload_Schema.md` v1.2 which documents the Lennar default `[]` for this field. |
 
 ---
 
