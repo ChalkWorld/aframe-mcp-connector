@@ -1,8 +1,8 @@
 ---
 title: Lennar Payload Schema
 document_id: LENNAR-OPS-SCHEMA-001
-version: 1.1
-version_date: 2026-08-24
+version: 1.2
+version_date: 2026-08-27
 status: Active
 author: Andrew Rich, AAR-TC Transaction Services
 contributor: Claude (Anthropic) — AI-assisted authoring
@@ -442,7 +442,7 @@ These come from the intake and are payload-driven. Listed here to make the A/B p
 | Field | Payload key | Codes |
 |---|---|---|
 | Style | `features_a.style` | See the stored value list below; Single Family is a closed 3-option set per §5.4.1 |
-| Parking | `features_a.parking` | Checkbox array — see the code resolution note above |
+| Parking | `features_a.parking` | For Lennar, default `[]` — Form 17 does not source this field, and garage-related parking already flows through `garage_yn` / `num_cars` / `garage`. If an intake ever explicitly specifies a parking type not documented anywhere in the doc set, follow the code resolution note above. |
 | Exterior | `features_a.exterior` | Checkbox array — Form 17 crosswalk in §5.4.1 |
 | Interior | `features_a.interior` | Checkbox array — Form 17 crosswalk in §5.4.1 |
 | Flooring | `features_a.flooring` | Payload-driven — default `["Input_73_17"]` (Vinyl - Plank/Tile/Stone) when unspecified; add `"Input_73_08"` (Tile) alongside when Tile is selected, e.g. bathrooms |
@@ -451,8 +451,8 @@ These come from the intake and are payload-driven. Listed here to make the A/B p
 | Garage Y/N | `features_a.garage_yn` | Select — `"1"` or `"0"` (drives the §5.3 conditional resolution) |
 | Basement Y/N | `features_a.basement_yn` | Select — `"1"` or `"0"` (drives the §5.3 conditional resolution) |
 | Num Fp | `features_a.num_fp` | Select — `"0"` default |
-| Fireplace | `features_a.fireplace` | Checkbox array — only written when `num_fp` > 0; see the code resolution note above |
-| Porch | `features_b.porch` | Checkbox array — see the code resolution note above |
+| Fireplace | `features_a.fireplace` | Only written when `num_fp` > 0. For Lennar, default `[]` — Form 17 does not source this field, and Lennar new construction typically has `num_fp: "0"`. If a listing ever comes with a fireplace, follow the code resolution note above to source the code. |
+| Porch | `features_b.porch` | For Lennar, default `[]` — Form 17 does not source this field. Covered porches flag through Exterior (`Input_570_44` — Porch) rather than this detail group. If a Lennar listing ever needs porch-type detail beyond the Exterior flag, follow the code resolution note above. |
 | Appl/Equip | `features_b.appl_equip` | See the stored value list below; Form 17 crosswalk in §5.4.1 |
 | Unit Placement | `features_b.unit_placement` | Checkbox array — `[]` for SF listings; TH mapping in §5.4.1 |
 
@@ -628,6 +628,7 @@ Checkbox array fields carry stored option values as JSON arrays. The array's ele
 |---|---|---|
 | 1.0 | 2026-08-19 | Initial operational version. Derived from `docs/lennar/Lennar_Payload_Schema.md` v1.5 (frozen as historical reference). Payload examples split to `Lennar_Payload_Examples.md`. |
 | 1.1 | 2026-08-24 | Two related fixes from the same 6122 Hull Street Road (Creekside Run TH) intake, both traced to the Airtable Community Reference DB holding display text where Matrix needed an exact stored value. §4.1 `listing.county_city`: documents the `County` column's stored-value requirement after Airtable's `"Richmond City"` (display text) silently broke the Listing Info cascade instead of `"Richmond"` (stored value) — no path mismatch, as first suspected. §5.2 Heating/Heat Fuel: replaces the unsourced "write the matching code" instruction with the new `Heating Codes`/`Heating Fuel Codes` Airtable columns, after a session copied the wrong pair of codes from an unrelated example and wrote them to a live listing. |
+| 1.2 | 2026-08-27 | §5.4 gets explicit Lennar defaults for Parking, Fireplace, and Porch — all three now lead with `default []` (Form 17 does not source these fields) and keep the code resolution note pointer as an edge-case fallback. Resolves Finding 2 from `Lennar_Session_Findings_Brief_2026-08-26.md`: the Session 026 payload for 6128 Hull Street Rd correctly left `parking: []` and flagged, following the "don't guess" rule; this change replaces the escalation with a concrete default so future sessions never need to escalate on these three fields. Companion fix to the misleading `Input_519_02` value in `Lennar_Payload_Examples.md` §8.1 ships as a separate handoff. |
 
 ---
 
