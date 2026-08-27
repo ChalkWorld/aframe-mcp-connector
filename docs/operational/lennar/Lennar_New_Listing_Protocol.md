@@ -1,8 +1,8 @@
 ---
 title: Lennar New Listing Protocol
 document_id: LENNAR-OPS-PROTOCOL-002
-version: 1.0
-version_date: 2026-08-19
+version: 1.1
+version_date: 2026-08-27
 status: Active
 author: Andrew Rich, AAR-TC Transaction Services
 contributor: Claude (Anthropic) — AI-assisted authoring
@@ -46,7 +46,7 @@ Keep it to a quick nudge, not a full review. If multiple addresses are reported 
 | **Airtable — Community Reference DB table** | Source of truth for all per-community data: MLS Area, schools, HOA fees, management firm, fee includes, heating, heat fuel, pool, community amenities | Base `app78fMUwDNBHUZ6r`, table `tbleMbM1WgY8Si2t7` |
 | Google Sheet — main tab | Authoritative for Status, Current Price, Closing Date, and Price Change Date only. **Read-only for sessions** — Andrew makes every write himself. Shared externally with the Lennar sales team | Sheet ID `1fTapWU64r78Fyd8J-RM1Xh0z-fKo2y-wF9o6rtNJ5ME` |
 | Cognito Forms | Primary intake source | Form `17`, internal name `LennarNewListingIntake` |
-| Gmail | Intake and lifecycle emails; label tracks listing state | Label convention `Lennar/[Address]` — street number and street name only. Under contract: `Lennar/@Under Contract/[Address]`. Closed: `Lennar/Closed/[Address]` |
+| Gmail | Intake and lifecycle emails; four fixed status labels track listing state, functional labels track cross-cutting topics | See **Gmail Labels** subsection below for the fixed label IDs, the functional labels, and the session/Andrew discovery contract |
 | Google Drive — Lennar root | Root folder for Lennar work | Folder ID `1hIN1WhrARVrQ7Y4KCh3hlCrI0Q-JS8az` |
 | Google Drive — Properties folder | One subfolder per address; holds the tax record, the signed addendum, and the MLS listing PDF | Folder ID `1EypC5Ep7VRMqwWcoMvUb5juVvJKAEi7B` |
 | PandaDoc | Listing addendum sending — **paid tier currently inactive**, addenda go out manually via TransactionDesk (Step 9) | Template ID `9DpcJ2wbwTkXvLh59aTPTn` |
@@ -59,6 +59,44 @@ Keep it to a quick nudge, not a full review. If multiple addresses are reported 
 - There is no field-creation tool on the Airtable connector. Andrew adds new columns in the Airtable UI; sessions populate them afterward with normal record writes.
 - To write a `singleSelect`/`multipleSelects` value that isn't in the field's choice list yet, pass `typecast: true` on the create/update call. `Airtable:update_field`'s `options` param does not accept `choices`.
 - Google Sheets reads: use `Zapier:execute_zapier_read_action` with action `_zap_raw_request` and tool `google_sheets_make_api_get_request` against `https://sheets.googleapis.com/v4/spreadsheets/{id}/values/'{Sheet Name}'!A1:Z###`. Zapier's abstracted `get_data_range` / `get_many_rows` actions have returned silently empty results on a populated worksheet.
+- Cognito intake pull: the Submitted view (`17-3`) is already sorted `Entry.Number` descending. Use `get_entries_in_view` with `take=N` (N = number of new intakes being processed) rather than pulling the entire view. `get_entry` is only useful when the entry ID is already known — the notification email carries no recoverable entry number, so `take=N` is the correct intake-time pattern.
+- Gmail `label:` search takes the **quoted display name**, not the label ID, despite the tool description saying otherwise. `label:"Lennar/Active"` returns matches; `label:Label_8433040405042272049` returns silent empty results. Always use the display name.
+
+### Gmail Labels
+
+**Four fixed status labels — hardcoded IDs, never resolved at runtime.**
+
+| Label | ID | Applied when |
+|---|---|---|
+| `Lennar/New Listings` | `Label_8162379569998573615` | Intake beat — new listing in inbox awaiting MLS activation. Standout blue (`#1e53b8`) so it's visible in the inbox at a glance |
+| `Lennar/Active` | `Label_8433040405042272049` | Andrew reports the listing has gone Active in MLS |
+| `Lennar/Pending` | `Label_1922509537569469064` | Under Contract lifecycle beat |
+| `Lennar/Closed` | `Label_7877946473296994946` | Closed lifecycle beat. Withdrawn from MLS also folds here — no separate Withdrawn label |
+
+Sessions apply and remove these using `Gmail:label_thread` / `Gmail:unlabel_thread` against the IDs above. Never call `Gmail:list_labels` for Lennar work — the IDs are authoritative here.
+
+**Five functional labels — Andrew-maintained, session leaves alone unless explicitly noted.**
+
+| Label | Purpose | Session touches? |
+|---|---|---|
+| `Lennar/My Invoices to Gary` | QBO invoice tracking, Andrew's payment records | No |
+| `Lennar/Notices` | CVRMLS violation notices | Only if a notice arrives on a specific listing thread |
+| `Lennar/Open House` | Dormant. Reserved for future partner-agent OH coordination via PHRE | No |
+| `Lennar/Price Adjustments` | NHC price-change emails | Yes — applied by session on any price-adjustment lifecycle beat, in addition to the status label |
+| `Lennar/Reverse Prospecting` | Dormant. Reserved for future RP process communications with Chris MacLaird | No |
+
+The parent `Lennar` label is a catch-all for anything that doesn't fit a specific bucket — Andrew's tree only.
+
+**`Lennar Archive` — terminal home for pre-existing per-address labels.**
+
+Prior to the 2026-08-27 redesign, every listing carried a `Lennar/[Address]` label that moved between `@Under Contract/[Address]` and `Closed/[Address]` sub-trees over its lifecycle. Those labels have all been swept into `Lennar Archive` (subdivided into `Active and Pending`, `Closed`, and `Keeton Transfer` for historical continuity). Sessions never touch this tree. Do not attempt to reconstruct history from it and do not resurrect an address label — the four-label scheme above is complete.
+
+**Session / Andrew Gmail discovery contract.**
+
+- Session's discovery scope for new email work is `in:inbox` filtered to Lennar (via label or address text), and only the inbox. The archive is out of scope.
+- The `Gmail Threads` field on the Airtable Lennar Listings row is the durable source of truth for "captured." Session appends new threads there; if a thread ID is already logged, the session leaves it alone.
+- The session does not archive threads. Andrew keeps his inbox tidy (target ~20 threads across all AAR-TC business) and archives at his own discretion, based on his personal follow-up state — not based on whether a session has processed the thread.
+- Any labels Andrew applies before a session runs are for his own visual organization; they do not signal "processed" to the session.
 
 ---
 
@@ -74,7 +112,27 @@ Form 17 field-name prefixes: `Intake_*`, `PropertyBasics_*`, `BedsBathsLevels_*`
 
 **No single funnel contact.** Reps submit their own listings; there is no manager or coordinator the intake routes through. Lennar calls these reps NHCs (New Home Consultants) — expect the abbreviation in signatures and threads. The POC recorded in Airtable is the rep who actually submitted the listing, confirmed from the intake itself, never a defaulted name.
 
-Rep roster by community: *(stub — reps shuffle. Confirm current contacts at the start of any session involving community-specific email.)*
+Rep roster by community (as of 2026-08-27 — reps shuffle; Chris MacLaird may reshuffle NHC assignments as he settles into the new role):
+
+| Role | Name | Email | Communities |
+|---|---|---|---|
+| Director of Sales, Mid-Atlantic Division | Megan Cook | `megan.cook@lennar.com` | Regional oversight; addendum owner-signer of record for template purposes |
+| Area Sales Manager, Richmond/Williamsburg | Chris MacLaird | `christopher.maclaird@lennar.com` | Regional escalation contact; addendum recipient going forward (replaces Carly Evans) |
+| NHC | Izaiah Clark | `izaiah.clark@lennar.com` | Harpers Mill SF & TH, Creekside Run TH, Wynwood at Fox Creek |
+| NHC | Lucas Clark | `sel9ct8QV6PNpgxg0` — see Airtable POC field | (confirm current community assignment) |
+| NHC | Michelle Eke | `michelle.eke@lennar.com` | Harpers Mill Towns & Singles, Wynwood at Fox Creek |
+| NHC | Mercedes Creech | `mercedes.creech@lennar.com` | Likely Harpers Mill — pending confirmation from Chris MacLaird |
+
+The POC recorded in Airtable is always the rep who actually submitted the intake, confirmed from the intake itself. Carly Evans is no longer with Lennar; treat any lingering "Carly Evans" POC selection on legacy records as historical. Stefanie Nayder has also departed.
+
+**Marketing contacts (not NHCs, not POC-eligible — for photo and marketing asset requests):**
+
+| Role | Name | Email | Phone |
+|---|---|---|---|
+| Regional Marketing Field Coordinator | Dianna Sherrod | `dianna.sherrod@lennar.com` | 301-325-4941 |
+| Regional Sr Integrated Marketing Specialist | Danielle Kefauver | `danielle.kefauver@lennar.com` | 240-459-0631 |
+
+Dianna is the first point of contact for marketing coordination; she routes to the right specialist. Danielle owns photo assets, sizing, and virtual staging — she's the go-to when photos or resizing are actually needed.
 
 ---
 
@@ -146,7 +204,7 @@ Cross-check against the Airtable Lennar Listings table and confirm the listing i
 
 ### 3. Apply the Gmail Label
 
-Check whether `Lennar/[Address]` already exists — an existing Gmail filter often applies it before the session starts. If it doesn't exist, create it directly (`Gmail:create_label`) rather than flagging it as a manual task for Andrew. Apply it to the intake email and any related threads either way. This step is session-owned end to end.
+Apply `Lennar/New Listings` (`Label_8162379569998573615`) to the intake thread and any related threads already visible (rep forwards, addendum, photo requests). Use `Gmail:label_thread` with the ID above — no lookup, no `list_labels` call, no per-address label creation. The four-label status scheme is documented in Systems & Reference → Gmail Labels; do not deviate from it. This step is session-owned end to end.
 
 ### 4. Parse & Present Listing Data
 
@@ -207,7 +265,8 @@ Add the listing to the Lennar Listings table:
 - Address, Community, List Price (as `Current Price`), Status = Input in Progress
 - Intake Date = today
 - Addendum Status = Pending
-- Gmail Thread ID
+- Gmail Thread ID — the intake thread only, unchanged historical meaning
+- Gmail Threads — leave blank at intake; ledger begins with the first post-intake thread (addendum, photos, price change, etc.). Format: `YYYY-MM-DD | thread_id | brief note`, one entry per line, oldest-first. Cross-reference shared threads with `(also [address])` when a single thread covers more than one listing. See the Lifecycle Updates section for when entries get appended
 - POC = the rep who actually submitted the listing, confirmed from the intake
 - MLS Input Stage = Not Started
 - Photo Status and Photo Source, if known from the intake notes
@@ -267,27 +326,42 @@ Rep emails announcing lifecycle events are Resume Beats — see `Lennar_Project_
 
 Price adjustments and status changes must be entered in Matrix by Andrew himself. Recording them in Airtable and surfacing them for the Google Sheet is the session's half of the work, not the whole of it.
 
+**Delta-sync first.** Any session that opens on a Lennar file — lifecycle beat or otherwise — reconciles the Google Sheet main tab against Airtable as an early move. Weekly Thursday meetings and ad-hoc rep emails between meetings both push price/status/close-date changes to the Sheet without necessarily generating a session-triggering email, so the Sheet may be ahead of Airtable by the time a session runs. Diff Status, Current Price, Closing Date, and Price Change Date against the Sheet by MLS# and apply any deltas to the Airtable row before acting on whatever email brought the session in. See Step 6 for the delta-sync procedure; it applies at every lifecycle beat, not only at new-listing intake.
+
+**Gmail Threads on every beat.** Every lifecycle beat also appends the triggering thread to the `Gmail Threads` field on the Airtable row, per the format documented in Step 7. If the same thread covers multiple listings (typical for combined addenda, multi-address price-change emails, and sales announcements), append it to every affected row with the `(also [address])` cross-reference.
+
 ### Price Adjustment
 
-1. Read the email; confirm address and new price.
+1. Read the email; confirm address(es) and new price.
 2. Surface the proposed main-tab update to Andrew — Current Price plus today's date in Price Change Date. Andrew applies it.
-3. Update Current Price and Price Change Date in Airtable.
-4. Flag the Matrix update in the handoff — Andrew enters it.
-5. Apply the Gmail label if not already applied.
+3. Update Current Price and Last Price Change Date in Airtable (`fld43ClxbfPcUQ9tz` and `fldWFGNpGXnUkmeko` respectively; singleLineText holding `$###,###` and `M/D/YY`).
+4. Append the price-change thread to `Gmail Threads` on every affected Airtable row.
+5. Apply `Lennar/Price Adjustments` (`Label_8071778675681803800`) to the thread, in addition to whichever status label the file currently carries. Do not change the status label — a price change does not itself change lifecycle state.
+6. Flag the Matrix update in the handoff — Andrew enters it.
 
 ### Under Contract
 
 1. Surface the proposed main-tab status change to **Pending**, plus the closing date if known. Andrew applies it.
 2. Update Status and Closing Date in Airtable.
-3. Update the Gmail label to `Lennar/@Under Contract/[Address]`.
-4. Flag the Matrix status change in the handoff — Andrew enters it.
+3. Append the Under Contract thread to `Gmail Threads` on the Airtable row.
+4. Move the Gmail label on the thread: remove `Lennar/Active` (`Label_8433040405042272049`) and add `Lennar/Pending` (`Label_1922509537569469064`).
+5. Flag the Matrix status change in the handoff — Andrew enters it.
 
 ### Closed
 
 1. Surface the proposed main-tab status change to **Closed**, plus the confirmed closing date. Andrew applies it.
 2. Update Status and Closing Date in Airtable.
-3. Update the Gmail label to `Lennar/Closed/[Address]`.
-4. Flag the Matrix status change in the handoff — Andrew enters it.
+3. Append the closing thread (or the settlement notification) to `Gmail Threads` on the Airtable row.
+4. Move the Gmail label on the thread: remove whichever of `Lennar/Active` or `Lennar/Pending` currently applies, and add `Lennar/Closed` (`Label_7877946473296994946`).
+5. Flag the Matrix status change in the handoff — Andrew enters it.
+
+### Withdrawn from MLS
+
+A withdrawn listing is handled the same as Closed — same Gmail label transition to `Lennar/Closed`, same Airtable Status update (set to `Closed`; there is no separate Withdrawn status option), same delta-sync-first behavior. Note in Session Notes on the row that the outcome was Withdrawn rather than sold, since the Sheet distinguishes them.
+
+### Activation (from Input Done → Active in MLS)
+
+When Andrew reports a listing has gone Active — see the Standing Rules activation double-check — apply the Gmail label transition alongside the manual-task nudge: remove `Lennar/New Listings` (`Label_8162379569998573615`) from the intake thread and add `Lennar/Active` (`Label_8433040405042272049`). Append the activation-triggering communication (or Andrew's own "it's active" message) to `Gmail Threads` on the Airtable row.
 
 ---
 
@@ -306,6 +380,7 @@ Photo upload order in MLS: exterior first, bathroom photos to the back.
 | Version | Date | Notes |
 |---|---|---|
 | 1.0 | 2026-08-19 | Initial operational version. Derived from `docs/lennar/Lennar_New_Listing_Protocol.md` v2.9 (frozen as historical reference). Rewritten for operational scope per Session 015 design. |
+| 1.1 | 2026-08-27 | Email workflow overhaul: retired per-address Gmail labels in favor of a fixed four-label status scheme (`Lennar/New Listings`, `Lennar/Active`, `Lennar/Pending`, `Lennar/Closed`) with hardcoded IDs; documented the five functional labels; documented `Lennar Archive` as terminal home for pre-existing address labels; documented the session/Andrew Gmail discovery contract (session scans inbox only, Andrew archives at his discretion). Added the `Gmail Threads` ledger field to Step 7 and to every lifecycle beat. Rewrote the Lifecycle Updates section to use status-label transitions instead of address-label moves; added the Withdrawn from MLS and Activation subsections; added the "delta-sync first" standing behavior for lifecycle beats to reflect that the Google Sheet may be ahead of Airtable via Thursday-meeting or ad-hoc updates. Replaced the rep roster stub with the confirmed 2026-08-27 roster: Chris MacLaird as new Area Sales Manager, Michelle Eke and Mercedes Creech as NHCs, Stefanie Nayder removed, Megan Cook title confirmed as Director of Sales Mid-Atlantic Division. Added marketing contacts (Dianna Sherrod, Danielle Kefauver). Added Cognito `take=N` intake pattern and the Gmail `label:` display-name-not-ID rule to Connector notes. |
 
 ---
 
