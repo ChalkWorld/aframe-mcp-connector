@@ -988,6 +988,95 @@ None. Session closes with clear next actions in the operational thread (Andrew r
 
 ---
 
+## Session 017 — Lennar Email/Labels Overhaul + Gmail Threads Ledger + Doc Refresh
+**Date:** August 27, 2026
+
+### Focus
+Redesign the Gmail label and thread-tracking strategy for the Lennar Operational Project after a recent ops-session brief documented the cost of the existing per-address labeling scheme against a mailbox carrying 665 labels with no batch-modify tool. Design the new scheme, prove it end-to-end on one live listing, sync the operational protocol and payload docs to the new state, and roll in a personnel refresh from Andrew's weekly Thursday Lennar meeting held earlier the same day.
+
+### What Was Accomplished
+
+**Design — Lennar email/labels overhaul (Findings 4 and 5 from the ops brief, resolved this session):**
+- Four fixed status labels replace per-address labeling: `Lennar/New Listings` (`Label_8162379569998573615`), `Lennar/Active` (`Label_8433040405042272049`), `Lennar/Pending` (`Label_1922509537569469064`), `Lennar/Closed` (`Label_7877946473296994946`). IDs hardcoded in the operational Protocol so sessions never call `list_labels`.
+- Five functional labels documented and scope-bounded (`My Invoices to Gary`, `Notices`, `Open House`, `Price Adjustments`, `Reverse Prospecting`). Session touches `Price Adjustments` only during Price Adjustment beats; Andrew maintains the rest.
+- `Lennar Archive` accepted as terminal home for ~91 pre-existing per-address labels Andrew swept out via Gmail UI before this session began. Sessions never touch this tree.
+- Withdrawn from MLS folds into Closed (same Gmail label, same Airtable Status). Session Notes documents the actual outcome.
+- New `Gmail Threads` field on the Airtable Lennar Listings table (Andrew created in UI as `fldDeQrtsbcLndcRn`, multilineText). Ledger format: `YYYY-MM-DD | thread_id | brief note`, oldest-first, `(also [address])` cross-references for shared threads. Non-overlapping with existing `Gmail Thread ID` (which continues to hold the intake thread only, unchanged historical meaning).
+- Session/Andrew Gmail discovery contract: session scans `in:inbox` filtered to Lennar as its entire discovery scope; the `Gmail Threads` field is source of truth for "captured"; session never archives; Andrew archives at his own discretion based on personal follow-up state, not "processed by session" state.
+- Delta-sync-first standing behavior added to every lifecycle beat (previously new-intake-only). Rationale: the Thursday-11am Lennar operational meeting and ad-hoc rep emails between meetings both push price/status/close-date changes to the Google Sheet without a session-triggering email, so a session may open on a Sheet that's ahead of Airtable. Delta-sync early.
+
+**Live implementation and end-to-end proof on one listing:**
+- 6128 Hull Street Rd (`rec6ehG55dE6tWDQx`) — Airtable: Current Price → $399,990 (was $390,990); Last Price Change Date → 8/27/26; `Gmail Threads` populated with the addendum thread. Gmail: `Lennar/Active` and `Lennar/Price Adjustments` labels applied to the intake thread using hardcoded IDs — no `list_labels` call.
+- 6122 Hull Street Rd (`recxIg2z3Skfq5q3a`) — `Gmail Threads` populated with three entries: photos-request thread to Marketing (Aug 25 → 27), Authentisign addendum (Aug 26, cross-referenced as `(also 6128 Hull)`), and Izaiah's direct-photos thread (Aug 27). Confirmed the shared-thread cross-reference convention works cleanly on both records.
+- 15912 Greenhart Dr and 8748 Whitman Dr — settled per Michelle Eke's Aug 26 emails; MLS and Google Sheet updated by Andrew directly. Intentionally not added to Airtable — both closed without ever being mirrored, and per protocol the Sheet remains authoritative. Reasoning documented so a future session doesn't try to backfill.
+
+**Personnel refresh from Thursday meeting (protocol roster stub replaced with confirmed 2026-08-27 roster):**
+- Chris MacLaird — new Area Sales Manager, Richmond/Williamsburg hub. Fills Carly Evans's old position. Addendum signatory going forward (Andrew updating TransactionDesk form on his side). Email `christopher.maclaird@lennar.com`.
+- Megan Cook title confirmed: Director of Sales, Mid-Atlantic Division. Higher than the ASM role Chris fills; not being replaced by Chris.
+- Michelle Eke and Mercedes Creech confirmed as active NHCs. Stefanie Nayder has departed.
+- Marketing contacts captured for the first time: Dianna Sherrod (Regional Marketing Field Coordinator, first-line for marketing coordination) and Danielle Kefauver (Regional Sr Integrated Marketing Specialist, owns photo assets and resizing).
+
+### Decisions Made
+- **Four-label Lennar Gmail scheme with hardcoded IDs.** Sessions transition labels via `label_thread`/`unlabel_thread` against known IDs; never call `list_labels`.
+- **`Gmail Threads` ledger on Airtable is the durable capture record.** Session appends new threads; Andrew's inbox state (labeled/unlabeled/archived) does not signal "processed" to a session.
+- **Session/Andrew Gmail discovery contract locked.** Session-scans-inbox-only; Andrew-archives-on-personal-follow-up. Generalizes to all future builder workflows through Gmail.
+- **Withdrawn from MLS folds into Closed.** No separate label, no separate Airtable Status option.
+- **Delta-sync first behavior extended to all lifecycle beats.** Any Lennar beat (Thursday-onward especially) opens with a delta-sync of the Sheet against Airtable before acting on whatever email brought the session in.
+- **Parking, Fireplace, and Porch default to `[]` for Lennar.** Form 17 does not source these three fields; existing code resolution note stays as edge-case fallback. Resolves the ambiguity Session 026 of the operational project flagged on 6128 Hull's intake payload.
+- **Standing rule for handoff-authoring sessions: consult `REPO_STRUCTURE.md` for repo-relative paths before authoring Find/Replace targets.** Added mid-session after Cursor rejected two handoffs pointed at `docs/lennar/` (frozen authoring source) when they should have been pointed at `docs/operational/lennar/` (current edit target). A `supersedes:` reference in frontmatter is a pointer to a related file, never the location of the file being edited. Belongs in `CURSOR-HANDOFF-PROTOCOL-001` on a future pass.
+- **NHC roster should migrate out of the operational Protocol doc into a new Airtable table.** Deferred to next session; too much design (schema, join model to POC single-select, generalization to future builders) to bolt on late in this one.
+
+### Documents Created / Updated
+
+| Document | ID | Version | Change Summary |
+|---|---|---|---|
+| Lennar New Listing Protocol (operational) | LENNAR-OPS-PROTOCOL-002 | 1.0 → 1.1 | Email overhaul + rep roster refresh + delta-sync-first + Gmail discovery contract. Retired per-address label steps; new four-label status scheme with hardcoded IDs; new Gmail Labels subsection documenting the status labels, functional labels, `Lennar Archive`, and session/Andrew discovery contract; `Gmail Threads` ledger added to Step 7 and to every lifecycle beat; Lifecycle Updates section rewritten with new Withdrawn and Activation subsections; rep roster stub replaced with confirmed 2026-08-27 roster; marketing contacts added; Cognito `take=N` intake pattern and Gmail `label:` display-name-not-ID rule added to Connector notes. |
+| Lennar Payload Schema (operational) | LENNAR-OPS-SCHEMA-001 | 1.1 → 1.2 | §5.4 explicit Lennar defaults for Parking, Fireplace, Porch (`default []` — Form 17 does not source these fields); code resolution note kept as edge-case fallback. Resolves ops brief Finding 2. |
+| Lennar Payload Examples (operational) | LENNAR-OPS-EXAMPLES-001 | (unchanged/next) | Removed misleading `Input_519_02` (Carport) from `features_a.parking` in the Harpers Mill TH taxid example — companion to the Schema fix above. |
+| Airtable — Lennar Listings table | — | — | New `Gmail Threads` field added by Andrew in UI (`fldDeQrtsbcLndcRn`, multilineText). Populated on 6128 Hull Street Rd and 6122 Hull Street Rd this session as end-to-end proof. |
+| Airtable — Lennar Listings records | — | — | 6128 Hull: Current Price and Last Price Change Date updated, Gmail Threads populated. 6122 Hull: Gmail Threads populated. |
+| Gmail (labels) | — | — | Four Lennar status labels created in UI by Andrew (New Listings recycled from a pre-existing empty label, with a standout blue `#1e53b8` color; Active, Pending, Closed created fresh). Pre-existing per-address labels swept into `Lennar Archive` before this session began. |
+
+### Cursor Handoffs Produced This Session
+
+| Handoff | Target File | Purpose |
+|---|---|---|
+| `HANDOFF-2026-08-27-lennar-new-listing-protocol.md` | `docs/operational/lennar/Lennar_New_Listing_Protocol.md` | v1.0 → v1.1 email overhaul + rep roster + delta-sync + Gmail discovery contract |
+| `HANDOFF-2026-08-27-lennar-payload-schema.md` | `docs/operational/lennar/Lennar_Payload_Schema.md` | v1.1 → v1.2 explicit Lennar defaults for Parking/Fireplace/Porch (Finding 2 resolution) |
+| `HANDOFF-2026-08-27-lennar-payload-examples.md` | `docs/operational/lennar/Lennar_Payload_Examples.md` | Carport removal in Harpers Mill TH taxid example (Finding 2 resolution) |
+| `HANDOFF-2026-08-27-session-log-v2.md` | `docs/project/Project_Session_Log_v2.md` | This entry |
+
+### Discrepancies Surfaced (Not Fixed This Session)
+- **Lucas Clark email/community placeholder in the new rep roster.** Change 4 of the Protocol handoff carries a placeholder for Lucas's email since it wasn't recoverable from any of the threads inspected this session. If he's still active, needs a follow-up backfill.
+- **Currency-mirror drift in Airtable Lennar Listings.** `fldT6CrqfiJQ6SE4F` (currency Current Price) and `fldmfUZaDOtgWMYa9` (currency, likely CC assistance / closing costs) populate on some records and not others. Decide: protocol maintains going forward, or treat as legacy fields.
+- **`Input_570_03` (Boat Lift) in the Harpers Mill TH taxid example's `features_a.exterior`.** Same class of misleading illustrative placeholder as the Carport value the Examples handoff fixes this session. Not scoped in — flagged for a follow-up sweep of the example against Form 17 crosswalk reality.
+- **Two path-related handoff rejections mid-session** — payload Schema and Examples handoffs first pointed at `docs/lennar/` (frozen authoring source) instead of `docs/operational/lennar/`. Root cause: I inferred paths from the operational doc's `supersedes:` metadata rather than consulting `REPO_STRUCTURE.md`. Corrected in-session; standing rule added under Decisions Made.
+- **Project knowledge sync drift** — second time this session where project-knowledge state lagged behind the repo state (`Lennar_Payload_Schema.md` was three days out of date). Same underlying pattern as flagged in previous log entries. No fix; ongoing.
+
+### Open Verification Items (Carried Forward)
+- Chris MacLaird's addendum signing scope — whether he signs for all Lennar Andrew handles, or only Richmond/Williamsburg. Andrew asked Megan mid-session; awaiting confirmation.
+- Mercedes Creech's confirmed community assignment — currently "likely Harpers Mill, pending confirmation from Chris."
+- Lucas Clark — see Discrepancies above.
+- Whether NHC roster migration to Airtable should also absorb the Marketing contacts (Dianna, Danielle) or keep them separate. Design question deferred to next session.
+- 6122 Hull Street Rd photo processing — Danielle's Box link and Izaiah's direct PNGs are in the inbox. Andrew handles MLS upload + Drive save when ready; not urgent, not session work.
+- Findings brief (`Lennar_Session_Findings_Brief_2026-08-26.md`) resolution artifact — brief was uploaded to this session as a one-time artifact; whether it lives in the ops project knowledge or just as an artifact wasn't determined. Decide next session whether a resolution doc is warranted.
+
+### Key References
+- Airtable Lennar Listings: base `app78fMUwDNBHUZ6r`, table `tbllTArjNE464zFGi`, new `Gmail Threads` field `fldDeQrtsbcLndcRn`
+- Gmail label IDs (hardcoded in Protocol v1.1): New Listings `Label_8162379569998573615` · Active `Label_8433040405042272049` · Pending `Label_1922509537569469064` · Closed `Label_7877946473296994946`
+- Live records exercising the new scheme: 6128 Hull Street Rd (`rec6ehG55dE6tWDQx`), 6122 Hull Street Rd (`recxIg2z3Skfq5q3a`)
+- Live threads referenced: intake `1a02f7c239cf20fa` (shared), Authentisign addendum `1a03e2bb5a33549a` (shared), 6122 photos hunt `1a038f3b599acc9f`, 6122 direct photos from Izaiah `1a043c48f99e6ee9`
+- Source ops brief: `Lennar_Session_Findings_Brief_2026-08-26.md`
+
+### Session Handoff Produced
+`SESSION-HANDOFF-2026-08-27-nhc-roster-airtable-migration.md` — bridge doc for the next session. Primary task: design and build the NHC Personnel Roster Airtable table, populate from the roster now inline in Protocol v1.1, and cut the Protocol over to point at the table. Plus smaller carryforward items (findings brief resolution, currency-mirror drift decision, AAR-TC-level pattern generalizations, remaining ops brief cleanup).
+
+---
+
+*Next session: NHC Personnel Roster → new Airtable table design and cutover. Includes decisions on join model to Lennar Listings POC field, whether Marketing contacts share the table, and generalization to future builders. See `SESSION-HANDOFF-2026-08-27-nhc-roster-airtable-migration.md` for full scope, open questions, and smaller carryforward items.*
+
+---
+
 *Log started July 15, 2026. Post-realignment doc architecture in effect. Old log (`docs/project/Project_Session_Log.md`) preserved as pre-realignment archive.*
 
 ---
