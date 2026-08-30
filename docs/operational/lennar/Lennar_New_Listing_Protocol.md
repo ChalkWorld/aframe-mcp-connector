@@ -1,8 +1,8 @@
 ---
 title: Lennar New Listing Protocol
 document_id: LENNAR-OPS-PROTOCOL-002
-version: 1.2
-version_date: 2026-08-28
+version: 1.3
+version_date: 2026-08-30
 status: Active
 author: Andrew Rich, AAR-TC Transaction Services
 contributor: Claude (Anthropic) — AI-assisted authoring
@@ -123,6 +123,18 @@ The POC written to Airtable on a new listing is always the rep who actually subm
 - Look up an NHC at intake — `search_records` on the roster by name to get the record ID for POC assignment.
 - Find active NHCs at a community — filter the roster on `Status = Active AND Communities Assigned contains <community recordId>`. Foundation for the parked Active Listing Email work (`Lennar_Project_Protocol.md` §5.3).
 - Find the current Area Sales Manager for CC on announcements — filter the roster on `Role = Area Sales Manager AND Status = Active`.
+
+**Write patterns.** Per `Lennar_Project_Protocol.md` §4.4, the roster is the one reference table sessions may modify in-band. Common updates:
+
+- **New NHC at intake or in an email signature** — create a roster record with name, email, Role = `New Home Consultant`, Status = `Active`, and community assignments if inferable from the intake or thread. Missing fields stay blank rather than guessed.
+- **Departure signal** — a rep announcing they're leaving, an email bounce, a "no longer with Lennar" mention from another NHC. Update Status to `Departed` and set End Date. Preserve the record; historical POC links depend on it.
+- **Community reassignment** — Chris (ASM) or the affected NHCs announce a shift. Update `Communities Assigned` on the relevant records.
+- **Contact-info backfill** — email or phone appearing in a signature that wasn't previously captured. Update the field.
+- **Typo correction** — fix in-band.
+
+Ambiguity — a name that might or might not be a new NHC, a departure signal that's not clear, a role change that doesn't fit an existing select option — is governed by `Lennar_Project_Protocol.md` §4.1. Surface to Andrew rather than writing when the signal isn't clear.
+
+Not authorized in-band: adding a new Role select option, modifying schema, renaming fields, deleting records. Those go to the authoring project via Issue Report per §4.4.
 
 **Community-naming note.** The Community Reference DB has separate records for Harpers Mill TH and Harpers Mill SF — Andrew's Sheet-side convention for tracking the property-type variants of one physical community. NHCs assigned to "Harpers Mill" link to both records in their `Communities Assigned` field.
 
@@ -383,6 +395,7 @@ Photo upload order in MLS: exterior first, bathroom photos to the back.
 | 1.0 | 2026-08-19 | Initial operational version. Derived from `docs/lennar/Lennar_New_Listing_Protocol.md` v2.9 (frozen as historical reference). Rewritten for operational scope per Session 015 design. |
 | 1.1 | 2026-08-27 | Email workflow overhaul: retired per-address Gmail labels in favor of a fixed four-label status scheme (`Lennar/New Listings`, `Lennar/Active`, `Lennar/Pending`, `Lennar/Closed`) with hardcoded IDs; documented the five functional labels; documented `Lennar Archive` as terminal home for pre-existing address labels; documented the session/Andrew Gmail discovery contract (session scans inbox only, Andrew archives at his discretion). Added the `Gmail Threads` ledger field to Step 7 and to every lifecycle beat. Rewrote the Lifecycle Updates section to use status-label transitions instead of address-label moves; added the Withdrawn from MLS and Activation subsections; added the "delta-sync first" standing behavior for lifecycle beats to reflect that the Google Sheet may be ahead of Airtable via Thursday-meeting or ad-hoc updates. Replaced the rep roster stub with the confirmed 2026-08-27 roster: Chris MacLaird as new Area Sales Manager, Michelle Eke and Mercedes Creech as NHCs, Stefanie Nayder removed, Megan Cook title confirmed as Director of Sales Mid-Atlantic Division. Added marketing contacts (Dianna Sherrod, Danielle Kefauver). Added Cognito `take=N` intake pattern and the Gmail `label:` display-name-not-ID rule to Connector notes. |
 | 1.2 | 2026-08-28 | Rep roster migrated to Airtable table `Lennar Personnel Roster` (base `app78fMUwDNBHUZ6r`, table `tblYI2KodPRjk1dAO`) with 11 initial records — the six people from v1.1 plus Tim Hall (NHC), Dianna Sherrod (Marketing Field Coordinator) and Danielle Kefauver (Marketing Specialist), plus Carly Evans and Stefanie Nayder as Departed records preserved for historical POC reference integrity. Retired the inline rep-roster table from the "How a New Listing Arrives" section; replaced with a pointer to the Airtable table, read patterns for sessions, and a community-naming note (Harpers Mill TH/SF are Sheet-side property-type variants of one physical community). POC field on Lennar Listings migrated from singleSelect (`fldQie6dPBjMO8aqh`, deleted) to linked-record field (`fldL1lmrjcJaOZGIf`) pointing at the roster; the 11 existing POC values re-linked in-place. New `Communities Assigned` linked-record field on the roster ties to Community Reference DB, unlocking the parked Active Listing Email work. |
+| 1.3 | 2026-08-30 | Added a Write patterns subsection to the roster section, positioned between Read patterns and the Community-naming note. Names the roster updates sessions may make in-band (new NHC creation, departure marking, community reassignment, contact-info backfill, typo correction) per the new roster carveout in `Lennar_Project_Protocol.md` §4.4 (v1.1). Explicitly punts ambiguity to §4.1 and role-option additions / schema changes / deletions to Issue Reports. Closes the doc-edit-latency gap the v1.2 migration left implicit — the roster is now writable in-band with named scope. |
 
 ---
 
