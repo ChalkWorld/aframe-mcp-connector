@@ -1,8 +1,8 @@
 ---
 title: Lennar Project Protocol
 document_id: LENNAR-OPS-PROTOCOL-001
-version: 1.0
-version_date: 2026-08-19
+version: 1.1
+version_date: 2026-08-30
 status: Active
 author: Andrew Rich, AAR-TC Transaction Services
 contributor: Claude (Anthropic) — AI-assisted authoring
@@ -200,6 +200,8 @@ This project executes the Lennar workflow. It does not fix, improve, or extend i
 
 When a session encounters a stale field ID, an outdated doc reference, a schema gap, a protocol conflict, an extension bug, or any other indication that the workflow's underlying artifacts need to change — the session flags to Andrew, files an Issue Report, and continues with the work at hand (or pauses if blocked). The session does not attempt to patch the docs, propose schema edits, modify community data, or troubleshoot extension internals.
 
+**Roster carveout.** The `Lennar Personnel Roster` table (base `app78fMUwDNBHUZ6r`, table `tblYI2KodPRjk1dAO`) is the one reference table sessions may modify directly. This is deliberate — the roster was moved out of the Protocol doc specifically to absorb NHC churn without an authoring cycle, and routing every roster change through Issue Reports would recreate the friction that migration removed. Authorized in-band: adding a new NHC discovered in a Form 17 intake or an email signature, flipping Status to `Departed` on a clear departure signal, updating community assignments, backfilling missing contact info, correcting typos. Still Issue Report territory: adding a new Role select option that doesn't exist yet, modifying field structure, renaming the table or fields, deleting records. Update conventions are documented in `Lennar_New_Listing_Protocol.md`.
+
 Fix-and-improve work is the authoring project's responsibility. That separation is what makes both projects trustworthy in their own domain.
 
 ---
@@ -277,6 +279,7 @@ The following exist elsewhere and are not consulted by operational sessions:
 | Version | Date | Notes |
 |---|---|---|
 | 1.0 | 2026-08-19 | Initial version. Adapted from the authoring project's `docs/lennar/` doc set following the operational-project split design session. |
+| 1.1 | 2026-08-30 | Added §4.4 roster carveout — the `Lennar Personnel Roster` table is the one reference table sessions may modify in-band. Scoped explicitly: authorizes new NHC creation, departure marking, community reassignment, contact-info backfill, and typo correction; still routes role-option additions, schema changes, table/field renames, and record deletion through Issue Reports. Update conventions live in `Lennar_New_Listing_Protocol.md`. |
 
 ---
 

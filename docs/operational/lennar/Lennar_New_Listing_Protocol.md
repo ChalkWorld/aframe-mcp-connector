@@ -1,8 +1,8 @@
 ---
 title: Lennar New Listing Protocol
 document_id: LENNAR-OPS-PROTOCOL-002
-version: 1.1
-version_date: 2026-08-27
+version: 1.2
+version_date: 2026-08-28
 status: Active
 author: Andrew Rich, AAR-TC Transaction Services
 contributor: Claude (Anthropic) — AI-assisted authoring
@@ -112,18 +112,19 @@ Form 17 field-name prefixes: `Intake_*`, `PropertyBasics_*`, `BedsBathsLevels_*`
 
 **No single funnel contact.** Reps submit their own listings; there is no manager or coordinator the intake routes through. Lennar calls these reps NHCs (New Home Consultants) — expect the abbreviation in signatures and threads. The POC recorded in Airtable is the rep who actually submitted the listing, confirmed from the intake itself, never a defaulted name.
 
-Rep roster by community (as of 2026-08-27 — reps shuffle; Chris MacLaird may reshuffle NHC assignments as he settles into the new role):
+Rep roster is maintained in Airtable, not in this doc. Base `app78fMUwDNBHUZ6r`, table `Lennar Personnel Roster` (`tblYI2KodPRjk1dAO`). The table holds NHCs, the Area Sales Manager, the Director of Sales, and Marketing contacts, each with contact info, community assignments, and Active/Departed status. Keeping the roster in Airtable means NHC churn is a data change, not a doc change.
 
-| Role | Name | Email | Communities |
-|---|---|---|---|
-| Director of Sales, Mid-Atlantic Division | Megan Cook | `megan.cook@lennar.com` | Regional oversight; addendum owner-signer of record for template purposes |
-| Area Sales Manager, Richmond/Williamsburg | Chris MacLaird | `christopher.maclaird@lennar.com` | Regional escalation contact; addendum recipient going forward (replaces Carly Evans) |
-| NHC | Izaiah Clark | `izaiah.clark@lennar.com` | Harpers Mill SF & TH, Creekside Run TH, Wynwood at Fox Creek |
-| NHC | Lucas Clark | `sel9ct8QV6PNpgxg0` — see Airtable POC field | (confirm current community assignment) |
-| NHC | Michelle Eke | `michelle.eke@lennar.com` | Harpers Mill Towns & Singles, Wynwood at Fox Creek |
-| NHC | Mercedes Creech | `mercedes.creech@lennar.com` | Likely Harpers Mill — pending confirmation from Chris MacLaird |
+**POC field cutover.** The POC field on Lennar Listings (`fldL1lmrjcJaOZGIf`) is a linked record pointing at the roster, not a singleSelect. New NHCs become selectable the moment they exist in the roster. Historical Carly Evans and Stefanie Nayder POC selections resolve to Departed roster records preserved for that purpose; those references remain valid post-cutover.
 
-The POC recorded in Airtable is always the rep who actually submitted the intake, confirmed from the intake itself. Carly Evans is no longer with Lennar; treat any lingering "Carly Evans" POC selection on legacy records as historical. Stefanie Nayder has also departed.
+The POC written to Airtable on a new listing is always the rep who actually submitted the intake, confirmed from the intake itself — never a defaulted name.
+
+**Read patterns:**
+
+- Look up an NHC at intake — `search_records` on the roster by name to get the record ID for POC assignment.
+- Find active NHCs at a community — filter the roster on `Status = Active AND Communities Assigned contains <community recordId>`. Foundation for the parked Active Listing Email work (`Lennar_Project_Protocol.md` §5.3).
+- Find the current Area Sales Manager for CC on announcements — filter the roster on `Role = Area Sales Manager AND Status = Active`.
+
+**Community-naming note.** The Community Reference DB has separate records for Harpers Mill TH and Harpers Mill SF — Andrew's Sheet-side convention for tracking the property-type variants of one physical community. NHCs assigned to "Harpers Mill" link to both records in their `Communities Assigned` field.
 
 **Marketing contacts (not NHCs, not POC-eligible — for photo and marketing asset requests):**
 
@@ -381,6 +382,7 @@ Photo upload order in MLS: exterior first, bathroom photos to the back.
 |---|---|---|
 | 1.0 | 2026-08-19 | Initial operational version. Derived from `docs/lennar/Lennar_New_Listing_Protocol.md` v2.9 (frozen as historical reference). Rewritten for operational scope per Session 015 design. |
 | 1.1 | 2026-08-27 | Email workflow overhaul: retired per-address Gmail labels in favor of a fixed four-label status scheme (`Lennar/New Listings`, `Lennar/Active`, `Lennar/Pending`, `Lennar/Closed`) with hardcoded IDs; documented the five functional labels; documented `Lennar Archive` as terminal home for pre-existing address labels; documented the session/Andrew Gmail discovery contract (session scans inbox only, Andrew archives at his discretion). Added the `Gmail Threads` ledger field to Step 7 and to every lifecycle beat. Rewrote the Lifecycle Updates section to use status-label transitions instead of address-label moves; added the Withdrawn from MLS and Activation subsections; added the "delta-sync first" standing behavior for lifecycle beats to reflect that the Google Sheet may be ahead of Airtable via Thursday-meeting or ad-hoc updates. Replaced the rep roster stub with the confirmed 2026-08-27 roster: Chris MacLaird as new Area Sales Manager, Michelle Eke and Mercedes Creech as NHCs, Stefanie Nayder removed, Megan Cook title confirmed as Director of Sales Mid-Atlantic Division. Added marketing contacts (Dianna Sherrod, Danielle Kefauver). Added Cognito `take=N` intake pattern and the Gmail `label:` display-name-not-ID rule to Connector notes. |
+| 1.2 | 2026-08-28 | Rep roster migrated to Airtable table `Lennar Personnel Roster` (base `app78fMUwDNBHUZ6r`, table `tblYI2KodPRjk1dAO`) with 11 initial records — the six people from v1.1 plus Tim Hall (NHC), Dianna Sherrod (Marketing Field Coordinator) and Danielle Kefauver (Marketing Specialist), plus Carly Evans and Stefanie Nayder as Departed records preserved for historical POC reference integrity. Retired the inline rep-roster table from the "How a New Listing Arrives" section; replaced with a pointer to the Airtable table, read patterns for sessions, and a community-naming note (Harpers Mill TH/SF are Sheet-side property-type variants of one physical community). POC field on Lennar Listings migrated from singleSelect (`fldQie6dPBjMO8aqh`, deleted) to linked-record field (`fldL1lmrjcJaOZGIf`) pointing at the roster; the 11 existing POC values re-linked in-place. New `Communities Assigned` linked-record field on the roster ties to Community Reference DB, unlocking the parked Active Listing Email work. |
 
 ---
 
