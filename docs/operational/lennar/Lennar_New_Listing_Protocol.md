@@ -1,8 +1,8 @@
 ---
 title: Lennar New Listing Protocol
 document_id: LENNAR-OPS-PROTOCOL-002
-version: 1.3
-version_date: 2026-08-30
+version: 1.4
+version_date: 2026-08-31
 status: Active
 author: Andrew Rich, AAR-TC Transaction Services
 contributor: Claude (Anthropic) — AI-assisted authoring
@@ -71,7 +71,7 @@ Keep it to a quick nudge, not a full review. If multiple addresses are reported 
 | `Lennar/New Listings` | `Label_8162379569998573615` | Intake beat — new listing in inbox awaiting MLS activation. Standout blue (`#1e53b8`) so it's visible in the inbox at a glance |
 | `Lennar/Active` | `Label_8433040405042272049` | Andrew reports the listing has gone Active in MLS |
 | `Lennar/Pending` | `Label_1922509537569469064` | Under Contract lifecycle beat |
-| `Lennar/Closed` | `Label_7877946473296994946` | Closed lifecycle beat. Withdrawn from MLS also folds here — no separate Withdrawn label |
+| `Lennar/Closed` | `Label_7877946473296994946` | Closed lifecycle beat, and the terminal Gmail transition for Withdrawn from MLS as well — Gmail has no separate Withdrawn label. Airtable Status does distinguish `Withdrawn` from `Closed` as of 2026-08-31; see Lifecycle Updates → Withdrawn from MLS |
 
 Sessions apply and remove these using `Gmail:label_thread` / `Gmail:unlabel_thread` against the IDs above. Never call `Gmail:list_labels` for Lennar work — the IDs are authoritative here.
 
@@ -343,6 +343,12 @@ Price adjustments and status changes must be entered in Matrix by Andrew himself
 
 **Gmail Threads on every beat.** Every lifecycle beat also appends the triggering thread to the `Gmail Threads` field on the Airtable row, per the format documented in Step 7. If the same thread covers multiple listings (typical for combined addenda, multi-address price-change emails, and sales announcements), append it to every affected row with the `(also [address])` cross-reference.
 
+**Multi-listing threads and label reconciliation.** The four status labels track *listing* state, not thread state — per-address continuity lives in the `Gmail Threads` ledger (Step 7), not in Gmail itself. That has three consequences for how label transitions actually run:
+
+1. **Furthest-along wins.** When a single thread covers listings at different lifecycle stages, apply the status label of whichever covered listing is furthest along: New Listings < Active < Pending < Closed/Withdrawn. Closed and Withdrawn are equivalent for label purposes — both terminal, and Gmail has no separate Withdrawn label. Do not layer multiple status labels on one thread to represent multiple listings' states.
+2. **`Lennar/New Listings` is the one exception.** It persists on a thread until every intake logged there has cleared intake — regardless of how far along any other listing on the same thread has gotten. It is both a session discovery cue and Andrew's own visual flag that unprocessed intake work remains on a thread he might otherwise archive. Never let a more-advanced status label silently replace it while any covered intake is still unprocessed.
+3. **Ledger sweep, not single-thread update.** Every lifecycle beat reconciles the status label on every thread logged in that listing's `Gmail Threads` ledger — not only the thread carrying the triggering email. Read the ledger; for each logged thread ID, remove whichever status label currently applies (subject to the two rules above) and apply the new one. This keeps threads that never received a reply — an earlier under-contract thread, a separate addendum thread — from sitting with a stale label after the listing moves on.
+
 ### Price Adjustment
 
 1. Read the email; confirm address(es) and new price.
@@ -357,7 +363,7 @@ Price adjustments and status changes must be entered in Matrix by Andrew himself
 1. Surface the proposed main-tab status change to **Pending**, plus the closing date if known. Andrew applies it.
 2. Update Status and Closing Date in Airtable.
 3. Append the Under Contract thread to `Gmail Threads` on the Airtable row.
-4. Move the Gmail label on the thread: remove `Lennar/Active` (`Label_8433040405042272049`) and add `Lennar/Pending` (`Label_1922509537569469064`).
+4. Apply the Gmail label transition per the multi-listing rules above — reconcile every thread in this listing's `Gmail Threads` ledger, removing `Lennar/Active` (`Label_8433040405042272049`) and adding `Lennar/Pending` (`Label_1922509537569469064`) on each, subject to the furthest-along and New Listings exceptions.
 5. Flag the Matrix status change in the handoff — Andrew enters it.
 
 ### Closed
@@ -365,16 +371,16 @@ Price adjustments and status changes must be entered in Matrix by Andrew himself
 1. Surface the proposed main-tab status change to **Closed**, plus the confirmed closing date. Andrew applies it.
 2. Update Status and Closing Date in Airtable.
 3. Append the closing thread (or the settlement notification) to `Gmail Threads` on the Airtable row.
-4. Move the Gmail label on the thread: remove whichever of `Lennar/Active` or `Lennar/Pending` currently applies, and add `Lennar/Closed` (`Label_7877946473296994946`).
+4. Apply the Gmail label transition per the multi-listing rules above — reconcile every thread in this listing's `Gmail Threads` ledger, removing whichever of `Lennar/Active` or `Lennar/Pending` currently applies and adding `Lennar/Closed` (`Label_7877946473296994946`) on each, subject to the furthest-along and New Listings exceptions.
 5. Flag the Matrix status change in the handoff — Andrew enters it.
 
 ### Withdrawn from MLS
 
-A withdrawn listing is handled the same as Closed — same Gmail label transition to `Lennar/Closed`, same Airtable Status update (set to `Closed`; there is no separate Withdrawn status option), same delta-sync-first behavior. Note in Session Notes on the row that the outcome was Withdrawn rather than sold, since the Sheet distinguishes them.
+A withdrawn listing follows the same delta-sync-first behavior and the same Gmail label transition as Closed — reconcile every thread in the ledger to `Lennar/Closed` per the multi-listing rules above (Gmail has no separate Withdrawn label; it's a terminal state like Closed for label purposes). Airtable Status, however, is set to **`Withdrawn`** — a distinct choice from `Closed` as of 2026-08-31, added specifically so withdrawn and sold-Closed listings remain distinguishable in Airtable and any Airtable-side reporting. Still note in Session Notes on the row that the outcome was Withdrawn, mirroring what the Sheet already distinguishes.
 
 ### Activation (from Input Done → Active in MLS)
 
-When Andrew reports a listing has gone Active — see the Standing Rules activation double-check — apply the Gmail label transition alongside the manual-task nudge: remove `Lennar/New Listings` (`Label_8162379569998573615`) from the intake thread and add `Lennar/Active` (`Label_8433040405042272049`). Append the activation-triggering communication (or Andrew's own "it's active" message) to `Gmail Threads` on the Airtable row.
+When Andrew reports a listing has gone Active — see the Standing Rules activation double-check — apply the Gmail label transition alongside the manual-task nudge, per the multi-listing rules above: reconcile every thread in this listing's `Gmail Threads` ledger, removing `Lennar/New Listings` (`Label_8162379569998573615`) and adding `Lennar/Active` (`Label_8433040405042272049`) — except on any thread where another intake logged there hasn't yet cleared intake, where `Lennar/New Listings` stays per the New Listings exception. Append the activation-triggering communication (or Andrew's own "it's active" message) to `Gmail Threads` on the Airtable row.
 
 ---
 
@@ -396,6 +402,7 @@ Photo upload order in MLS: exterior first, bathroom photos to the back.
 | 1.1 | 2026-08-27 | Email workflow overhaul: retired per-address Gmail labels in favor of a fixed four-label status scheme (`Lennar/New Listings`, `Lennar/Active`, `Lennar/Pending`, `Lennar/Closed`) with hardcoded IDs; documented the five functional labels; documented `Lennar Archive` as terminal home for pre-existing address labels; documented the session/Andrew Gmail discovery contract (session scans inbox only, Andrew archives at his discretion). Added the `Gmail Threads` ledger field to Step 7 and to every lifecycle beat. Rewrote the Lifecycle Updates section to use status-label transitions instead of address-label moves; added the Withdrawn from MLS and Activation subsections; added the "delta-sync first" standing behavior for lifecycle beats to reflect that the Google Sheet may be ahead of Airtable via Thursday-meeting or ad-hoc updates. Replaced the rep roster stub with the confirmed 2026-08-27 roster: Chris MacLaird as new Area Sales Manager, Michelle Eke and Mercedes Creech as NHCs, Stefanie Nayder removed, Megan Cook title confirmed as Director of Sales Mid-Atlantic Division. Added marketing contacts (Dianna Sherrod, Danielle Kefauver). Added Cognito `take=N` intake pattern and the Gmail `label:` display-name-not-ID rule to Connector notes. |
 | 1.2 | 2026-08-28 | Rep roster migrated to Airtable table `Lennar Personnel Roster` (base `app78fMUwDNBHUZ6r`, table `tblYI2KodPRjk1dAO`) with 11 initial records — the six people from v1.1 plus Tim Hall (NHC), Dianna Sherrod (Marketing Field Coordinator) and Danielle Kefauver (Marketing Specialist), plus Carly Evans and Stefanie Nayder as Departed records preserved for historical POC reference integrity. Retired the inline rep-roster table from the "How a New Listing Arrives" section; replaced with a pointer to the Airtable table, read patterns for sessions, and a community-naming note (Harpers Mill TH/SF are Sheet-side property-type variants of one physical community). POC field on Lennar Listings migrated from singleSelect (`fldQie6dPBjMO8aqh`, deleted) to linked-record field (`fldL1lmrjcJaOZGIf`) pointing at the roster; the 11 existing POC values re-linked in-place. New `Communities Assigned` linked-record field on the roster ties to Community Reference DB, unlocking the parked Active Listing Email work. |
 | 1.3 | 2026-08-30 | Added a Write patterns subsection to the roster section, positioned between Read patterns and the Community-naming note. Names the roster updates sessions may make in-band (new NHC creation, departure marking, community reassignment, contact-info backfill, typo correction) per the new roster carveout in `Lennar_Project_Protocol.md` §4.4 (v1.1). Explicitly punts ambiguity to §4.1 and role-option additions / schema changes / deletions to Issue Reports. Closes the doc-edit-latency gap the v1.2 migration left implicit — the roster is now writable in-band with named scope. |
+| 1.4 | 2026-08-31 | Withdrawn from MLS now sets Airtable Status to a distinct `Withdrawn` choice (added directly in Airtable by Andrew) instead of collapsing into `Closed`; Gmail-side, Withdrawn still transitions to `Lennar/Closed` since no separate Withdrawn Gmail label exists. Added the "Multi-listing threads and label reconciliation" standing rule to Lifecycle Updates: furthest-along status wins when one thread covers listings at different stages (New Listings < Active < Pending < Closed/Withdrawn), with `Lennar/New Listings` exempted from that ordering until every intake on the thread clears intake. Every lifecycle beat now reconciles the status label across every thread logged in the listing's `Gmail Threads` ledger, not only the triggering thread, closing the gap where sibling threads for the same address kept a stale status label after the listing moved on. Resolves three linked Issue Reports from the 2026-08-30 Cratey Ln delta-sync session (Airtable Status choice gap, multi-listing thread label rule, shared-intake thread label transition). |
 
 ---
 
