@@ -1,7 +1,7 @@
 ---
 title: Lennar New Listing Protocol
 document_id: LENNAR-OPS-PROTOCOL-002
-version: 1.4
+version: 1.5
 version_date: 2026-08-31
 status: Active
 author: Andrew Rich, AAR-TC Transaction Services
@@ -207,9 +207,25 @@ Before the tabbed input view, Matrix offers three listing creation paths. The pa
 
 ## New Listing — Session Steps
 
+### 0. Opening Handshake
+
+Every new-listing session opens with the same lightweight handshake before pulling the intake in full. The purpose is to establish parallel work per `Lennar_Project_Protocol.md` §4.5 — the session hands the user a concrete task to run while the session moves into intake parsing.
+
+**Read community and property type from the newest intake.** Call `Cognito Forms:get_entries_in_view` on the Submitted view (`17-3`) with `take=1`. The tool returns the full entry — the "quick" part of the handshake is Claude-side discipline about reading only `Intake_Community` and `PropertyBasics_PropertyType` at this stage, deferring the full parse to Step 1. Retain the response object; Step 1 does not re-call the tool.
+
+**Look up the path from community.** Path is a community property (see Matrix Entry Path Rules by Community above), driven by parcel-data availability rather than home type. Property type is read for two secondary reasons: it's what the session states back to the user as a sanity check, and Harpers Mill has separate TH and SF records in the Community Reference DB that later steps need to select correctly.
+
+**State back and ask.** State back what the intake shows and ask the pacing-critical question — whether the Matrix incomplete listing exists yet. A well-formed opening looks like:
+
+> This is a [community] [property type] listing, which is a [taxid | new] path listing. Have you already created the Matrix incomplete listing? If so, share the MLS# — and the tax ID if this is a taxid-path community. If not, [taxid path: pull the tax record from Realist in CVRMLS to get the tax ID, then create the listing in Matrix with the taxid path | new path: create the listing in Matrix with the new path, no tax record needed]. Either path generates the MLS# on first save.
+
+**Wait for the user's response before proceeding.** The response tells the session whether to proceed straight into Step 1 (user already has MLS# in hand) or whether to walk the user through the Matrix-creation prerequisites first. While the user is creating the listing, the session pulls the full intake and moves into Step 1 in parallel.
+
+**Do not skip the handshake even when the user provides the MLS# in the initial prompt.** The handshake still serves to confirm community, path, and property type, and to keep the session-open shape consistent across users.
+
 ### 1. Read the Intake
 
-Read it in full before doing anything else. Notes-to-Andrew fields and rep forwarding notes carry photo instructions that don't appear in the structured form data.
+Read the intake in full using the entry object already retrieved in Step 0 — no new tool call needed. Notes-to-Andrew fields and rep forwarding notes carry photo instructions that don't appear in the structured form data.
 
 ### 2. Verify the Address
 
@@ -229,6 +245,18 @@ Present a clean summary to Andrew before generating anything. Flag:
 - Address discrepancies
 
 Andrew confirms before the session proceeds.
+
+### 4a. Resolve Photo Source
+
+Photo source resolution is a session-owned step, not a passing note. Reps often reference reusing photos from another listing (typical phrasing: "use Concord model photos," "same as the last Plymouth"), and knowing where those photos live is a prerequisite for the addendum trigger in Step 9.
+
+Read the intake's photo instructions — check `PhotosVirtualTour_ExteriorPhotoLink`, `PhotosVirtualTour_AdditionalPhotosLink`, and any photo notes in `Notes_NotesToAndrew`. Handle each case:
+
+- **New photos provided (links present).** Note the source in the Step 10 handoff; the user downloads and uploads.
+- **Reuse from another listing referenced by model or address.** Search the Lennar Listings table for prior listings matching the referenced model in the same community, get the address, and tell the user which Google Drive property folder to grab from. If the reference is ambiguous — multiple prior listings match, no clear address in the note — surface it to the user rather than picking one.
+- **No photo source indicated.** Flag it. The addendum cannot go out until this is resolved (see Step 9).
+
+Once photo source is confirmed, the user can start photo upload work in parallel with the session moving into Step 5 payload generation. This is the multitask handoff point of the intake beat, per `Lennar_Project_Protocol.md` §4.5.
 
 ### 5. Generate the Payload
 
@@ -250,10 +278,9 @@ Generation checkpoints:
 Fill flow, for what to expect back from Andrew:
 
 1. Session outputs the payload as a single copy-ready JSON block.
-2. Andrew creates the listing in Matrix via the correct entry path for the community.
-3. Andrew pastes the payload once into the extension's side panel and clicks through the Lennar-scoped tabs; the extension fills whichever tab is showing. See `Lennar_Extension_Reference.md` §2.
-4. Andrew reviews the populated fields before saving each tab and reports the outcome.
-5. The Status tab is never automated — Andrew activates manually.
+2. Andrew pastes the payload once into the extension's side panel — the Matrix incomplete listing is already open from Step 0 — and clicks through the Lennar-scoped tabs; the extension fills whichever tab is showing. See `Lennar_Extension_Reference.md` §2.
+3. Andrew reviews the populated fields before saving each tab and reports the outcome.
+4. The Status tab is never automated — Andrew activates manually.
 
 Handle Andrew's feedback per `Lennar_Extension_Reference.md` §4. Field-write errors and detection misses are Issue Report material, not in-session debugging.
 
@@ -276,6 +303,7 @@ Then, based on the duplicate check:
 Add the listing to the Lennar Listings table:
 
 - Address, Community, List Price (as `Current Price`), Status = Input in Progress
+- MLS# — provided by the user in Step 0
 - Intake Date = today
 - Addendum Status = Pending
 - Gmail Thread ID — the intake thread only, unchanged historical meaning
@@ -297,8 +325,8 @@ The PandaDoc integration is built, tested, and documented — template ID `9DpcJ
 
 Either way, set Addendum Status to `Sent` in Airtable once it goes out, and:
 
-- **Send early in intake** — don't hold the rest of the session waiting on a signature.
-- **Check for a future launch date.** Occasionally an intake asks for activation on a specific future date rather than immediately. If a stated launch date is in the future, hold the addendum and send it on that date instead. Flag any held send clearly in the handoff so the next beat follows through.
+- **Send only when the listing is launch-ready.** Two conditions, both required: (a) photos are secured — either in hand or a source folder definitively identified in Step 4a — and (b) no open questions with the NHC that could block launch (missing intake fields, phone number in remarks to resolve, address discrepancies, etc.). If either condition is unmet, hold the addendum. A signed addendum in hand for a listing that can't actually go active is worse than a small delay starting the signature clock; the listing can sit in `Incomplete` in Matrix indefinitely while blockers resolve. (This supersedes the pre-v1.5 "send early in intake" rule, which was calibrated around a slower signer response cycle that no longer applies.)
+- **Check for a future launch date.** Occasionally an intake asks for activation on a specific future date rather than immediately. If a stated launch date is in the future, hold the addendum and send it on that date instead — this rule supersedes the launch-ready trigger above. Flag any held send clearly in the handoff so the next beat follows through.
 - **Multiple listings at once** are handled one after another in the same session; there is no batch path.
 
 > **HARD RULE: a listing cannot go Active in the MLS under any circumstances until the signed listing addendum is on file. Do not mark the activation handoff item complete and do not prompt Andrew to activate until the signed addendum has been received and saved to the Google Drive property folder.**
@@ -312,7 +340,7 @@ Close every beat with a clear handoff of what still needs Andrew's action:
 - [ ] Manual Matrix fields the extension never touches: **Map** and **Directions** — enter these while reviewing the extension's fills (`Lennar_Extension_Reference.md` §5)
 - [ ] ShowingTime — set Allowing Online Requests to "No". Keeps buyer agents from contacting Gary Martin directly to request showings
 - [ ] Photos — download/save, then upload and reorder in MLS: exterior first, bathrooms to the back
-- [ ] Save the MLS# back to Airtable once assigned, and surface it for manual entry on the Google Sheet main tab
+- [ ] Surface the MLS# (captured in Step 7 during intake) for manual entry on the Google Sheet main tab
 - [ ] Save the signed addendum to the Google Drive property folder once returned
 - [ ] Activate the listing in MLS once the signed addendum is on file
 - [ ] Post-activation: export the MLS listing PDF from Matrix, save it to the property Drive folder, and hyperlink the address in Column A of the Google Sheet main tab to that PDF
@@ -403,6 +431,7 @@ Photo upload order in MLS: exterior first, bathroom photos to the back.
 | 1.2 | 2026-08-28 | Rep roster migrated to Airtable table `Lennar Personnel Roster` (base `app78fMUwDNBHUZ6r`, table `tblYI2KodPRjk1dAO`) with 11 initial records — the six people from v1.1 plus Tim Hall (NHC), Dianna Sherrod (Marketing Field Coordinator) and Danielle Kefauver (Marketing Specialist), plus Carly Evans and Stefanie Nayder as Departed records preserved for historical POC reference integrity. Retired the inline rep-roster table from the "How a New Listing Arrives" section; replaced with a pointer to the Airtable table, read patterns for sessions, and a community-naming note (Harpers Mill TH/SF are Sheet-side property-type variants of one physical community). POC field on Lennar Listings migrated from singleSelect (`fldQie6dPBjMO8aqh`, deleted) to linked-record field (`fldL1lmrjcJaOZGIf`) pointing at the roster; the 11 existing POC values re-linked in-place. New `Communities Assigned` linked-record field on the roster ties to Community Reference DB, unlocking the parked Active Listing Email work. |
 | 1.3 | 2026-08-30 | Added a Write patterns subsection to the roster section, positioned between Read patterns and the Community-naming note. Names the roster updates sessions may make in-band (new NHC creation, departure marking, community reassignment, contact-info backfill, typo correction) per the new roster carveout in `Lennar_Project_Protocol.md` §4.4 (v1.1). Explicitly punts ambiguity to §4.1 and role-option additions / schema changes / deletions to Issue Reports. Closes the doc-edit-latency gap the v1.2 migration left implicit — the roster is now writable in-band with named scope. |
 | 1.4 | 2026-08-31 | Withdrawn from MLS now sets Airtable Status to a distinct `Withdrawn` choice (added directly in Airtable by Andrew) instead of collapsing into `Closed`; Gmail-side, Withdrawn still transitions to `Lennar/Closed` since no separate Withdrawn Gmail label exists. Added the "Multi-listing threads and label reconciliation" standing rule to Lifecycle Updates: furthest-along status wins when one thread covers listings at different stages (New Listings < Active < Pending < Closed/Withdrawn), with `Lennar/New Listings` exempted from that ordering until every intake on the thread clears intake. Every lifecycle beat now reconciles the status label across every thread logged in the listing's `Gmail Threads` ledger, not only the triggering thread, closing the gap where sibling threads for the same address kept a stale status label after the listing moved on. Resolves three linked Issue Reports from the 2026-08-30 Cratey Ln delta-sync session (Airtable Status choice gap, multi-listing thread label rule, shared-intake thread label transition). |
+| 1.5 | 2026-08-31 | Session-open workflow and persona overhaul. Added Step 0 (Opening Handshake) as the standard session-start pattern: lightweight Cognito read for community and property type via `get_entries_in_view` on view `17-3` with `take=1`, path lookup from community, state-back to user, ask whether the Matrix incomplete listing exists, wait for MLS#. Aligns session start with the pacing principle newly codified in `Lennar_Project_Protocol.md` §4.5 (parallel work, meet back in the middle) — session pulls the full intake while the user creates the Matrix listing. Added Step 4a (Resolve Photo Source), promoting photo source resolution from the trailing Photo Notes to an owned session step, positioned before Step 5 so the user starts photo work in parallel with payload generation. Revised Step 9 addendum trigger from "send early in intake" to "send only when launch-ready" (photos secured AND no open NHC blockers), reflecting that current session speeds moot the earlier-multitasking rationale and that a signed addendum on a stalled listing is worse than a delay. Removed Matrix creation from the Step 5 fill flow (now Step 0). Added MLS# to Step 7's Airtable row-add fields (available at intake now) and adjusted the corresponding Step 10 handoff item. Step 1 now reuses the entry object retrieved in Step 0 rather than re-calling the Cognito tool. |
 
 ---
 
