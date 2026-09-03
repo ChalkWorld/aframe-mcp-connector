@@ -1,8 +1,8 @@
 ---
 title: Lennar New Listing Protocol
 document_id: LENNAR-OPS-PROTOCOL-002
-version: 1.5
-version_date: 2026-08-31
+version: 1.6
+version_date: 2026-09-03
 status: Active
 author: Andrew Rich, AAR-TC Transaction Services
 contributor: Claude (Anthropic) — AI-assisted authoring
@@ -75,6 +75,14 @@ Keep it to a quick nudge, not a full review. If multiple addresses are reported 
 
 Sessions apply and remove these using `Gmail:label_thread` / `Gmail:unlabel_thread` against the IDs above. Never call `Gmail:list_labels` for Lennar work — the IDs are authoritative here.
 
+**One filter-applied label — `Lennar/Incoming`.**
+
+A Gmail filter — not the session — applies this label on arrival, based on a fixed sender list: Izaiah Clark, Lucas Clark, Michelle Eke, Mercedes Creech, Tim Hall (NHCs), and Chris MacLaird (Area Sales Manager). Andrew maintains the filter directly in Gmail; it is not session-editable, and its sender list should track the roster's Active NHCs plus the ASM.
+
+Deliberately excluded from the filter: Megan Cook (Director of Sales), Dianna Sherrod and Danielle Kefauver (Marketing). Their correspondence is exec-level or photo/marketing-asset coordination, not lifecycle events, and doesn't belong in the triage queue. This exclusion is intentional, not a gap — do not add them without Andrew's direction.
+
+Unlike the four status labels, sessions never *add* `Lennar/Incoming` — only *remove* it, once a thread's contents have been captured (see Incoming Mail Triage below). A thread still carrying `Lennar/Incoming` means it hasn't been processed yet; that's the label's entire purpose, so let it clear on capture rather than layering a status label on top and leaving it in place.
+
 **Five functional labels — Andrew-maintained, session leaves alone unless explicitly noted.**
 
 | Label | Purpose | Session touches? |
@@ -93,10 +101,33 @@ Prior to the 2026-08-27 redesign, every listing carried a `Lennar/[Address]` lab
 
 **Session / Andrew Gmail discovery contract.**
 
-- Session's discovery scope for new email work is `in:inbox` filtered to Lennar (via label or address text), and only the inbox. The archive is out of scope.
+- Session's discovery scope for new email work is `in:inbox label:"Lennar/Incoming"` — see Incoming Mail Triage below for the full procedure. The archive is out of scope.
 - The `Gmail Threads` field on the Airtable Lennar Listings row is the durable source of truth for "captured." Session appends new threads there; if a thread ID is already logged, the session leaves it alone.
 - The session does not archive threads. Andrew keeps his inbox tidy (target ~20 threads across all AAR-TC business) and archives at his own discretion, based on his personal follow-up state — not based on whether a session has processed the thread.
 - Any labels Andrew applies before a session runs are for his own visual organization; they do not signal "processed" to the session.
+
+### Incoming Mail Triage
+
+Resolves `AAR-TC-OPS-PROTO-001` §2 (Inbox Triage and Labeling) for Lennar specifically — Lennar uses the filter-plus-triage mechanism below rather than a session-run label sweep.
+
+**Discovery query:**
+
+```
+Gmail:search_threads
+  query: 'in:inbox label:"Lennar/Incoming"'
+  view: THREAD_VIEW_MINIMAL
+```
+
+Run this at session open, or whenever Andrew asks for a triage pass. The `Lennar/Incoming` label already narrows the result set to Lennar lifecycle correspondence — no address-text fallback needed, since the filter (not the session) is doing sender-based detection.
+
+**Per thread:**
+
+1. Read the full thread body (`get_thread`) — the triage label doesn't tell you *which* address or *what kind* of lifecycle event, only that it's Lennar correspondence worth a look.
+2. Identify the affected address(es). A single thread may cover more than one listing — reuse the `(also [address])` cross-reference convention from the `Gmail Threads` ledger.
+3. Match each address to its Airtable row (by address or MLS#) and run the appropriate Lifecycle Updates procedure — Price Adjustment, Under Contract, Closed, Withdrawn, or Activation — including the existing multi-listing label reconciliation rules.
+4. Append the thread to `Gmail Threads` on every affected row, per the existing ledger format.
+5. Remove `Lennar/Incoming` from the thread once steps 1–4 are complete.
+6. If the thread doesn't match anything identifiable — no resolvable address, no matching Airtable row — leave `Lennar/Incoming` in place and flag it to Andrew rather than guessing or silently clearing the label. A false negative here just means the thread sits labeled until reviewed; incorrectly clearing it would hide the thread from any future pass.
 
 ---
 
@@ -432,6 +463,7 @@ Photo upload order in MLS: exterior first, bathroom photos to the back.
 | 1.3 | 2026-08-30 | Added a Write patterns subsection to the roster section, positioned between Read patterns and the Community-naming note. Names the roster updates sessions may make in-band (new NHC creation, departure marking, community reassignment, contact-info backfill, typo correction) per the new roster carveout in `Lennar_Project_Protocol.md` §4.4 (v1.1). Explicitly punts ambiguity to §4.1 and role-option additions / schema changes / deletions to Issue Reports. Closes the doc-edit-latency gap the v1.2 migration left implicit — the roster is now writable in-band with named scope. |
 | 1.4 | 2026-08-31 | Withdrawn from MLS now sets Airtable Status to a distinct `Withdrawn` choice (added directly in Airtable by Andrew) instead of collapsing into `Closed`; Gmail-side, Withdrawn still transitions to `Lennar/Closed` since no separate Withdrawn Gmail label exists. Added the "Multi-listing threads and label reconciliation" standing rule to Lifecycle Updates: furthest-along status wins when one thread covers listings at different stages (New Listings < Active < Pending < Closed/Withdrawn), with `Lennar/New Listings` exempted from that ordering until every intake on the thread clears intake. Every lifecycle beat now reconciles the status label across every thread logged in the listing's `Gmail Threads` ledger, not only the triggering thread, closing the gap where sibling threads for the same address kept a stale status label after the listing moved on. Resolves three linked Issue Reports from the 2026-08-30 Cratey Ln delta-sync session (Airtable Status choice gap, multi-listing thread label rule, shared-intake thread label transition). |
 | 1.5 | 2026-08-31 | Session-open workflow and persona overhaul. Added Step 0 (Opening Handshake) as the standard session-start pattern: lightweight Cognito read for community and property type via `get_entries_in_view` on view `17-3` with `take=1`, path lookup from community, state-back to user, ask whether the Matrix incomplete listing exists, wait for MLS#. Aligns session start with the pacing principle newly codified in `Lennar_Project_Protocol.md` §4.5 (parallel work, meet back in the middle) — session pulls the full intake while the user creates the Matrix listing. Added Step 4a (Resolve Photo Source), promoting photo source resolution from the trailing Photo Notes to an owned session step, positioned before Step 5 so the user starts photo work in parallel with payload generation. Revised Step 9 addendum trigger from "send early in intake" to "send only when launch-ready" (photos secured AND no open NHC blockers), reflecting that current session speeds moot the earlier-multitasking rationale and that a signed addendum on a stalled listing is worse than a delay. Removed Matrix creation from the Step 5 fill flow (now Step 0). Added MLS# to Step 7's Airtable row-add fields (available at intake now) and adjusted the corresponding Step 10 handoff item. Step 1 now reuses the entry object retrieved in Step 0 rather than re-calling the Cognito tool. |
+| 1.6 | 2026-09-03 | Added filter-applied `Lennar/Incoming` label (sender list: Izaiah Clark, Lucas Clark, Michelle Eke, Mercedes Creech, Tim Hall, Chris MacLaird; Megan Cook and the two Marketing contacts deliberately excluded — exec-level/marketing correspondence, not lifecycle events) and the corresponding Incoming Mail Triage procedure, resolving `AAR-TC-OPS-PROTO-001` §2 for Lennar specifically. Simplified the Session/Andrew Gmail discovery contract's discovery-scope bullet to the label-based query, retiring the address-text fallback now that filter-side sender detection covers it. Lucas Clark's Airtable roster record backfilled with email address. |
 
 ---
 
