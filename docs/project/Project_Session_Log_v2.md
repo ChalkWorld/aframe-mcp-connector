@@ -1137,6 +1137,45 @@ Named in-session: "harness engineering" as the term for the scaffolding around t
 
 ---
 
+---
+
+## Session 019 — Lennar Restructure Alignment
+**Date:** September 9, 2026
+
+**Cursor note — session number:** Confirm the session number against the live file before commit. Working number is one greater than the most recent numbered entry. This confirmation is a standing rule per the Session 008/004 misnumbering incident.
+
+### Focus
+Macro-level realignment of the Lennar Operational Project. Triggered by cumulative token-economics and beat-scope concerns from prior sessions (`BRIEF-2026-09-04-session-scope-payload-split.md` and `ISSUE-2026-09-03-beat-scope-triage-and-delta-sync.md`). Discussion-only; no code, protocol, Airtable, or Gmail changes.
+
+### What Was Accomplished
+Reframed the project. The session-driven end-to-end model (one Claude session per listing, intake through close) is being retired in favor of a script-plus-extension architecture where payload generation runs deterministically in Andrew's infrastructure and the Google Sheet remains the sole daily-tracking source of truth. Claude sessions become episodic — engineering collaboration on the script and docs, how-to guidance for the eventual operator, rare judgment-call escape hatches. New Phase Tracker doc drafted as the living state document for the restructure; every restructure session updates it at close.
+
+### Key Decisions
+- **Project identity is Lennar Ledger.** Chrome extension owns intake in the browser (payload gen, PandaDoc addenda, audit-table write, Drive folder create). Google Sheet is the operator's daily tracking authority. Existing Airtable Lennar Listings table freezes as archival in Phase 4; new Lennar Listings Audit table replaces it at intake time with immutable data only (model, photos used, photo URLs, form submitted date, community, NHC/POC frozen at submission, path, envelope, tax ID or Realist reference, script flags, MLS# once captured).
+- **Three-layer architecture.** MLS layer (objective, per-MLS) / Builder layer (policy, per-builder) / Instance layer (per-listing). Enforced through separate Airtable bases with cross-base links. Multi-builder onboarding adds a Builder Rules table linked to the appropriate MLS base(s); cross-MLS builder support becomes multi-base linking. No architectural retrofit for either.
+- **CVRMLS Matrix Fields as a dedicated Airtable base.** Single Residential Input Form table with grouping by Tab (primary) and Section (secondary, inside the two large tabs). Field Types, Sections, and Field Options as linked tables. Type-specific parameters as columns on Matrix Fields: Character Limit, Options, Cascade Parent, Explicit Zero Required, Repeat Container, Max Selections, Yellow Highlighted. Individual checkboxes modeled as CHECKBOX_GROUP with small option sets. REPEAT_SUBFORM promoted to first-class type. Hidden infrastructure fields excluded from the base entirely.
+- **Phased execution.** Phase 0 (foundation: base build + fresh doc set) → Phase 1 (payload script CLI) → Phase 2 (extension integration) → Phase 3 (PandaDoc + audit table + Drive folder + email trigger) → Phase 4 (doc refactor + operational doc archival). Strict order; existing Ops Project runs as-is in the interim.
+- **Formal doc set authored fresh for the restructure**, not amendments to existing operational docs. Vision/charter, base schema specification, phase tracker, maintenance protocol, builder-onboarding protocol. Payload Schema and Payload Examples reassigned as the spec that drives the transform code (versioned alongside it), not deleted.
+- **Progress tracking via the Phase Tracker doc.** Every session updates it at close; no separate handoff artifact per session. Phase Tracker's Next Session Opening Move is the standing handoff mechanism.
+
+### Documents Created This Session
+| Document | ID | Version | Notes |
+|---|---|---|---|
+| Lennar Restructure Phase Tracker | AAR-TC-LENNAR-PHASE-TRACKER-001 (interim) | 0.1 | Living state doc for the restructure. Added to Claude project files this session by Andrew. Final doc ID prefix and repo location parked for next session decision. |
+
+### Cursor Handoffs Produced This Session
+| Handoff | Target File | Purpose |
+|---|---|---|
+| `HANDOFF-2026-09-09-session-log-v2.md` | `docs/project/Project_Session_Log_v2.md` | This entry |
+
+### Discrepancies Surfaced (Not Fixed This Session)
+- `ISSUE-2026-09-03-beat-scope-triage-and-delta-sync.md` was filed against the old operational model. Superseded by the restructure — the operational model that produced the beat-scope failures is retiring. No fix action required. Documented in the Phase Tracker as a superseded prior finding.
+
+### Session Handoff Produced
+`SESSION-HANDOFF-2026-09-09-lennar-restructure-alignment.md` — bridge doc for the next session. Primary task: confirm parked decisions (base/table naming, primary field on Matrix Fields, docs folder + prefix), then draft the Vision/Charter doc for the restructure. Phase Tracker is the authoritative state; session handoff is the per-session forward pass.
+
+---
+
 *Log started July 15, 2026. Post-realignment doc architecture in effect. Old log (`docs/project/Project_Session_Log.md`) preserved as pre-realignment archive.*
 
 ---
