@@ -1,8 +1,8 @@
 ---
 title: Lennar Restructure Phase Tracker
 document_id: FOUND-PHASE-TRACKER-001
-version: 0.4
-version_date: 2026-09-10
+version: 0.5
+version_date: 2026-09-14
 status: Active — Living Document
 author: Andrew Rich, AAR-TC Transaction Services
 contributor: Claude (Anthropic) — AI-assisted authoring
@@ -152,19 +152,27 @@ Adding a type when a new MLS surfaces one is a row edit, not a schema change. Hi
 
 **Notes column verbosity: not formalized, kept as-is for now.** Field-level usage nuance (timing rules, conditional behavior, edge cases) stays in Residential Input Form's Notes column until a schema doc exists that's actually built to hold conditional workflow logic — removing it now would be data loss, not cleanup, since nothing downstream currently captures it. A future cleanup pass targets stale content specifically (GAP tags for gaps since filled, resolved-ambiguity narrative, session-provenance commentary), not usage-related nuance.
 
+**Features fully populated.** 49 of 49 field groups (up from the 1 illustrative row — Water — carried since base buildout): 48 new Residential Input Form rows, 635 new Field Options rows (639 total for Features including Water's 4). Full detail in `SESSION-HANDOFF-2026-09-14-FEATURES-PASS.md`.
+
+**CVRMLS Features field map fully live-verified.** All 30 previously-unconfirmed checkbox groups (12 Tier-2 suffix-gap candidates plus 18 Tier-1/Tier-3 sequence-clean or small groups) confirmed via Claude-in-Chrome ES extraction. 29 of 30 matched documented content exactly; Siding was missing Composite (`Input_71_26`), corrected in both the field map (now v1.2) and the base. The suffix-gap detection method itself proved structurally blind to additions above the highest known suffix — the Composite miss was found only via full re-traversal, a caution for any future field-map verification that leans on the same heuristic.
+
+**Section field left blank for Features, pending confirmation.** The Sections table's own definition (Section Name = "the section label as it appears in the Matrix UI") and the existing Water row's precedent (no Section link) both point away from inventing a thematic taxonomy for Features. No evidence yet that Features' Matrix UI has real named section panels analogous to Listing Info's three (Listing Information / Location Information / Square Feet were confirmed as real Matrix UI panel labels, not editorial groupings, via the live base). Table Structure's original decision (Decisions Landed, restructure-alignment session) named Features alongside Listing Info for Section grouping — that assumption is now an open question, not a confirmed design, until someone checks Matrix's live Features tab for actual panel headers.
+
 ### Decisions Parked for Next Session
 
-**Timing of the extension verification pass for flagged GAP fields — now 18, still deferred.** Nine fields carried forward from the prior session, plus nine more surfaced during Listing Info population (Type's missing Condominium/Cooperative codes among them). All findable by filtering Residential Input Form's Notes column for "GAP"; full list in `SESSION-HANDOFF-2026-09-10-LISTING-INFO-PASS.md`. Decided this session to hold the extraction pass until after Features completes, since Features will likely add to the same list — running it once against a complete list beats running it twice. No firm date set.
+**Timing of the extension verification pass for flagged GAP fields — 18, no longer blocked.** The prior hold ("wait until after Features completes") has cleared: Features' own live-verification pass this session used direct Chrome DOM extraction rather than surfacing new GAP-tagged fields, so the 18-field list is unchanged and ready to run. All findable by filtering Residential Input Form's Notes column for "GAP"; full list in `SESSION-HANDOFF-2026-09-10-LISTING-INFO-PASS.md`. No firm date set — first candidate for next session.
+
+**Whether Features' Matrix UI has real Section panels.** See Decisions Landed above. If Andrew confirms Features has no visible section headers in Matrix, Table Structure's decision should be revised to name Listing Info only; if it does, a live-extraction pass identifies the panel names and boundaries before Section links get added retroactively.
 
 ---
 
 ## Next Session Opening Move
 
-1. Read this tracker first, then `SESSION-HANDOFF-2026-09-10-LISTING-INFO-PASS.md` for full base state (record IDs, the corrected 18-field GAP list, and the doc-architecture note).
-2. **Features** is the only tab of meaningful size left (~49 field groups, still 1 illustrative row) — but do not move straight from reading the source docs into batch Airtable writes. Build the field-group inventory first, flag every enumerated option list that lacks a stated total count or a live-extraction confirmation, and bring that flagged list to Andrew before writing anything. Direct lesson from Listing Info, where skipping this checkpoint cost five rounds of after-the-fact correction — see the bridge doc's process section for the full reasoning.
-3. Room Info stays deferred — Lennar skips this tab entirely, and it's low priority for this operation otherwise.
-
-Not for next session unless time permits: the 18-field ES extraction list (see Decisions Parked above) — deliberately held until after Features, not urgent before then.
+1. Read this tracker first, then `SESSION-HANDOFF-2026-09-14-FEATURES-PASS.md` for full base state (record IDs, the completed Features field-group inventory, and the Section-panel open question).
+2. **Run the 18-field GAP extension-verification pass.** No longer blocked — see Decisions Parked. Filter Residential Input Form's Notes column for "GAP" to rebuild the list before starting.
+3. **Resolve whether Features has real Matrix UI Section panels** (Decisions Landed and Decisions Parked above) — a quick live-DOM check settles it either way and unblocks either adding Section links or revising the Table Structure decision.
+4. Room Info stays deferred — Lennar skips this tab entirely, and it's low priority for this operation otherwise.
+5. With Listing Info and Features both complete, **Residential Input Form population is functionally done** across all in-scope tabs (Room Info excepted by design). Worth checking whether Phase 0's remaining scope items (Lennar Payload Rules table, foundation docs, exclusion reference) are next, per the Phase Structure section above.
 
 At session close: bump version and date, refresh Decisions Parked and Next Session Opening Move to current state, and add a Version History row. Substantive decisions migrate to canonical foundation docs, not into this tracker.
 
@@ -188,6 +196,7 @@ Not part of the phase plan, tracked here so they are not forgotten:
 | 0.2 | 2026-09-10 | Session close after Restructure Charter drafting. Charter (`FOUND-CHARTER-001` v0.1) landed at `docs/foundation/Lennar_Restructure_Charter.md`. Doc_id updated from interim `AAR-TC-LENNAR-PHASE-TRACKER-001` to confirmed `FOUND-PHASE-TRACKER-001`. All three 2026-09-09 parked decisions confirmed; two-audience principle canonized as Charter Principle 6. |
 | 0.3 | 2026-09-10 | Session close after a CVRMLS Matrix Fields base population pass. Populated Bath Info, Owner Info, Internet Display Info, Virtual Tour Info, Agent/Office Info, Showing Instructions, Remarks, Fee Info, and General Info into Residential Input Form (89 rows, 189 Field Options rows — up from 6/8 at session start). 9 fields flagged GAP for a deferred extension verification pass — see `SESSION-HANDOFF-2026-09-10-POPULATION-PASS.md`. Next: Listing Info (3/43 fields done) and Features. |
 | 0.4 | 2026-09-10 | Session close after Listing Info population pass. Populated all 43 fields (up from 3 illustrative rows), 95 Street Suffix options, and six County/City-rooted cascade links; Sections table got its first real use. Corrected a mid-session mischaracterization of the CVRMLS docs as Lennar-scoped — confirmed against Charter Design Principle 1 as the general upstream reference instead. GAP list grew from 9 to 18 fields, deliberately held until after Features. Next: Features, with a build-inventory-then-align-with-Andrew checkpoint before any writes — see `SESSION-HANDOFF-2026-09-10-LISTING-INFO-PASS.md`. |
+| 0.5 | 2026-09-14 | Session close after Features population pass. Populated all 49 field groups (up from the 1 illustrative row), 635 new Field Options rows (639 total for Features). Live ES verification completed for all 30 previously-unconfirmed checkbox groups — 29 clean, Siding's missing Composite option (`Input_71_26`) added and corrected in the CVRMLS field map (now v1.2). Section field left blank for Features pending confirmation of real Matrix UI panels — flagged as an open question against Table Structure's original decision. GAP-list extension pass no longer blocked. Residential Input Form population functionally complete across all in-scope tabs (Room Info excepted by design). Next: run the GAP extension pass, resolve the Features-Section question — see `SESSION-HANDOFF-2026-09-14-FEATURES-PASS.md`. |
 
 ---
 
