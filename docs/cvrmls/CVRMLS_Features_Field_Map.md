@@ -1,10 +1,19 @@
 # CVRMLS Matrix — Features Tab Field Map
 **Document ID:** AAR-TC-CVRMLS-BM-001-FEA
-**Version:** 1.0
-**Last Updated:** June 27, 2026
+**Version:** 1.1
+**Last Updated:** September 11, 2026
 **Addendum to:** `CVRMLS_Bookmarklet_Build.md` (`AAR-TC-CVRMLS-BM-001`)
 
 *Extraction complete — all 10 chunks documented. Ready for bookmarklet build.*
+
+---
+
+## Version History
+
+| Version | Date | Author | Notes |
+|---|---|---|---|
+| 1.0 | 2026-06-27 | Andrew Rich / Claude | Initial extraction — all 10 chunks, ~49 field groups. |
+| 1.1 | 2026-09-11 | Andrew Rich / Claude | Live-extraction verification pass (Claude in Chrome ES session) on the 12 groups flagged as suffix-gap candidates during the AAR-TC Lennar Operational Project's Features pre-write checkpoint: Water Type, Disabl Feat, Style, Restrictions, Garage, Attic, Building/Structure, Siding, Structure, Roof, Basement/Foundation, Unit Placement. 11 of 12 confirmed exact matches with no changes. Siding was missing one option — Composite (`Input_71_26`) — added; count corrected 23 → 24. Each verified group's header now states its confirmed option count. Remaining Tier 1/Tier 3 groups (sequence-clean or small/unconfirmable, no proven gap) are not yet live-verified — see the session's Features pre-write checkpoint doc for the full tier breakdown. |
 
 ---
 
@@ -27,7 +36,7 @@ The Features tab is the most field-dense tab in CVRMLS Matrix. It contains ~49 f
 
 ### Style
 
-Checkbox group.
+Checkbox group (31 options, confirmed via live extraction 2026-09-11).
 
 | Label | Input ID |
 |---|---|
@@ -67,7 +76,7 @@ Checkbox group.
 
 ### Structure
 
-Checkbox group.
+Checkbox group (9 options, confirmed via live extraction 2026-09-11).
 
 | Label | Input ID |
 |---|---|
@@ -85,7 +94,7 @@ Checkbox group.
 
 ### Siding
 
-Checkbox group.
+Checkbox group (24 options, confirmed via live extraction 2026-09-11 — Composite added, previously undocumented).
 
 | Label | Input ID |
 |---|---|
@@ -98,6 +107,7 @@ Checkbox group.
 | Cedar | `Input_71_07` |
 | Cedar Shake | `Input_71_08` |
 | Clapboard | `Input_71_10` |
+| Composite | `Input_71_26` |
 | Glass | `Input_71_11` |
 | Hardboard | `Input_71_12` |
 | HardiPlank Type | `Input_71_25` |
@@ -117,7 +127,7 @@ Checkbox group.
 
 ### Roof
 
-Checkbox group.
+Checkbox group (17 options, confirmed via live extraction 2026-09-11).
 
 | Label | Input ID |
 |---|---|
@@ -199,7 +209,7 @@ Checkbox group. *Named suffixes, not numeric.*
 
 ### Attic
 
-Checkbox group.
+Checkbox group (9 options, confirmed via live extraction 2026-09-11).
 
 | Label | Input ID |
 |---|---|
@@ -382,7 +392,7 @@ Select/dropdown.
 
 ### Garage
 
-Checkbox group.
+Checkbox group (18 options, confirmed via live extraction 2026-09-11).
 
 | Label | Input ID |
 |---|---|
@@ -409,7 +419,7 @@ Checkbox group.
 
 ### Basement/Foundation
 
-Checkbox group.
+Checkbox group (19 options, confirmed via live extraction 2026-09-11).
 
 | Label | Input ID |
 |---|---|
@@ -577,7 +587,7 @@ Checkbox group.
 
 ### Restrictions
 
-Checkbox group.
+Checkbox group (24 options, confirmed via live extraction 2026-09-11).
 
 | Label | Input ID |
 |---|---|
@@ -876,7 +886,7 @@ Select/dropdown.
 
 ### Disabl Feat
 
-Checkbox group.
+Checkbox group (20 options, confirmed via live extraction 2026-09-11).
 
 | Label | Input ID |
 |---|---|
@@ -971,7 +981,7 @@ Select/dropdown.
 
 ### Unit Placement
 
-Checkbox group.
+Checkbox group (8 options, confirmed via live extraction 2026-09-11).
 
 | Label | Input ID |
 |---|---|
@@ -1022,7 +1032,7 @@ Checkbox group. *`Input_88_13` (Geothermal) is non-sequential — do not assume 
 
 ### Water Type
 
-Checkbox group.
+Checkbox group (24 options, confirmed via live extraction 2026-09-11).
 
 | Label | Input ID |
 |---|---|
@@ -1074,7 +1084,7 @@ Checkbox group.
 
 ### Building/Structure
 
-Checkbox group.
+Checkbox group (21 options, confirmed via live extraction 2026-09-11).
 
 | Label | Input ID |
 |---|---|
