@@ -1,6 +1,6 @@
 # CVRMLS Matrix — Features Tab Field Map
 **Document ID:** AAR-TC-CVRMLS-BM-001-FEA
-**Version:** 1.1
+**Version:** 1.2
 **Last Updated:** September 11, 2026
 **Addendum to:** `CVRMLS_Bookmarklet_Build.md` (`AAR-TC-CVRMLS-BM-001`)
 
@@ -14,6 +14,7 @@
 |---|---|---|---|
 | 1.0 | 2026-06-27 | Andrew Rich / Claude | Initial extraction — all 10 chunks, ~49 field groups. |
 | 1.1 | 2026-09-11 | Andrew Rich / Claude | Live-extraction verification pass (Claude in Chrome ES session) on the 12 groups flagged as suffix-gap candidates during the AAR-TC Lennar Operational Project's Features pre-write checkpoint: Water Type, Disabl Feat, Style, Restrictions, Garage, Attic, Building/Structure, Siding, Structure, Roof, Basement/Foundation, Unit Placement. 11 of 12 confirmed exact matches with no changes. Siding was missing one option — Composite (`Input_71_26`) — added; count corrected 23 → 24. Each verified group's header now states its confirmed option count. Remaining Tier 1/Tier 3 groups (sequence-clean or small/unconfirmable, no proven gap) are not yet live-verified — see the session's Features pre-write checkpoint doc for the full tier breakdown. |
+| 1.2 | 2026-09-11 | Andrew Rich / Claude | Live-extraction verification pass completed on the remaining 18 groups (the prior pass's Tier 1 "sequence-clean" and Tier 3 "small/named-suffix" candidates): Flooring, Golf View/Frontage, Parking, Currently Connected Internet, Water, Sewer/Septic, Fenced, Fireplace, Green Cert, Pool Description, Heating, Water Heater, Heat/Fuel, Porch, Cooling, Wall Type, Farm Type, Irrigation Source. All 18 confirmed exact matches — no additions, no removals. Every checkbox group in this document (30 of 30 previously unconfirmed groups, plus the 4 that already carried stated counts) now has a stated, live-confirmed option count. Field map is fully verified end to end as of this version. |
 
 ---
 
@@ -153,7 +154,7 @@ Checkbox group (17 options, confirmed via live extraction 2026-09-11).
 
 ### Flooring
 
-Checkbox group.
+Checkbox group (17 options, confirmed via live extraction 2026-09-11).
 
 | Label | Input ID |
 |---|---|
@@ -195,7 +196,7 @@ Select/dropdown.
 
 ### Golf View/Frontage
 
-Checkbox group. *Named suffixes, not numeric.*
+Checkbox group (5 options, confirmed via live extraction 2026-09-11). *Named suffixes, not numeric.*
 
 | Label | Input ID |
 |---|---|
@@ -227,7 +228,7 @@ Checkbox group (9 options, confirmed via live extraction 2026-09-11).
 
 ### Parking
 
-Checkbox group.
+Checkbox group (16 options, confirmed via live extraction 2026-09-11).
 
 | Label | Input ID |
 |---|---|
@@ -304,7 +305,7 @@ Checkbox group (39 options).
 
 ### Currently Connected Internet
 
-Checkbox group. *Named suffixes, not numeric.*
+Checkbox group (7 options, confirmed via live extraction 2026-09-11). *Named suffixes, not numeric.*
 
 | Label | Input ID |
 |---|---|
@@ -513,7 +514,7 @@ Checkbox group (57 options).
 
 ### Water
 
-Checkbox group. *Named suffixes, not numeric.*
+Checkbox group (4 options, confirmed via live extraction 2026-09-11). *Named suffixes, not numeric.*
 
 | Label | Input ID |
 |---|---|
@@ -526,7 +527,7 @@ Checkbox group. *Named suffixes, not numeric.*
 
 ### Sewer/Septic
 
-Checkbox group. *Named suffixes, not numeric.*
+Checkbox group (7 options, confirmed via live extraction 2026-09-11). *Named suffixes, not numeric.*
 
 | Label | Input ID |
 |---|---|
@@ -558,7 +559,7 @@ Select/dropdown.
 
 ### Fenced
 
-Checkbox group.
+Checkbox group (20 options, confirmed via live extraction 2026-09-11).
 
 | Label | Input ID |
 |---|---|
@@ -628,7 +629,7 @@ Checkbox group (24 options, confirmed via live extraction 2026-09-11).
 
 ### Fireplace
 
-Checkbox group.
+Checkbox group (9 options, confirmed via live extraction 2026-09-11).
 
 | Label | Input ID |
 |---|---|
@@ -703,7 +704,7 @@ Checkbox group (44 options).
 
 ### Green Cert
 
-Checkbox group.
+Checkbox group (7 options, confirmed via live extraction 2026-09-11).
 
 | Label | Input ID |
 |---|---|
@@ -731,7 +732,7 @@ Select/dropdown.
 
 ### Pool Description
 
-Checkbox group.
+Checkbox group (20 options, confirmed via live extraction 2026-09-11).
 
 | Label | Input ID |
 |---|---|
@@ -812,7 +813,7 @@ Checkbox group (39 options).
 
 ### Heating
 
-Checkbox group.
+Checkbox group (19 options, confirmed via live extraction 2026-09-11).
 
 | Label | Input ID |
 |---|---|
@@ -848,7 +849,7 @@ Checkbox group.
 
 ### Water Heater
 
-Checkbox group.
+Checkbox group (13 options, confirmed via live extraction 2026-09-11).
 
 | Label | Input ID |
 |---|---|
@@ -915,7 +916,7 @@ Checkbox group (20 options, confirmed via live extraction 2026-09-11).
 
 ### Heat/Fuel
 
-Checkbox group.
+Checkbox group (11 options, confirmed via live extraction 2026-09-11).
 
 | Label | Input ID |
 |---|---|
@@ -943,7 +944,7 @@ Checkbox group.
 
 ### Porch
 
-Checkbox group.
+Checkbox group (13 options, confirmed via live extraction 2026-09-11).
 
 | Label | Input ID |
 |---|---|
@@ -998,7 +999,7 @@ Checkbox group (8 options, confirmed via live extraction 2026-09-11).
 
 ### Cooling
 
-Checkbox group. *`Input_88_13` (Geothermal) is non-sequential — do not assume suffix order matches display order.*
+Checkbox group (13 options, confirmed via live extraction 2026-09-11). *`Input_88_13` (Geothermal) is non-sequential — do not assume suffix order matches display order.*
 
 | Label | Input ID |
 |---|---|
@@ -1065,7 +1066,7 @@ Checkbox group (24 options, confirmed via live extraction 2026-09-11).
 
 ### Wall Type
 
-Checkbox group.
+Checkbox group (10 options, confirmed via live extraction 2026-09-11).
 
 | Label | Input ID |
 |---|---|
@@ -1114,7 +1115,7 @@ Checkbox group (21 options, confirmed via live extraction 2026-09-11).
 
 ### Farm Type
 
-Checkbox group.
+Checkbox group (9 options, confirmed via live extraction 2026-09-11).
 
 | Label | Input ID |
 |---|---|
@@ -1132,7 +1133,7 @@ Checkbox group.
 
 ### Irrigation Source
 
-Checkbox group.
+Checkbox group (5 options, confirmed via live extraction 2026-09-11).
 
 | Label | Input ID |
 |---|---|
