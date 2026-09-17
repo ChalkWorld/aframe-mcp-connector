@@ -1,5 +1,5 @@
 # Repo Structure — Quick Reference
-**Last Updated:** August 24, 2026 (regenerated from actual repo structure — see Layer Logic for `docs/operational/` note)
+**Last Updated:** September 17, 2026 (added `/docs/foundation/` to the tree diagram and named `Payload_Rules_Conventions.md`)
 
 ---
 
@@ -64,6 +64,11 @@ docs/
 │       ├── Payload schema (LENNAR-OPS-SCHEMA-001)
 │       └── Project protocol (LENNAR-OPS-PROTOCOL-001)
 │
+├── foundation/         ← Cross-cutting architecture and governance (FOUND-*)
+│   ├── Restructure Charter (FOUND-CHARTER-001)
+│   ├── Phase Tracker (FOUND-PHASE-TRACKER-001)
+│   └── Payload Rules Conventions (PAYLOAD-RULES-CONVENTIONS-001)
+│
 ├── mls-input/          ← MLS-side input/extraction procedures
 │   └── Aframe Swagger endpoint extraction procedure
 │
@@ -99,7 +104,7 @@ docs/
 
 **`docs/operational/`** — Operational doc sets for downstream Claude projects that execute (rather than author) builder-specific workflows. Each subdirectory (`docs/operational/lennar/`, future `docs/operational/<builder>/`) contains a scoped, self-contained set of docs derived from the corresponding authoring folder. Operational sets are the current edit target once created; corresponding authoring folders (e.g. `docs/lennar/`) freeze as historical reference after their operational counterpart stands up. **All five `docs/operational/lennar/` docs are tracked in this git repo** — they are not maintained externally. `Issue_Report_Resolution_Log.md` (referenced elsewhere in the AAR-TC Lennar Operational Project) does not exist anywhere in this repo, tracked or untracked, as of this update — confirm with the operational project owner whether it lives outside git or hasn't been created yet.
 
-**`docs/foundation/`** — cross-cutting architecture and governance for the restructured AAR-TC Lennar Operational Project. Contains the Restructure Charter (`FOUND-CHARTER-001`), the Phase Tracker (`FOUND-PHASE-TRACKER-001`), and Phase 0 foundation docs as they land (Base Schema Specification, maintenance protocol, builder-onboarding protocol, and a short exclusion reference for hidden Matrix infrastructure fields). Distinct from any single MLS or builder layer — this layer governs the shape of the stack itself. Doc IDs use the `FOUND-` prefix. Foundation docs are engineer-facing; SOP and help-desk artifacts for the operator live in the corresponding operational set.
+**`docs/foundation/`** — cross-cutting architecture and governance for the restructured AAR-TC Lennar Operational Project. Contains the Restructure Charter (`FOUND-CHARTER-001`), the Phase Tracker (`FOUND-PHASE-TRACKER-001`), the Payload Rules Conventions (`PAYLOAD-RULES-CONVENTIONS-001` — script-author reference for how the Lennar Payload Rules table is authored, dropped in 2026-09-17; ID prefix not yet aligned to `FOUND-*` convention, revisit at next tracker close), and Phase 0 foundation docs as they land (Base Schema Specification, maintenance protocol, builder-onboarding protocol, and a short exclusion reference for hidden Matrix infrastructure fields). Distinct from any single MLS or builder layer — this layer governs the shape of the stack itself. Doc IDs generally use the `FOUND-` prefix. Foundation docs are engineer-facing; SOP and help-desk artifacts for the operator live in the corresponding operational set.
 
 **`docs/mls-input/`** — MLS-side input/extraction procedures not specific to any one MLS or builder (currently: the Aframe Swagger endpoint extraction procedure).
 
