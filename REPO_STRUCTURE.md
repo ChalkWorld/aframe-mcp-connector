@@ -52,8 +52,7 @@ docs/
 │   │                      docs/operational/lennar/ has stood up (see Layer Logic)
 │   ├── Community reference database (frozen — superseded by Airtable Community Reference DB)
 │   ├── New listing protocol (frozen v2.9 — superseded by docs/operational/lennar/Lennar_New_Listing_Protocol.md)
-│   ├── Payload schema (frozen v1.5 — superseded by docs/operational/lennar/Lennar_Payload_Schema.md)
-│   └── Photo preprocessing (local AI photo sorter — not superseded, still active)
+│   └── Payload schema (frozen v1.5 — superseded by docs/operational/lennar/Lennar_Payload_Schema.md)
 │
 ├── operational/        ← Operational doc sets for downstream Claude projects that execute
 │   │                      (rather than author) builder-specific workflows
@@ -71,6 +70,9 @@ docs/
 │
 ├── mls-input/          ← MLS-side input/extraction procedures
 │   └── Aframe Swagger endpoint extraction procedure
+│
+├── local-tools/        ← Local operator tools (macOS scripts, droplets)
+│   └── Photo sorter (Swift + Apple Vision, Automator droplet)
 │
 ├── connector/          ← Aframe connector technical reference
 │   ├── Technical reference
@@ -100,13 +102,15 @@ docs/
 
 **`docs/cvrmls/`** — anything that describes CVRMLS Matrix itself: field IDs, option values, tab structure, cascade behavior, universal JS variants. Anyone working any CVRMLS listing uses these docs. Future MLS systems follow the same pattern: `docs/rein/`, `docs/bright/`, etc.
 
-**`docs/lennar/`** — anything Lennar-specific: hardcoded statics, community lookup tables, `isLennar` flag behavior, listing protocol tied to Carly/Megan emails. This is the authoring-lineage layer, tracked in this same repo. Now that `docs/operational/lennar/` has stood up, the two docs it explicitly supersedes — `Lennar_Payload_Schema.md` (frozen at v1.5) and `Lennar_New_Listing_Protocol.md` (frozen at v2.9) — are frozen historical reference at their original paths (not moved, not archived elsewhere). `Lennar_Community_Reference_Database.md` is separately superseded by the Airtable Community Reference DB table. `Lennar_Photo_Preprocessing.md` is not superseded by anything and remains active. Future builders follow the same pattern: `docs/[builder]/`, referencing the relevant MLS layer.
+**`docs/lennar/`** — anything Lennar-specific: hardcoded statics, community lookup tables, `isLennar` flag behavior, listing protocol tied to Carly/Megan emails. This is the authoring-lineage layer, tracked in this same repo. Now that `docs/operational/lennar/` has stood up, the two docs it explicitly supersedes — `Lennar_Payload_Schema.md` (frozen at v1.5) and `Lennar_New_Listing_Protocol.md` (frozen at v2.9) — are frozen historical reference at their original paths (not moved, not archived elsewhere). `Lennar_Community_Reference_Database.md` is separately superseded by the Airtable Community Reference DB table. `Lennar_Photo_Preprocessing.md` has been migrated out of this layer to `docs/local-tools/Local_Real_Estate_Photo_Sorter.md` (`AAR-TC-TOOLS-PHOTO-SORTER-001`) — the built tool is general-MLS, not Lennar-specific. Future builders follow the same pattern: `docs/[builder]/`, referencing the relevant MLS layer.
 
 **`docs/operational/`** — Operational doc sets for downstream Claude projects that execute (rather than author) builder-specific workflows. Each subdirectory (`docs/operational/lennar/`, future `docs/operational/<builder>/`) contains a scoped, self-contained set of docs derived from the corresponding authoring folder. Operational sets are the current edit target once created; corresponding authoring folders (e.g. `docs/lennar/`) freeze as historical reference after their operational counterpart stands up. **All five `docs/operational/lennar/` docs are tracked in this git repo** — they are not maintained externally. `Issue_Report_Resolution_Log.md` (referenced elsewhere in the AAR-TC Lennar Operational Project) does not exist anywhere in this repo, tracked or untracked, as of this update — confirm with the operational project owner whether it lives outside git or hasn't been created yet.
 
 **`docs/foundation/`** — cross-cutting architecture and governance for the restructured AAR-TC Lennar Operational Project. Contains the Restructure Charter (`FOUND-CHARTER-001`), the Phase Tracker (`FOUND-PHASE-TRACKER-001`), the Payload Rules Conventions (`PAYLOAD-RULES-CONVENTIONS-001` — script-author reference for how the Lennar Payload Rules table is authored, dropped in 2026-09-17; ID prefix not yet aligned to `FOUND-*` convention, revisit at next tracker close), and Phase 0 foundation docs as they land (Base Schema Specification, maintenance protocol, builder-onboarding protocol, and a short exclusion reference for hidden Matrix infrastructure fields). Distinct from any single MLS or builder layer — this layer governs the shape of the stack itself. Doc IDs generally use the `FOUND-` prefix. Foundation docs are engineer-facing; SOP and help-desk artifacts for the operator live in the corresponding operational set.
 
 **`docs/mls-input/`** — MLS-side input/extraction procedures not specific to any one MLS or builder (currently: the Aframe Swagger endpoint extraction procedure).
+
+**`docs/local-tools/`** — documentation for local operator tools that run on the operator's Mac rather than in the connector or extension runtime. These tools sit in the toolbox next to Claude — sessions reference them procedurally but do not orchestrate them. Doc IDs use the `AAR-TC-TOOLS-` prefix. Current entry: the photo sorter (`AAR-TC-TOOLS-PHOTO-SORTER-001`) — Swift + Apple Vision, Automator droplet. Adjacent tools of the same shape (e.g. the Reverse Prospecting Cursor script) can migrate here as their docs are formalized.
 
 **`bookmarklets/`** — deployment artifacts generated from the source files in `docs/cvrmls/`. Universal tabs have generic names; builder-specific launchers are named explicitly.
 
