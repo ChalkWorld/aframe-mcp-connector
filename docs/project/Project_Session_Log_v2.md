@@ -1180,5 +1180,37 @@ Reframed the project. The session-driven end-to-end model (one Claude session pe
 
 ---
 
+## Session 020 — Photo Sorter Migration to `docs/local-tools/`
+**Date:** September 29, 2026
+
+### Focus
+Home in the repo for the Gemini-built Swift POC that closes the long-standing `AAR-TC-LENNAR-PHOTO-001` carryforward. Established a new `docs/local-tools/` layer, migrated the photo preprocessing doc into it under a new doc ID, deleted the stale design doc, committed the Swift source alongside the doc, and updated `REPO_STRUCTURE.md` with a corresponding Layer Logic paragraph. Also folded in: moved `sort_listing.swift` off the Desktop to a permanent local path and updated the Automator droplet accordingly. Tool verified end-to-end with a test image.
+
+### What Was Accomplished
+Migration executed via three Cursor handoffs in a first commit, followed by a session-log-plus-source commit. The old `docs/lennar/Lennar_Photo_Preprocessing.md` (`AAR-TC-LENNAR-PHOTO-001` v1.0, June 2026) was the pre-build design/plan doc — Python/pyobjc plan, open questions, phased build roadmap. The new `docs/local-tools/Local_Real_Estate_Photo_Sorter.md` (`AAR-TC-TOOLS-PHOTO-SORTER-001` v1.0) replaces it with an implementation reference matching what the code actually does: Swift source verbatim, Automator droplet setup with the real path, reconciled category table, and a Status & Refinement Path section naming the future work that the POC doesn't cover. The Swift source itself is committed alongside the doc at `docs/local-tools/sort_listing.swift` as the canonical copy.
+
+### Key Decisions
+- **Doc moved out of `docs/lennar/`, not kept in it.** Rationale: the built tool is general-MLS, not Lennar-specific. The design doc framing was Lennar (Box drops, bathroom-first ordering as the driving problem), but the built tool's category ontology (porch, foyer, basement, shed, patio/deck/backyard) is generic. The driving use case remains Lennar, and the operational protocol's Step 4a photo source resolution continues to reference this tool — but the tool itself lives at the general layer.
+- **New `docs/local-tools/` layer established.** Doc IDs use the `AAR-TC-TOOLS-` prefix. Layer Logic paragraph in `REPO_STRUCTURE.md` frames it as documentation for local operator tools that run on the operator's Mac rather than in the connector or extension runtime — tools that sit in the toolbox next to Claude, referenced procedurally but not orchestrated by the session (consistent with Session 018 §"Not every automation needs to live inside the session's execution surface"). Adjacent tools of the same shape (e.g. the Reverse Prospecting Cursor script) can migrate here as their docs are formalized.
+- **Swift over Python confirmed.** Gemini's build-time choice was the right one: zero dependencies (`/usr/bin/swift` ships with macOS), native Vision framework, single-file script, no `pyobjc` bridging layer. Same Neural Engine path at the model layer either way. The original design's Python/pyobjc plan retires with the deleted doc.
+- **Doc reconciled to the code, not to the plan.** Category table now reflects the actual `categoryRank` dictionary (13 priority tiers, 0.25 confidence threshold, rank 500 fallback for no-keyword-match, rank 999 for unreadable). Aspirational features from the design doc (dry-run flag, primary vs. additional bedroom split, Aerial/Community category) moved into a Status & Refinement Path section naming a Lennar-tuned variant, tighter category groupings, confidence threshold tuning, and the `--dry-run` flag as future work. POC works; refinement is optional.
+- **Source committed to the repo as a peer of the doc.** `docs/local-tools/sort_listing.swift` is the canonical copy. The doc still embeds the source verbatim so it reads as a self-contained reference, but the peer `.swift` file is the authoritative source going forward — future edits touch the `.swift` first, then sync the embedded block in the doc. The operator's local copy at `~/Desktop/Listing Folder/Photo Sorter/sort_listing.swift` is the runnable copy the Automator droplet points at; updates flow repo → local via manual copy after each change lands on `main`.
+
+### Artifacts Produced
+- `docs/local-tools/Local_Real_Estate_Photo_Sorter.md` (`AAR-TC-TOOLS-PHOTO-SORTER-001` v1.0) — new
+- `docs/local-tools/sort_listing.swift` — new (canonical Swift source, peer of the doc)
+- `docs/lennar/Lennar_Photo_Preprocessing.md` (`AAR-TC-LENNAR-PHOTO-001` v1.0) — deleted
+- `REPO_STRUCTURE.md` — tree updated (photo preprocessing removed from `docs/lennar/`, `docs/local-tools/` added between `mls-input/` and `connector/`); Layer Logic updated (photo preprocessing sentence in `docs/lennar/` paragraph now points to the new location, new `docs/local-tools/` paragraph added between `mls-input/` and `bookmarklets/`)
+- Cursor handoffs (deleted post-commit per handoff protocol)
+- This session log entry
+
+### What We Intentionally Didn't Do
+- **Didn't touch the Session Log v1 carryforward pointer** to `AAR-TC-LENNAR-PHOTO-001` under Session 017's "Open Items Carried Forward". That log is archived — the defunct ID stays there as historical record and is now cross-referenced by this entry's Key Decisions.
+- **Didn't build any of the refinement candidates.** Lennar-tuned variant, `--dry-run` flag, tighter category groupings, and confidence threshold tuning are named in the new doc's Status & Refinement Path section as future work. The POC works for the current volume of listings; refinement waits for evidence it's needed.
+- **Didn't audit `docs/foundation/`'s absence from the `REPO_STRUCTURE.md` tree block.** Noted in-session as a pre-existing gap (the layer has its own Layer Logic paragraph but doesn't appear in the tree at line 41+), but out of scope for this session's photo-sorter migration. Candidate for a future structure-cleanup pass.
+- **Didn't update the doc's Swift Implementation section to reference the peer `.swift` file.** The doc still reads as if the embedded code block is the sole location of the source. Low-priority polish — the doc doesn't lie, it just doesn't mention the peer file exists. Fold into the next doc revision if convenient.
+
+---
+
 *AAR-TC Transaction Services | agentandrewrich@gmail.com | www.aar-tc.com*
 *This is a living document. Each session adds one entry; version_date is not maintained (chronology is captured in the entries themselves).*
