@@ -1,7 +1,7 @@
 ---
 title: Payload Rules — Script-Author Conventions
 document_id: PAYLOAD-RULES-CONVENTIONS-001
-version: 0.2
+version: 0.3
 date: 2026-09-30
 project: AAR-TC Lennar Operational Project
 related: Lennar_Payload_Schema.md, Lennar_Restructure_Charter.md, Lennar_Restructure_Phase_Tracker.md
@@ -36,7 +36,9 @@ The integer-to-string coercion is likewise implicit for these fields; Transform 
 
 ### 2. The Cognito Field link is the primary source
 
-When `Source Type = COGNITO`, the linked **Cognito Field** is the sole value source for that rule. If a rule needs to read a second Cognito field to gate or combine with the first, that is a `DERIVED` rule and the second field's read is spelled out in the **Transform / Logic** column.
+When `Source Type = COGNITO`, the linked **Cognito Field** is the sole value source for that rule. If a rule needs to read a second Cognito field to gate or combine with the first, that is a `DERIVED` rule and the additional fields' reads are spelled out in the **Transform / Logic** column.
+
+For `DERIVED` rules reading multiple Cognito fields, link all source fields on the row — the Cognito Field column is `multipleRecordLinks` by design, and linking every source gives a maintainer the full input list without having to parse the Transform prose. Example: the Features `basement_foundation` rule reads PropertyType, Basement, and FinishedStatus, and all three are linked on the row.
 
 The linked Cognito Field's own **Conditional Visibility** on the form is descriptive metadata about the form — it records what the form does. It is not a gate the script honors. If visibility behavior needs to be honored to prevent bad data, that is a form-side or NHC-training concern, handled upstream.
 
@@ -95,9 +97,21 @@ When a rule reads a Cognito field and applies a Transform, the source-type class
 
 The distinction matters because a script author reading `COGNITO` with Transform expects the rule to preserve what the NHC submitted; `DERIVED` signals that the script is authoring the value from inputs, and misreads there produce values the NHC never confirmed.
 
+### 8. Property-Type scoping pattern
+
+When a rule has different treatment for Single Family vs. Townhouse, choose between splitting into two Property-Type-scoped rules or unifying as one `DERIVED` rule based on what each branch actually is:
+
+**Split into two Property-Type-scoped rules** when one branch is a Cognito format-shift and the other is a fixed authored value (or two different fixed authored values). Property-Type scoping is expressed via the row's Property Type multi-select field. Example: Style (Input_541) — SF branch is `COGNITO` with a format-shift Transform reading `PropertyBasics.Style` (Ranch → `["18"]`, 2 Story → `["27"]`, Custom → `["06"]`); TH branch is `STATIC` `["19"]`. Two rules, both scoped to their respective property type; each rule's Source Type is honest about what the rule does.
+
+**Unify as one `DERIVED` rule** when both branches fit into one Transform reading PropertyType as an input, and where at least one branch is a derivation from other inputs rather than a fixed authored value. Example: Basement/Foundation (Input_569) — TH → `["12"]` (Slab); SF+No → `["03"]` (Crawl Space); SF+Yes → FinishedStatus-mapped code with Unfinished default. One rule, PropertyType linked as one of the source Cognito Fields, all branches spelled out in Transform.
+
+Distinguishing criterion: does splitting produce two clean rules with honest Source Types (one `COGNITO` w/ format-shift + one `STATIC`), or does it produce two rules that would both be `DERIVED` with each branch's Transform being trivial? If the latter, unify. This convention is a downstream application of convention #7's classification — a rule authored as `COGNITO` w/ Transform must preserve source meaning, and if the TH branch has no Cognito source to preserve, splitting keeps the SF branch classified honestly.
+
 ---
 
 ## Change Log
+
+**v0.3 — 2026-09-30** — Added convention #8 (Property-Type scoping pattern) surfaced during Features authoring's Style rule decision (SF branch is a Cognito format-shift; TH branch is a fixed authored value; splitting into two Property-Type-scoped rules keeps each Source Type honest, unifying into one DERIVED would overload the classification). Convention #8 is a downstream application of convention #7 — the choice of split-vs-unify follows from whether each branch preserves source meaning (COGNITO w/ Transform) or invents value from inputs (DERIVED). Convention #2 refined to acknowledge that DERIVED rules reading multiple Cognito fields link all source fields on the row (the Cognito Field column is multipleRecordLinks by design). Both codifications surfaced from the Features authoring pass (v0.11 of the tracker); no rule teardowns required.
 
 **v0.2 — 2026-09-30** — Added convention #6 (community-name resolution and hard-fail on unresolved lookup) surfaced during v0.10's Listing Info authoring pass, and convention #7 (DERIVED vs. COGNITO with Transform classification) surfaced by the Rooms rule's classification decision in the same pass. Both codify script-contract behaviors previously implicit in prior rule authoring. Convention #6 is the community-lookup extension of #5's absence-as-signal pattern. Convention #7 is the operating principle behind why Type and Attached Y/N are `COGNITO` with Transform (format shifts) while Rooms is `DERIVED` (invention from source).
 
