@@ -1,8 +1,8 @@
 ---
 title: Payload Rules — Script-Author Conventions
 document_id: PAYLOAD-RULES-CONVENTIONS-001
-version: 0.1
-date: 2026-09-17
+version: 0.2
+date: 2026-09-30
 project: AAR-TC Lennar Operational Project
 related: Lennar_Payload_Schema.md, Lennar_Restructure_Charter.md, Lennar_Restructure_Phase_Tracker.md
 ---
@@ -66,9 +66,40 @@ The table covers only what the script writes. Fields Matrix defaults blank and t
 
 Matrix-required fields that go missing at intake are enforced upstream (Cognito form required-field validation), not documented here. If a Matrix-required field somehow arrives blank, Matrix flags it when the listing is flipped to Active — this is a known escape hatch, not a script responsibility.
 
+### 6. Community-name resolution and unresolved-lookup behavior
+
+The payload's top-level `community` key is not a Matrix write; it's a session-side variable used to key every `COMMUNITY_DB` rule's lookup. Per convention #5 (no row for what the script doesn't write to Matrix), community-name resolution has no Payload Rules row.
+
+The resolution combines two Cognito Form 17 fields to form the Community Reference DB lookup key:
+
+- `Intake.Community` (closed enum: `Harpers Mill`, `Creekside Run`, `Everstone`, `Watermark`)
+- `PropertyBasics.PropertyType` (`Single Family` or `Townhouse`)
+
+Concatenated as `<Community> <TH|SF>` (e.g. `"Harpers Mill" + "Townhouse" → "Harpers Mill TH"`), then queried against the Community Reference DB's `Community` primary field.
+
+**Unresolved lookup is a hard error at payload generation.** Some Community × PropertyType combinations have no DB record — `Creekside Run + Single Family`, `Everstone + Townhouse`, and `Watermark + Townhouse` are all currently invalid. When the lookup misses, the script fails loudly rather than fuzzy-matching, applying a default, or silently omitting community-driven fields. Bad NHC selection is caught by the operator at intake review, not by script-side error correction. This is the community-lookup extension of convention #5's absence-as-signal pattern.
+
+### 7. DERIVED vs. COGNITO with Transform
+
+When a rule reads a Cognito field and applies a Transform, the source-type classification depends on what the Transform does. The **Cognito Field** link on the rule is populated in both cases; the **Source Type** distinguishes them.
+
+**Format shift preserving meaning → `COGNITO` with Transform.** The output represents the same underlying fact as the source, translated to the format Matrix expects. The source's semantic content is preserved; only the encoding changes.
+
+- Type (`Input_849`) reads `PropertyBasics.PropertyType` with Transform `"Single Family" → "SFR"` / `"Townhouse" → "TOWN"` — property type stays property type.
+- Attached Y/N (`Input_850`) reads the same field with Transform `"Townhouse" → "1"` / `"Single Family" → "0"` — attached-ness is derivable directly from home type without invention.
+
+**Lossy inference (value invented from source) → `DERIVED`.** The output is a different fact from the source, produced by an authoring rule. The source is one input to the derivation, not the value carrier.
+
+- Rooms (`Input_48`) reads `PropertyBasics.PropertyType` with Transform `SF → "10"` / `TH → "8"` — room count is not a property of home type; the Lennar-wide standing default assigns a plausible count per type.
+- Bath Info's `Basement.desc` / `Level<n>.desc` rules (`IF FullBath > 0 → "TS", ELSE ""`) read the level's own `FullBath` count with an IF/ELSE — descriptor invented from count.
+
+The distinction matters because a script author reading `COGNITO` with Transform expects the rule to preserve what the NHC submitted; `DERIVED` signals that the script is authoring the value from inputs, and misreads there produce values the NHC never confirmed.
+
 ---
 
 ## Change Log
+
+**v0.2 — 2026-09-30** — Added convention #6 (community-name resolution and hard-fail on unresolved lookup) surfaced during v0.10's Listing Info authoring pass, and convention #7 (DERIVED vs. COGNITO with Transform classification) surfaced by the Rooms rule's classification decision in the same pass. Both codify script-contract behaviors previously implicit in prior rule authoring. Convention #6 is the community-lookup extension of #5's absence-as-signal pattern. Convention #7 is the operating principle behind why Type and Attached Y/N are `COGNITO` with Transform (format shifts) while Rooms is `DERIVED` (invention from source).
 
 **v0.1 — 2026-09-17** — Initial conventions drafted during the Bath Info philosophy pass. Conventions 1–5 established. This file exists because the Airtable base's own table description could not be updated via the API (approval flow); conventions live here for now, mirrored into the Payload Rules table description manually when convenient.
 
