@@ -1,8 +1,8 @@
 ---
 title: Payload Rules — Script-Author Conventions
 document_id: PAYLOAD-RULES-CONVENTIONS-001
-version: 0.3
-date: 2026-09-30
+version: 0.4
+date: 2026-10-01
 project: AAR-TC Lennar Operational Project
 related: Lennar_Payload_Schema.md, Lennar_Restructure_Charter.md, Lennar_Restructure_Phase_Tracker.md
 ---
@@ -107,9 +107,21 @@ When a rule has different treatment for Single Family vs. Townhouse, choose betw
 
 Distinguishing criterion: does splitting produce two clean rules with honest Source Types (one `COGNITO` w/ format-shift + one `STATIC`), or does it produce two rules that would both be `DERIVED` with each branch's Transform being trivial? If the latter, unify. This convention is a downstream application of convention #7's classification — a rule authored as `COGNITO` w/ Transform must preserve source meaning, and if the TH branch has no Cognito source to preserve, splitting keeps the SF branch classified honestly.
 
+### 9. Community Reference DB holds the values Matrix expects
+
+When a `COMMUNITY_DB` rule has no Transform, the script writes the Community Reference DB column's value verbatim to Matrix. For Matrix SELECT and SELECT_DYNAMIC fields (schools, Area, Zip, etc.) reached that way, the DB column must hold the **stored value**, not the display label — `DeepCreek` not `Deep Creek`, `HighlandSprings` not `Highland Springs`, `RiverCity` not `River City`. The script does no implicit display→stored normalization.
+
+Where stored value and display label match (most entries do — `Winterpock`, `Hopkins`, `Bird`, `Huguenot`), either is fine; where they diverge, the DB holds the stored value. The CVRMLS Matrix Fields base's `Cascade Options` and `Field Options` tables are the stored-value reference when authoring new DB rows.
+
+When a DB column stores a composed display string that the script decomposes (HOA Fee `"$800.00 / Yearly"` → Fee Amount + Fee Period as two rules reading the same column with different Transforms), the Transform spells out the extraction explicitly — verbatim passthrough is only the default when no Transform is present.
+
+This convention is a downstream application of convention #3 (Transform is the definitive spec when present; otherwise verbatim passthrough from the source). It specifies what the DB must hold for passthrough to work for SELECT and SELECT_DYNAMIC fields.
+
 ---
 
 ## Change Log
+
+**v0.4 — 2026-10-01** — Added convention #9 (Community Reference DB holds the values Matrix expects) surfaced during the 2026-10-01 Community DB school-column cleanup pass. 5 cells in the Lennar Community Reference DB were holding display text where Matrix expects stored values (`Deep Creek` → `DeepCreek`, `River City` → `RiverCity`, `Falling Creek` → `FallingCreek`, `Highland Springs` → `HighlandSprings`); the fix made the 4 Listing Info COMMUNITY_DB rules clean verbatim passthroughs with no Transforms needed. Convention #9 locks the guarantee: for `COMMUNITY_DB` rules without a Transform, the DB column holds what Matrix expects as the stored value. Downstream application of convention #3. The CVRMLS Matrix Fields base's new `Cascade Options` table (built the same session as the final Phase 0 data-modeling item) is the stored-value reference for cascade-scoped fields; `Field Options` is the reference for non-cascade SELECT and CHECKBOX_GROUP fields.
 
 **v0.3 — 2026-09-30** — Added convention #8 (Property-Type scoping pattern) surfaced during Features authoring's Style rule decision (SF branch is a Cognito format-shift; TH branch is a fixed authored value; splitting into two Property-Type-scoped rules keeps each Source Type honest, unifying into one DERIVED would overload the classification). Convention #8 is a downstream application of convention #7 — the choice of split-vs-unify follows from whether each branch preserves source meaning (COGNITO w/ Transform) or invents value from inputs (DERIVED). Convention #2 refined to acknowledge that DERIVED rules reading multiple Cognito fields link all source fields on the row (the Cognito Field column is multipleRecordLinks by design). Both codifications surfaced from the Features authoring pass (v0.11 of the tracker); no rule teardowns required.
 
