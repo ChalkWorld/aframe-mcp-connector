@@ -1,5 +1,5 @@
 # Repo Structure — Quick Reference
-**Last Updated:** September 17, 2026 (added `/docs/foundation/` to the tree diagram and named `Payload_Rules_Conventions.md`)
+**Last Updated:** October 2, 2026 (added `extension/scripts/` for the Phase 1 Lennar Payload Generator CLI)
 
 ---
 
@@ -32,6 +32,12 @@ Universal CVRMLS Matrix tab launchers. One HTML file per tab. Builder-specific l
 Chrome extension (Manifest V3) — POC consolidating the bookmarklet-per-tab system into one tool. Auto-detects the current Matrix tab and fills its fields on click, replacing the need to click a separate bookmark per tab. Scoped to Lennar/CVRMLS only for the POC — the `payload.mls` / `payload.builder` envelope keys and multi-MLS/multi-builder routing are a later-phase decision, not built into the POC.
 
 Internal layout (manifest, content scripts, popup, etc.) is finalized during the build session — this entry reserves the top-level location and scope statement ahead of that work.
+
+### `extension/scripts/`
+
+Phase 1 Lennar Payload Generator — a standalone Python CLI (`generate.py`) that reads a Cognito Form 17 entry, joins it against the Lennar Payload Rules + Community Reference DB in Airtable, and emits a payload matching `docs/operational/lennar/Lennar_Payload_Examples.md`. See `extension/scripts/README.md` (`SCRIPTS-README-001`) for setup and usage. Co-located with the extension because Phase 2 wraps this same code as an endpoint the extension's "Generate from Cognito Entry" surface will call — the two pieces belong in one repo.
+
+Phase status: scaffold landed, pipeline build-out follows. See `docs/foundation/Lennar_Restructure_Phase_Tracker.md`.
 
 ---
 
