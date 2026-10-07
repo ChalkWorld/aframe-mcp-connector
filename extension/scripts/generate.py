@@ -227,6 +227,31 @@ def _cognito_multiselect_list(entry: dict, dotted_path: str) -> list:
     return [part.strip() for part in str(raw).split(",") if part.strip()]
 
 
+def _cognito_yesno(entry: dict, dotted_path: str) -> str:
+    """
+    Read a Cognito Yes/No-type field and normalize to "Yes"/"No" strings.
+
+    Cognito's YesNo field type returns boolean (True/False) on the single-entry
+    API, while a Choice field with Yes/No options returns the string ("Yes"/"No").
+    Dispatcher branches comparing against literal "Yes"/"No" silently fail on
+    YesNo fields (False != "No", True != "Yes"). This helper collapses both
+    shapes to the string form so dispatcher comparisons do not have to care
+    which Cognito field type was used. Returns "" when the field is unset.
+
+    As of 2026-10-07 the only YesNo-type field read by the dispatcher is
+    BuildFeatures.Basement.Basement (Rules 111 and 114). Garage1 and Pool Y/N
+    are Choice/DB-text and continue to work with plain string comparison.
+    """
+    raw = _cognito_get(entry, dotted_path)
+    if raw is None:
+        return ""
+    if isinstance(raw, bool):
+        return "Yes" if raw else "No"
+    if isinstance(raw, str):
+        return raw
+    return str(raw)
+
+
 # ---------------------------------------------------------------------------
 # Community resolution — convention #6
 # ---------------------------------------------------------------------------
@@ -840,7 +865,7 @@ def _handle_derived(rule: dict, entry: dict, community_row: dict) -> object:
     # --- Basement/Foundation: PropertyType + Basement + FinishedStatus ---
     if input_id == "Input_569":
         prop_type = _cognito_get(entry, "PropertyBasics.PropertyType")
-        basement  = _cognito_get(entry, "BuildFeatures.Basement.Basement")
+        basement  = _cognito_yesno(entry, "BuildFeatures.Basement.Basement")
         finished  = _cognito_get(entry, "BuildFeatures.Basement.FinishedStatus")
         if prop_type == "Townhouse":
             return _prefix_features_codes(input_id, ["12"], tab)  # Slab
@@ -858,7 +883,7 @@ def _handle_derived(rule: dict, entry: dict, community_row: dict) -> object:
         if prop_type == "Townhouse":
             return "0"
         if prop_type == "Single Family":
-            basement = _cognito_get(entry, "BuildFeatures.Basement.Basement")
+            basement = _cognito_yesno(entry, "BuildFeatures.Basement.Basement")
             return "1" if basement == "Yes" else "0"
         return "0"
 
