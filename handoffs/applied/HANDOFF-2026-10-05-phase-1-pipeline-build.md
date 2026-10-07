@@ -1,128 +1,77 @@
-#!/usr/bin/env python3
-"""
-Lennar Payload Generator — Phase 1 CLI
+---
+title: Phase 1 Pipeline Build — generate_payload() implementation
+handoff_id: HANDOFF-2026-10-05-phase-1-pipeline-build
+date: 2026-10-05
+author: Andrew Rich (via Claude Opus 4.7 session)
+project: AAR-TC Lennar Operational Project
+targets:
+  - extension/scripts/generate.py
+related:
+  - FOUND-PHASE-TRACKER-001 (v0.13)
+  - PAYLOAD-RULES-CONVENTIONS-001 (v0.4)
+  - SESSION-HANDOFF-2026-10-03-PHASE-1-SCAFFOLD.md
+batch_override: yes — single logical unit (one file, one feature: the real pipeline)
+---
 
-Reads a Cognito Form 17 entry by ID, joins it against the Lennar Payload
-Rules + Community Reference DB in Airtable, and emits a payload matching
-Lennar_Payload_Examples.md shape.
+# Phase 1 Pipeline Build — Cursor Handoff
 
-Phase 1 scope: standalone CLI. Phase 2 wraps this as an endpoint; Phase 3
-triggers from a Cognito submission webhook. Scaffold is intentionally
-shaped to make the Phase 2 wrap trivial.
+Replaces the stub `generate_payload()` in `extension/scripts/generate.py` with the real pipeline: fetch Cognito entry → resolve community → fetch Rules + Cognito Fields + Source Types from Airtable → dispatch per Source Type → assemble payload matching `Lennar_Payload_Examples.md`.
 
-See extension/scripts/README.md for setup and usage.
-"""
+**Batched override justification:** This is one file, one feature. The pipeline is a cohesive unit — splitting into a Cognito-fetch handoff, a Rules-fetch handoff, a dispatcher handoff, etc. would produce an unrunnable interim state at every step. One commit, one review surface.
 
-from __future__ import annotations
+---
 
-import argparse
-import json
+## 1. Scope of this handoff
+
+### In scope
+
+- Replace the placeholder `generate_payload(entry_id)` body in `extension/scripts/generate.py` with the full Harpers Mill TH / Creekside Run TH pipeline.
+- Flip `ensure_ascii=False` in the final `json.dumps` call (small cosmetic fix parked in v0.13).
+
+### Out of scope (do not touch)
+
+- CLI argument parsing, env validation, output routing — the scaffold's working CLI shell stays.
+- `.env`, `.env.example`, `requirements.txt`, `README.md`, `REPO_STRUCTURE.md` — unchanged.
+- Rules table or Community DB edits — this handoff is script-only.
+
+---
+
+## 2. Target: `extension/scripts/generate.py`
+
+### Replace this (current stub)
+
+```python
+def generate_payload(entry_id: str) -> dict:
+    """
+    Phase 1 pipeline (TODO):
+      1. Fetch Cognito Form 17 entry by ID.
+      2. Resolve community from Intake.Community + PropertyBasics.PropertyType.
+      3. Fetch Payload Rules + Cognito Fields + Source Types + Community DB row from Airtable.
+      4. Iterate rules, dispatch by Source Type.
+      5. Honor Property Type and Path scoping.
+      6. Assemble payload matching Lennar_Payload_Examples.md.
+    """
+    return {"entry_id": entry_id, "stub": True}
+```
+
+### With the full implementation (next section)
+
+Replace the function body end-to-end. Leave the function signature identical. Also update the `json.dumps(...)` call wherever it lives (likely in `main()` or an output helper) to pass `ensure_ascii=False`.
+
+---
+
+## 3. Full implementation
+
+Copy this into `extension/scripts/generate.py`, replacing the existing `generate_payload` function. Add the new imports and helpers above it.
+
+```python
 import os
 import re
-import subprocess
+import json
 import sys
 from datetime import datetime
-from pathlib import Path
 
 import requests
-from dotenv import load_dotenv
-
-
-# -------- CLI --------
-
-def parse_entry_id(raw: str) -> int:
-    """Accept either a bare integer or a Cognito entry URL. Return int."""
-    raw = raw.strip()
-    if raw.isdigit():
-        return int(raw)
-    # Match a trailing integer in a Cognito entry URL,
-    # e.g. https://www.cognitoforms.com/Shared/Form_17/42
-    match = re.search(r"/(\d+)/?$", raw)
-    if match:
-        return int(match.group(1))
-    raise argparse.ArgumentTypeError(
-        f"Could not parse an entry ID from {raw!r}. "
-        f"Pass an integer or a Cognito entry URL ending in /<id>."
-    )
-
-
-def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        prog="generate.py",
-        description=(
-            "Generate a Lennar listing payload from a Cognito Form 17 entry."
-        ),
-    )
-    parser.add_argument(
-        "--entry-id",
-        type=parse_entry_id,
-        required=True,
-        help="Cognito entry ID (integer) or a pasted Cognito entry URL.",
-    )
-    output = parser.add_mutually_exclusive_group()
-    output.add_argument(
-        "--clipboard",
-        action="store_true",
-        help="Copy the generated payload to the macOS clipboard (pbcopy).",
-    )
-    output.add_argument(
-        "--out",
-        type=Path,
-        metavar="PATH",
-        help="Write the generated payload to this file.",
-    )
-    return parser
-
-
-# -------- Env loading & validation --------
-
-REQUIRED_ENV_VARS = (
-    "AIRTABLE_PAT",
-    "AIRTABLE_LENNAR_BASE_ID",
-    "AIRTABLE_CVRMLS_BASE_ID",
-    "COGNITO_API_KEY",
-    "COGNITO_FORM_ID",
-)
-
-
-def load_env() -> dict[str, str]:
-    """Load .env next to this script. Return a dict of required vars."""
-    script_dir = Path(__file__).resolve().parent
-    load_dotenv(script_dir / ".env")
-
-    missing = [v for v in REQUIRED_ENV_VARS if not os.getenv(v)]
-    if missing:
-        sys.exit(
-            f"Missing required environment variables: {', '.join(missing)}.\n"
-            f"Copy .env.example to .env and fill in values."
-        )
-
-    return {v: os.environ[v] for v in REQUIRED_ENV_VARS}
-
-
-# -------- Output --------
-
-def emit(payload: str, args: argparse.Namespace) -> None:
-    """Route the generated payload to stdout, clipboard, or file."""
-    if args.clipboard:
-        subprocess.run(["pbcopy"], input=payload, text=True, check=True)
-        print("Payload copied to clipboard.", file=sys.stderr)
-    elif args.out:
-        args.out.write_text(payload)
-        print(f"Payload written to {args.out}", file=sys.stderr)
-    else:
-        print(payload)
-
-
-# -------- Payload generation: Phase 1 pipeline --------
-#
-# Replaces the Phase 1 scaffold placeholder with the real pipeline:
-#   1. Fetch Cognito Form 17 entry → 2. resolve community →
-#   3. fetch Rules + Cognito Fields + Source Types + Community DB from
-#   Airtable → 4. dispatch per Source Type → 5. assemble payload matching
-#   Lennar_Payload_Examples.md.
-#
-# Per HANDOFF-2026-10-05-phase-1-pipeline-build.md.
 
 # ---------------------------------------------------------------------------
 # Airtable base + table identifiers (resolved 2026-10-05)
@@ -173,7 +122,7 @@ def _airtable_list_all(table_id: str) -> list:
     return records
 
 
-def _cognito_fetch_entry(form_id: str, entry_id) -> dict:
+def _cognito_fetch_entry(form_id: str, entry_id: str) -> dict:
     """Fetch one Cognito form entry by ID. Raises on 404 or auth failure."""
     url = f"{COGNITO_API_BASE}/forms/{form_id}/entries/{entry_id}"
     resp = requests.get(url, headers=_cognito_headers(), timeout=30)
@@ -945,7 +894,7 @@ def _route_rule_output(payload: dict, input_id: str, value) -> None:
 # Main pipeline
 # ---------------------------------------------------------------------------
 
-def _build_payload(entry_id) -> dict:
+def generate_payload(entry_id: str) -> dict:
     """
     Phase 1 pipeline — Harpers Mill TH / Creekside Run TH happy path.
 
@@ -1065,40 +1014,69 @@ def _build_payload(entry_id) -> dict:
                     "remarks", "fee", "owner", "agent_office", "showing"):
         payload.setdefault(section, {})
 
-    # Matrix's Bath Info tab requires every level sub-object to exist in the
-    # payload, even when the Rules table has no rules firing for a given level
-    # (Rule 44 deliberately excludes Level 4 — no Form 17 source). Fill in any
-    # missing bath sub-objects with Matrix's required empty-but-present shape.
-    # setdefault means levels populated by rules keep their rule-driven values.
-    for level in ("basement", "level1", "level2", "level3", "level4"):
-        payload["bath"].setdefault(level, {"desc": "", "full": "0", "half": "0"})
-
     return payload
+```
 
+### Also update the output helper
 
-def generate_payload(entry_id: int, env: dict[str, str]) -> str:
-    """
-    Build the payload for the given Cognito entry and return it as a JSON
-    string, per the CLI's existing output contract.
+Wherever `json.dumps(payload, ...)` is called in `main()` or an output-routing helper, add `ensure_ascii=False`:
 
-    `env` is unused directly here — the pipeline helpers read credentials
-    from `os.environ`, which `load_env()` has already populated via
-    `load_dotenv()`. It's kept in the signature so callers (and the Phase 2
-    wrap) don't need to change.
-    """
-    payload = _build_payload(entry_id)
-    return json.dumps(payload, indent=2, ensure_ascii=False)
+```python
+# Before
+output_text = json.dumps(payload, indent=2)
 
+# After
+output_text = json.dumps(payload, indent=2, ensure_ascii=False)
+```
 
-# -------- Main --------
+This handles both `--stdout` and `--out`; the `--clipboard` path should also use `ensure_ascii=False` if it formats separately.
 
-def main() -> int:
-    args = build_parser().parse_args()
-    env = load_env()
-    payload = generate_payload(args.entry_id, env)
-    emit(payload, args)
-    return 0
+---
 
+## 4. What to verify after applying
 
-if __name__ == "__main__":
-    sys.exit(main())
+After Cursor applies this handoff, the operator runs:
+
+```bash
+cd /Users/andrewrich/Desktop/aframe-mcp-connector/extension/scripts
+source .venv/bin/activate
+python generate.py --entry-id 20 --out /tmp/entry20-payload.json
+```
+
+Then diff against the known-good Creekside Run TH example:
+
+```bash
+diff <(jq -S . /tmp/entry20-payload.json) <(jq -S . /path/to/example.json)
+```
+
+**Expected diffs (not bugs):**
+
+- `list_price`: Entry 20 is `"373740"`, example is `"372740"` — different listing.
+- `list_date`: today (`"10/5/2026"`), example is `"09/03/2026"`.
+- `remarks.remarks` and `remarks.agent_comments`: different text per Entry 20's NHC submission.
+- `appl_equip`: Entry 20 has 8 items (`Electric Cooking, Disposal, Dishwasher, Microwave, Refrigerator, EV Charger, Washer, Dryer`); example has 8 different items.
+- `interior`: Entry 20 has 7 items (no `Ceiling Fans`); example has 8.
+- `siding`: Entry 20 has `Vinyl + Brick` (2); example has `Vinyl` only (1).
+- `exterior`: Entry 20 is empty `[]`; example has `["Input_570_31", "Input_570_43"]`.
+
+**Anything else that differs is a bug** — either in the Rules table (fix the table) or in the script (fix the code). Report back the diff and we triage.
+
+---
+
+## 5. Convention #10 proposal (parked, not committed by this handoff)
+
+The Features-tab-prefixing logic in `_prefix_features_codes()` is the script-side resolution of the bare-code vs. full-Input-ID shape gap documented in the 2026-10-05 session. Once it proves out across more communities, it should be codified in `Payload_Rules_Conventions.md` as convention #10:
+
+> **Features-tab checkbox outputs are prefixed with the rule's Matrix Input ID.** The Rules table and Community DB may store bare suffix codes ("03", "01,04,46,22") for Features-tab checkbox-group rules. The script prefixes each code with the rule's Matrix Input ID at output time, producing full Input_XX_YY form. Non-Features checkbox groups (Disclosures, Lead Disclosure, Owned By, Possession, Fee Includes, Fee Desc, Showing Flags) pass through bare. Where a DB column already stores full Input IDs (Heating Codes, Heating Fuel Codes), the prefixer is a no-op.
+
+Don't commit this convention update as part of this handoff — ship the pipeline first, confirm it holds up, then codify.
+
+---
+
+## 6. Rollback
+
+If the pipeline fails catastrophically on first run, revert `extension/scripts/generate.py` to the pre-handoff state. The scaffold's working CLI shell is complete and will produce the stub payload again. No other files touched.
+
+---
+
+*Co-authored by Claude Opus 4.7 as the 2026-10-05 session's pipeline-build output. Operator-authored handoffs follow the same shape; this one is model-authored but validated against Payload Rules (all 111 rows), Cognito Fields (all 35 rows), the Creekside Run TH Community DB row, and the known-good example payload before writing.*

@@ -1,8 +1,8 @@
 ---
 title: Payload Rules — Script-Author Conventions
 document_id: PAYLOAD-RULES-CONVENTIONS-001
-version: 0.4
-date: 2026-10-01
+version: 0.5
+date: 2026-10-05
 project: AAR-TC Lennar Operational Project
 related: Lennar_Payload_Schema.md, Lennar_Restructure_Charter.md, Lennar_Restructure_Phase_Tracker.md
 ---
@@ -117,9 +117,29 @@ When a DB column stores a composed display string that the script decomposes (HO
 
 This convention is a downstream application of convention #3 (Transform is the definitive spec when present; otherwise verbatim passthrough from the source). It specifies what the DB must hold for passthrough to work for SELECT and SELECT_DYNAMIC fields.
 
+### 10. Features-tab checkbox outputs are prefixed with the rule's Matrix Input ID
+
+The Rules table and the Community Reference DB may store Features-tab checkbox-group outputs as bare suffix codes:
+
+- STATIC Static Value: `"[\"03\"]"` for Structure, `"[\"19\"]"` for Style TH
+- COGNITO Transform output: `"01"`, `"13"`, `"25"` for Interior crosswalk, etc.
+- COMMUNITY_DB Community Amenities Codes: `"01,04,46,22"`
+
+The script prefixes each code with the rule's Matrix Input ID at output time, producing full `Input_XX_YY` form in the final payload. This applies **only** to rules whose Tab is `Features`.
+
+**Non-Features checkbox groups pass through bare.** Disclosures (`Input_102`), Lead Disclosure (`Input_103`), Owned By (`Input_120`), Possession (`Input_121`), Fee Includes (`Input_576`), Fee Desc (`Input_111`), and Showing Flags (`Input_722`) all stay as bare suffix codes in the payload. The known-good `Lennar_Payload_Examples.md` shape confirms this split: Features consistently uses full IDs, non-Features consistently uses bare codes.
+
+**Where a DB column already stores full Input IDs**, the prefixer is a no-op. The Community Reference DB's `Heating Codes` and `Heating Fuel Codes` columns store full IDs (`"Input_86_08"`, `"Input_87_02"`); the script splits-on-comma and the resulting items pass through the prefixer unchanged because they already begin with `"Input_"`.
+
+This convention is a downstream application of convention #3 (Transform is the definitive spec when present). It specifies how the script bridges the Rules-table bare-code authoring convention to the extension's full-ID payload consumption convention.
+
+**Future Rules-table hygiene candidate.** A future cleanup pass could normalize all Features-tab checkbox rules to store full Input IDs, making the Rules table self-describing. The script's prefixer would then become a no-op for every Features-tab rule and could be removed. Non-blocking; convention #10 carries the gap in the interim.
+
 ---
 
 ## Change Log
+
+**v0.5 — 2026-10-05** — Added convention #10 (Features-tab checkbox outputs are prefixed with the rule's Matrix Input ID) codified from the 2026-10-05 Phase 1 pipeline-build session. The bare-code vs. full-Input-ID shape gap was surfaced before any code was written; Option A (script-side prefixing, no Rules-table rewrite) was chosen because it ships the pipeline faster and keeps Rules authoring stable. Convention #10 was validated the same session by the extension correctly checking every Features-tab checkbox (Structure, Siding, Roof, Interior, Exterior, Appl/Equip, Garage, etc.) on the first end-to-end fill against Entry #20 (6136 Hull Street Rd, Creekside Run TH). Non-Features checkbox groups stay bare per the example-payload shape. Where a DB column stores full IDs already (Heating Codes, Heating Fuel Codes), the prefixer is a no-op. Downstream application of convention #3. Future Rules-table hygiene candidate: normalize Features-tab checkbox rules to store full IDs, make the Rules table self-describing, remove the prefixer. Non-blocking.
 
 **v0.4 — 2026-10-01** — Added convention #9 (Community Reference DB holds the values Matrix expects) surfaced during the 2026-10-01 Community DB school-column cleanup pass. 5 cells in the Lennar Community Reference DB were holding display text where Matrix expects stored values (`Deep Creek` → `DeepCreek`, `River City` → `RiverCity`, `Falling Creek` → `FallingCreek`, `Highland Springs` → `HighlandSprings`); the fix made the 4 Listing Info COMMUNITY_DB rules clean verbatim passthroughs with no Transforms needed. Convention #9 locks the guarantee: for `COMMUNITY_DB` rules without a Transform, the DB column holds what Matrix expects as the stored value. Downstream application of convention #3. The CVRMLS Matrix Fields base's new `Cascade Options` table (built the same session as the final Phase 0 data-modeling item) is the stored-value reference for cascade-scoped fields; `Field Options` is the reference for non-cascade SELECT and CHECKBOX_GROUP fields.
 
