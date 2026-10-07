@@ -1,8 +1,8 @@
 ---
 title: Payload Rules — Script-Author Conventions
 document_id: PAYLOAD-RULES-CONVENTIONS-001
-version: 0.5
-date: 2026-10-05
+version: 0.6
+date: 2026-10-07
 project: AAR-TC Lennar Operational Project
 related: Lennar_Payload_Schema.md, Lennar_Restructure_Charter.md, Lennar_Restructure_Phase_Tracker.md
 ---
@@ -135,9 +135,25 @@ This convention is a downstream application of convention #3 (Transform is the d
 
 **Future Rules-table hygiene candidate.** A future cleanup pass could normalize all Features-tab checkbox rules to store full Input IDs, making the Rules table self-describing. The script's prefixer would then become a no-op for every Features-tab rule and could be removed. Non-blocking; convention #10 carries the gap in the interim.
 
+### 11. Cognito field-type normalization for Yes/No semantic fields
+
+Cognito's **YesNo** field type and **Choice** field type with Yes/No options are both reasonable form-author choices for a Yes/No question, but the single-entry API returns them differently: YesNo returns boolean (`true`/`false`), Choice returns strings (`"Yes"`/`"No"`). Dispatchers comparing against literal `"Yes"`/`"No"` silently fail on YesNo fields — `False == "No"` is False, `True == "Yes"` is False — so a branch intended to fire on a form answer never fires, and the dispatcher falls through to its default (often an empty value or coincidentally-correct wrong-reason value).
+
+**The script normalizes Yes/No semantic reads via `_cognito_yesno(entry, dotted_path)`.** This helper reads the raw value with `_cognito_get`, converts boolean to `"Yes"`/`"No"`, passes strings through, and returns `""` for None. Dispatcher branches then compare against `"Yes"`/`"No"` string literals as the Transform text specifies, regardless of which Cognito field type the form uses.
+
+**Scope:** use `_cognito_yesno` for any Cognito field that semantically answers Yes/No, whenever the field type is uncertain or specifically YesNo. Plain `_cognito_get` remains correct for Choice fields where the author has confirmed the return type is a string.
+
+As of 2026-10-07, the only YesNo-typed field read by the dispatcher is `BuildFeatures.Basement.Basement` (Rules 111 and 114). `BuildFeatures.Garage.Garage1` is a Choice field returning strings and continues to work with plain `_cognito_get`. Community DB `Pool Y/N` is a text column (not a Cognito read) and is unaffected.
+
+**View-API caveat:** the Cognito view-API (`get_entries_in_view`) stringifies booleans in its summary output, so a YesNo field looks like `"No"` or `"Yes"` in that listing — the mismatch only surfaces at single-entry fetch time, which is when the dispatcher actually reads. Debugging payload-generation bugs: trust `get_entry`'s shape, not the view listing.
+
+This convention is a downstream application of convention #3 (Transform/Logic is the definitive spec; the helper preserves spec intent across Cognito field type variance) and complements convention #2 (the Cognito Field link is the primary source — this just adds a type-normalization layer at read).
+
 ---
 
 ## Change Log
+
+**v0.6 — 2026-10-07** — Added convention #11 (Cognito field-type normalization for Yes/No semantic fields) codified from the 2026-10-07 Everstone SF validation session. Surfaced when Entry #18's first pipeline run came back with `features_a.basement_foundation = []` — Rule 111's SF+No→Crawl Space branch failed to fire because `BuildFeatures.Basement.Basement` returns boolean `false` from the single-entry Cognito API (YesNo field type), and the dispatcher compared it against the string `"No"`. `BuildFeatures.Garage.Garage1` doesn't have this problem because it's a Cognito Choice field with Yes/No as text options — returns the string. Both are reasonable form-author choices made at different times during Form 17 authoring. Fix: `_cognito_yesno()` helper added to `generate.py` after `_cognito_multiselect_list`; swapped the Basement reads in Rules 111 and 114 to use it. Rule 114 was simultaneously found to have the same latent flaw (Entry #18 coincidentally produced correct output; a SF+Yes-basement listing would have silently written `"0"` for Basement Y/N when it should write `"1"`). Both fixes shipped via `HANDOFF-2026-10-07-generate-py-cognito-yesno.md`. Pool Y/N (Community DB text column) and Garage1 (Choice field) left untouched. Downstream application of convention #3.
 
 **v0.5 — 2026-10-05** — Added convention #10 (Features-tab checkbox outputs are prefixed with the rule's Matrix Input ID) codified from the 2026-10-05 Phase 1 pipeline-build session. The bare-code vs. full-Input-ID shape gap was surfaced before any code was written; Option A (script-side prefixing, no Rules-table rewrite) was chosen because it ships the pipeline faster and keeps Rules authoring stable. Convention #10 was validated the same session by the extension correctly checking every Features-tab checkbox (Structure, Siding, Roof, Interior, Exterior, Appl/Equip, Garage, etc.) on the first end-to-end fill against Entry #20 (6136 Hull Street Rd, Creekside Run TH). Non-Features checkbox groups stay bare per the example-payload shape. Where a DB column stores full IDs already (Heating Codes, Heating Fuel Codes), the prefixer is a no-op. Downstream application of convention #3. Future Rules-table hygiene candidate: normalize Features-tab checkbox rules to store full IDs, make the Rules table self-describing, remove the prefixer. Non-blocking.
 
