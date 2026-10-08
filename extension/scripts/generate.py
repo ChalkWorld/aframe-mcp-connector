@@ -1104,47 +1104,71 @@ def _build_payload(entry_id) -> dict:
 # ---------------------------------------------------------------------------
 # Recent-entries lookup — Phase 2 extension picker
 #
-# Note on implementation: Cognito's plain REST API only exposes GetEntry
-# (by ID) and CreateEntry — there is no "list entries" REST verb. Listing a
-# view's entries is a documented OData operation instead:
-#   GET /api/odata/Forms({form})/Views({viewId})/Entries
-# which supports $select but not a server-side "take"/$top limit per
-# Cognito's published API reference. So this fetches just the ordered entry
-# IDs via $select=Id (cheap — no full field payloads over the wire), then
-# reuses the already-proven _cognito_fetch_entry() single-entry call for
-# each of the first `limit` IDs to get full field data in the same nested
-# shape generate_payload() already depends on (Intake.StreetNumber, etc.).
+# Note on implementation (corrected 2026-10-08 — see
+# HANDOFF-2026-10-08-phase-2-fastapi-wrapper.md follow-up fix): Cognito's
+# plain REST API only exposes GetEntry (by ID) and CreateEntry — there is
+# no "list entries" REST verb. Listing a view's entries is the OData
+# operation GET /api/odata/Forms({form})/Views({viewId})/Entries.
 #
-# The Submitted view ("17-3") is already sorted by Entry.Number descending
-# per Lennar_New_Listing_Protocol.md, so the first `limit` IDs returned are
-# the most recent submissions.
+# Two things about that endpoint are easy to get wrong and both were wrong
+# in the first pass, isolated via direct curl/requests probing against the
+# live API on 2026-10-08:
+#
+#   1. {viewId} is an Int32, not a string. Lennar_New_Listing_Protocol.md's
+#      "17-3" shorthand means "form 17, view 3" for humans — the literal
+#      OData path segment is just Views(3). Views('17-3') (quoted string)
+#      500s with an unhandled "UnknownError"; Views(17) (wrong number)
+#      cleanly 404s with "EntryViewNotFound". Views(3) 200s.
+#   2. $select only accepts the single literal value "Id" (matches Cognito's
+#      own docs: "$select: Retrieves entry IDs for all entries in a view").
+#      A real field list like "$select=Id,Intake_StreetNumber" 400s with
+#      "EntryViewInvalidSelect". There's no partial-field projection —
+#      either fetch full rows or just Ids.
+#
+# $top is NOT supported for a server-side limit despite being valid OData
+# syntax elsewhere — confirmed: Forms(17)/Views(3)/Entries?$top=5 returns
+# 200 but still all 20 rows, silently ignoring $top (Cognito's own docs
+# only ever list $count and $select as supported query params; $top was
+# never one of them). So this fetches the full view in one call and slices
+# to `limit` in Python — still a single round trip, and reads the fields
+# it needs straight out of the full rows with no follow-up per-entry REST
+# calls needed.
+#
+# OData rows come back FLAT with underscore-joined field names
+# (Intake_StreetNumber, Entry_DateSubmitted, bare Id) — a different shape
+# from the nested dotted-path shape the plain REST GetEntry call returns
+# (Intake.StreetNumber via _cognito_get). Do not mix the two: _cognito_get
+# does not apply here.
+#
+# The Submitted view is already sorted by Entry.Number descending per
+# Lennar_New_Listing_Protocol.md (confirmed: a $top=5 call returns entries
+# in descending Id order), so the first `limit` rows are the most recent
+# submissions with no extra client-side sort needed.
 # ---------------------------------------------------------------------------
 
-SUBMITTED_VIEW_ID = "17-3"
+SUBMITTED_VIEW_ID = 3  # Form 17's "Submitted" view — OData Int32 view ID.
 
 
-def _cognito_fetch_view_entry_ids(form_id: str, view_id: str, take: int) -> list:
+def _cognito_fetch_view_entries(form_id: str, view_id: int, take: int) -> list:
     """
-    Fetch entry IDs from a Cognito entry view via the OData API, in the
-    view's configured sort order. Raises on auth failure, same as
-    _cognito_fetch_entry.
+    Fetch the full set of entry rows from a Cognito entry view via the
+    OData API (no server-side limit is honored — see note above), sliced
+    to the first `take` rows in the view's configured sort order. Raises on
+    auth failure, same as _cognito_fetch_entry.
     """
     url = f"{COGNITO_API_BASE}/odata/Forms({form_id})/Views({view_id})/Entries"
-    resp = requests.get(
-        url, headers=_cognito_headers(), params={"$select": "Id"}, timeout=30
-    )
+    resp = requests.get(url, headers=_cognito_headers(), timeout=30)
     if resp.status_code in (401, 403):
         raise RuntimeError(
             f"Cognito auth failed ({resp.status_code}) fetching view {view_id}. "
             "Check COGNITO_API_KEY in .env."
         )
+    if resp.status_code == 404:
+        raise RuntimeError(f"Cognito entry view {view_id} not found on form {form_id}")
     resp.raise_for_status()
     data = resp.json()
-    # OData wraps results in {"value": [...]}; be defensive in case the
-    # response is ever a bare list instead.
     rows = data.get("value", []) if isinstance(data, dict) else data
-    ids = [row["Id"] if isinstance(row, dict) else row for row in rows]
-    return ids[:take]
+    return rows[:take]
 
 
 def fetch_recent_entries(limit: int = 5) -> list[dict]:
@@ -1153,36 +1177,31 @@ def fetch_recent_entries(limit: int = 5) -> list[dict]:
 
     Returns a list of dicts: {"entry_id": int, "address": str, "submitted_at": str}
     sorted by submission time, newest first (inherited from the Submitted
-    view's configured sort — see _cognito_fetch_view_entry_ids).
+    view's configured sort — see _cognito_fetch_view_entries).
 
     Entries missing either StreetNumber or StreetName fall back to a
     "(address unknown — Entry #N)" label so the picker always has something
-    to display. If a given entry ID 404s between the view lookup and the
-    detail fetch (e.g. deleted), it is skipped rather than failing the whole
-    request.
+    to display.
     """
     form_id = os.environ["COGNITO_FORM_ID"]
-    entry_ids = _cognito_fetch_view_entry_ids(form_id, SUBMITTED_VIEW_ID, limit)
+    rows = _cognito_fetch_view_entries(form_id, SUBMITTED_VIEW_ID, limit)
 
     entries = []
-    for entry_id in entry_ids:
-        try:
-            entry = _cognito_fetch_entry(form_id, entry_id)
-        except RuntimeError:
-            continue
-
-        street_number = _cognito_get(entry, "Intake.StreetNumber")
-        street_name = _cognito_get(entry, "Intake.StreetName")
+    for row in rows:
+        entry_id = row.get("Id")
+        street_number = row.get("Intake_StreetNumber")
+        street_name = row.get("Intake_StreetName")
         if street_number and street_name:
             address = f"{street_number} {street_name}"
         else:
             address = f"(address unknown — Entry #{entry_id})"
 
-        submitted_at = (
-            _cognito_get(entry, "Entry.DateSubmitted")
-            or _cognito_get(entry, "Entry.DateCreated")
-            or ""
-        )
+        # Entry_DateCreated is not present in the OData schema observed for
+        # this view (confirmed 2026-10-08) — Entry_DateSubmitted is the only
+        # timestamp field returned. Kept as a defensive fallback in case a
+        # future view configuration or a draft (not-yet-submitted) entry
+        # omits DateSubmitted.
+        submitted_at = row.get("Entry_DateSubmitted") or row.get("Entry_DateCreated") or ""
 
         entries.append(
             {"entry_id": entry_id, "address": address, "submitted_at": submitted_at}
