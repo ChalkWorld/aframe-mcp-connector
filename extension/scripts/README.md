@@ -65,3 +65,68 @@ Scaffold only. No Airtable or Cognito API calls wired in yet — running `genera
 - `docs/foundation/Payload_Rules_Conventions.md` — script-author conventions for reading the Payload Rules table.
 - `docs/operational/lennar/Lennar_Payload_Schema.md` — payload shape reference.
 - `docs/operational/lennar/Lennar_Payload_Examples.md` — known-good payloads for diff comparison during Phase 1 build-out.
+
+---
+
+## Phase 2 — FastAPI Endpoint (Railway-Hosted)
+
+The CLI above continues to work for local use. Phase 2 adds `app.py`, a FastAPI
+wrapper that exposes the same `generate_payload()` function over two HTTP endpoints,
+deployed on Railway and called by the Chrome extension.
+
+### Endpoints
+
+| Method | Path | Purpose |
+|---|---|---|
+| GET | `/` | Public health check (no auth) |
+| GET | `/recent-entries` | Last 5 Form 17 submissions for the extension picker |
+| POST | `/generate` | Run the pipeline for a given `entry_id` |
+
+Both authenticated endpoints require an `X-API-Key` header matching the
+`API_SHARED_SECRET` environment variable. Generate the secret with:
+
+```bash
+python3 -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+### Request / Response Shapes
+
+`POST /generate`:
+```json
+// Request
+{"entry_id": 18}
+
+// Success response
+{"status": "ok", "payload": { /* full Lennar payload */ }, "warnings": []}
+
+// Error response
+{"status": "error", "message": "Community not resolved for Entry #18"}
+```
+
+`GET /recent-entries`:
+```json
+// Success response
+{
+  "status": "ok",
+  "entries": [
+    {"entry_id": 20, "address": "6136 Hull Street Rd", "submitted_at": "2026-10-05T09:12:00Z"},
+    {"entry_id": 18, "address": "3737 Larimar Lane", "submitted_at": "2026-09-17T14:03:00Z"}
+  ]
+}
+```
+
+### Deployment
+
+Railway auto-deploys on every push to the `extension/scripts/` subfolder.
+Environment variables are managed in Railway's Variables UI (same keys as `.env`,
+plus `API_SHARED_SECRET`). The service listens on port 8080 per `Procfile`.
+
+Public URL: `lennar-payload-script-production.up.railway.app`
+
+### Local Run (Optional)
+
+```bash
+cd extension/scripts
+source .venv/bin/activate
+uvicorn app:app --reload --port 8080
+```
