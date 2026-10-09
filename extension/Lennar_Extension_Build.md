@@ -35,6 +35,38 @@ Cursor handoffs: `HANDOFF-2026-08-17-extension-poc-build.md` (initial build), `H
 
 ---
 
+## Phase 2 Build Status — October 2026
+
+Picker UI added at the top of the side panel. The operator picks a Form 17 entry from a dropdown, clicks Load, and the Phase 1 pipeline (hosted on Railway as a FastAPI service — `lennar-payload-script-production.up.railway.app`) returns the generated payload. The payload lands in the existing textarea and the existing fill flow (auto-fill toggle, Fill button, content-script messaging) takes over unchanged.
+
+**New files:**
+- `config.example.js` — Railway base URL + shared API secret template. Copied to `config.js` (git-ignored) locally and filled in with the real secret from Railway Variables.
+
+**Changed files:**
+- `manifest.json` — bumped to `0.3.0`, added `host_permissions` for the Railway domain.
+- `sidepanel.html` — picker section at top (dropdown + Load button, refresh + "Updated Xm ago" below); Clear button added above the textarea; Fill button moved inline into the toggle row (now labeled just "Auto-fill" / "Fill tab").
+- `sidepanel.js` — picker state, Railway `/recent-entries` and `/generate` calls, picker rendering, event wiring for Refresh/Load/Clear, hybrid time formatting (`2h ago` / `yesterday` / `Oct 7`), per-minute "Updated Xm ago" tick. Existing fill/messaging/persistence behavior preserved verbatim.
+
+**Error states:**
+- Railway unreachable on `/recent-entries` → inline `Can't reach Railway. Click refresh to retry.`
+- Railway returns `{status: "error"}` on `/recent-entries` → inline `Failed to load entries: <message>`
+- Railway unreachable on `/generate` → inline `Can't reach Railway. Try refresh or paste manually.`
+- Railway returns `{status: "error"}` on `/generate` → inline `Generation failed: <message>`
+
+Textarea paste fallback remains fully usable when Railway is down. Full error detail goes to the browser console.
+
+**Config / secret handling:**
+`config.js` is git-ignored. First-time setup: `cp extension/config.example.js extension/config.js`, open it, replace `PASTE_SECRET_HERE` with the `API_SHARED_SECRET` value from Railway → `lennar-payload-script` → Variables. Changing the secret later is the same workflow (edit `config.js`, reload the extension in `chrome://extensions`).
+
+**Permission reload note:**
+After pulling and reloading the extension in `chrome://extensions`, Chrome shows a one-time permission prompt for the new Railway host. Accept it; `fetch()` from the side panel will not reach Railway until this is granted.
+
+**Live-tested by Andrew:** TODO after the first end-to-end extension run against Entry #18 Everstone SF.
+
+Cursor handoff: `HANDOFF-2026-10-09-phase-2-extension-picker.md`.
+
+---
+
 ## Tab Detection — Confirmed August 17, 2026
 
 Live-tested via Claude in Chrome against a blank new-listing page. Each candidate ID checked for presence/absence across all 11 Lennar-scoped tabs (cross-checked, not just spot-checked) — zero collisions found.

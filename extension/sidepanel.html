@@ -6,9 +6,26 @@
 <style>
   body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 12px; margin: 0; }
   h1 { font-size: 14px; margin: 0 0 10px; }
+
+  /* Picker (Phase 2) */
+  .picker { padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid #e5e7eb; }
+  .picker-row { display: flex; gap: 6px; align-items: stretch; }
+  .picker-row select { flex: 1; min-width: 0; padding: 6px 8px; font-size: 12px; font-family: inherit; border: 1px solid #d1d5db; border-radius: 4px; background: #fff; color: #111; }
+  .picker-row select:disabled { color: #6b7280; background: #f8f9fa; }
+  .picker-row #loadBtn { padding: 6px 12px; font-size: 12px; font-family: inherit; border: 1px solid #d1d5db; background: #f3f4f6; border-radius: 4px; cursor: pointer; white-space: nowrap; }
+  .picker-row #loadBtn:disabled { opacity: 0.4; cursor: default; }
+  .picker-footer { display: flex; align-items: center; gap: 10px; margin-top: 6px; font-size: 11px; color: #6b7280; }
+  .picker-footer .refresh-btn { background: none; border: none; padding: 2px 4px; font-size: 12px; color: #111; cursor: pointer; font-family: inherit; }
+  .picker-footer .refresh-btn:hover { text-decoration: underline; }
+  .picker-footer.error { color: #721c24; }
+
+  /* Clear button above textarea (Phase 2) */
+  .clear-row { display: flex; justify-content: flex-start; margin-bottom: 4px; }
+  .clear-btn { padding: 3px 10px; font-size: 11px; font-family: inherit; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 3px; cursor: pointer; }
+
   textarea { width: 100%; height: 100px; font-family: ui-monospace, monospace; font-size: 11px; box-sizing: border-box; }
   .toggle-row { display: flex; align-items: center; gap: 8px; margin: 10px 0; font-size: 12px; }
-  #fillBtn { width: 100%; padding: 8px; font-size: 13px; cursor: pointer; margin-bottom: 4px; }
+  #fillBtn { padding: 4px 10px; font-size: 12px; font-family: inherit; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 4px; cursor: pointer; margin-left: auto; white-space: nowrap; }
   #fillBtn:disabled { opacity: 0.4; cursor: default; }
   #currentStatus { font-size: 12px; padding: 6px 8px; border-radius: 4px; margin-bottom: 10px; background: #eee; }
   #currentStatus.detected { background: #d4edda; color: #155724; }
@@ -25,17 +42,35 @@
 <body>
   <h1>Lennar CVRMLS Matrix Filler</h1>
 
-  <textarea id="payload" placeholder="Paste JSON payload here — stays in place as you move between tabs"></textarea>
+  <div id="picker" class="picker">
+    <div class="picker-row">
+      <select id="entrySelect" aria-label="Select Cognito entry">
+        <option>Loading recent entries…</option>
+      </select>
+      <button id="loadBtn" type="button" disabled>Load</button>
+    </div>
+    <div id="pickerFooter" class="picker-footer">
+      <button id="refreshBtn" type="button" class="refresh-btn">⟳ Refresh</button>
+      <span id="pickerStatus"></span>
+    </div>
+  </div>
+
+  <div class="clear-row">
+    <button id="clearBtn" type="button" class="clear-btn">Clear</button>
+  </div>
+
+  <textarea id="payload" placeholder="Load a Cognito entry above, or paste JSON here."></textarea>
 
   <div class="toggle-row">
-    <label><input type="checkbox" id="autoFillToggle"> Auto-fill on tab detection</label>
+    <label><input type="checkbox" id="autoFillToggle"> Auto-fill</label>
+    <button id="fillBtn" type="button">Fill tab</button>
   </div>
 
   <div id="currentStatus">Checking tab…</div>
-  <button id="fillBtn">Fill current tab</button>
 
   <div id="tabList"></div>
 
+  <script src="config.js"></script>
   <script src="sidepanel.js"></script>
 </body>
 </html>

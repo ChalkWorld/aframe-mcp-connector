@@ -3,3 +3,6 @@ node_modules/
 .env.local
 .DS_Store
 *.log
+
+# Phase 2 extension config — holds the shared secret, never commit it
+extension/config.js
