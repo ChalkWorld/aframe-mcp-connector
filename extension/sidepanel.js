@@ -279,6 +279,12 @@ clearBtn.addEventListener('click', function() {
   payloadEl.value = '';
   // Also clear the persisted value so a panel reopen does not resurrect it.
   chrome.storage.local.remove('matrixFillerPayload');
+  // Reset the per-tab status dots back to all-unvisited, since Clear means
+  // we're starting fresh on a new listing. The currently-detected tab goes
+  // back to 'pending' to match setCurrentStatus's first-detection behavior.
+  TAB_ORDER.forEach(function(t) { tabStatus[t] = 'unvisited'; });
+  if (currentDetectedTab) { tabStatus[currentDetectedTab] = 'pending'; }
+  renderTabList();
 });
 
 // ---------- Rendering (unchanged) ----------
