@@ -350,7 +350,9 @@ OUTPUT_MAP = {
     "Input_722": ("showing", "_showing_flags"),  # see _emit_showing_flags()
 
     # Virtual Tour Info
-    "Input_610": ("_virtual_tour", "url"),  # see tab-skip logic below
+    # Input_610 is handled by the router's own short-circuit before
+    # OUTPUT_MAP is consulted — see _route_rule_output() and the
+    # Virtual Tour section-build block below. No OUTPUT_MAP entry needed.
 
     # Bath Info — three-tuple ("bath", level, sub_key)
     "Input_57":  ("bath", "basement", "desc"),
@@ -1072,14 +1074,21 @@ def _build_payload(entry_id) -> dict:
 
         _route_rule_output(payload, input_id, value)
 
-    # --- 8. Virtual Tour tab-skip ---
-    # If the Cognito VirtualTourLink is blank/missing, drop the entire
-    # virtual_tour section (per Rule 17 Notes / Schema §4.10 payload-level
-    # omit rule). We route Input_610 to a sentinel key during iteration,
-    # then promote or drop it here.
-    vt_url = payload.pop("_virtual_tour_url", None)
-    if vt_url:
-        payload["virtual_tour"] = {"url": vt_url}
+    # --- 8. Virtual Tour section ---
+    # Promote the Input_610 sentinel to the extension's expected shape under
+    # payload.tour.{virtual_tour, additional_virtual_tour}. Always emit the
+    # section with empty defaults when no URL is provided — the extension's
+    # fillVirtualTourInfo dispatcher reads payload.tour unconditionally and
+    # does `var d = payload.tour;` which throws on undefined. Matches the
+    # v0.14 extension-contract-knowledge pattern applied below for Bath Info
+    # level sub-objects (shape always present, rule-driven values preserved).
+    # Schema §4.10's "omit entirely on blank URL" semantics are preserved
+    # operationally: Matrix accepts empty strings as "no virtual tour".
+    vt_url = payload.pop("_virtual_tour_url", None) or ""
+    payload["tour"] = {
+        "virtual_tour": vt_url,
+        "additional_virtual_tour": "",
+    }
 
     # --- 9. Ensure every expected section exists even if empty ---
     # (Prevents the payload from losing keys because every rule in a section
