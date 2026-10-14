@@ -2,3 +2,7 @@ requests==2.32.*
 python-dotenv==1.0.*
 fastapi==0.115.*
 uvicorn[standard]==0.32.*
+google-api-python-client==2.149.*
+google-auth==2.35.*
+google-auth-oauthlib==1.2.*
+google-auth-httplib2==0.2.*

@@ -19,6 +19,19 @@
   .picker-footer .refresh-btn:hover { text-decoration: underline; }
   .picker-footer.error { color: #721c24; }
 
+  /* Phase 3a — Generate listing prep */
+  .phase3 { padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid #e5e7eb; }
+  .phase3-btn { width: 100%; padding: 7px 12px; font-size: 12px; font-family: inherit; border: 1px solid #d1d5db; background: #f3f4f6; border-radius: 4px; cursor: pointer; color: #111; text-align: center; font-weight: 500; }
+  .phase3-btn:disabled { opacity: 0.4; cursor: default; }
+  .phase3-btn.busy { background: #e9ecef; cursor: wait; }
+  .phase3-status { margin-top: 6px; font-size: 11px; color: #6b7280; line-height: 1.45; }
+  .phase3-status.success { color: #155724; }
+  .phase3-status.success a { color: #155724; text-decoration: underline; }
+  .phase3-status.error { color: #721c24; }
+  .phase3-status .success-row { display: flex; align-items: center; gap: 6px; padding: 4px 0; }
+  .phase3-status .check { font-weight: 700; }
+  .phase3-status .notice { display: block; font-style: italic; margin-top: 2px; color: #856404; }
+
   /* Clear button above textarea (Phase 2) */
   .clear-row { display: flex; justify-content: flex-start; margin-bottom: 4px; }
   .clear-btn { padding: 3px 10px; font-size: 11px; font-family: inherit; background: #f3f4f6; border: 1px solid #d1d5db; border-radius: 3px; cursor: pointer; }
@@ -53,6 +66,11 @@
       <button id="refreshBtn" type="button" class="refresh-btn">⟳ Refresh</button>
       <span id="pickerStatus"></span>
     </div>
+  </div>
+
+  <div id="phase3" class="phase3">
+    <button id="prepBtn" class="phase3-btn" type="button" disabled>Generate listing prep</button>
+    <div id="phase3Status" class="phase3-status">Load a Cognito entry first.</div>
   </div>
 
   <div class="clear-row">

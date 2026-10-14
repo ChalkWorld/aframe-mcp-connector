@@ -50,6 +50,10 @@ var pickerFooter = document.getElementById('pickerFooter');
 var pickerStatus = document.getElementById('pickerStatus');
 var clearBtn = document.getElementById('clearBtn');
 
+// DOM refs — Phase 3a
+var prepBtn = document.getElementById('prepBtn');
+var phase3StatusEl = document.getElementById('phase3Status');
+
 // Config lives on window.LENNAR_PAYLOAD_CONFIG via extension/config.js.
 var CONFIG = window.LENNAR_PAYLOAD_CONFIG || {};
 
@@ -179,6 +183,8 @@ function generatePayload(entryId) {
       // so the paste fallback stays intact.
       payloadEl.value = JSON.stringify(body.payload, null, 2);
       chrome.storage.local.set({ matrixFillerPayload: payloadEl.value });
+      // Phase 3a button enables now that the textarea has content.
+      setPhase3Idle();
       // Nudge the existing fill flow: if auto-fill is on and a tab is already
       // detected, fill immediately.
       if (toggleEl.checked && currentDetectedTab) { runFill(); }
@@ -191,6 +197,25 @@ function generatePayload(entryId) {
     })
     .then(function() {
       setLoadBusy(false);
+    });
+}
+
+function prepareListingForEntry(entryId) {
+  var headers = railwayHeaders();
+  headers['Content-Type'] = 'application/json';
+  return fetch(CONFIG.RAILWAY_BASE_URL + '/prepare-listing', {
+    method: 'POST',
+    headers: headers,
+    body: JSON.stringify({ entry_id: entryId })
+  })
+    .then(function(res) {
+      return res.json().then(function(body) {
+        if (!res.ok || !body || body.status !== 'ok') {
+          var msg = (body && body.message) || ('HTTP ' + res.status);
+          throw new Error(msg);
+        }
+        return body;
+      });
     });
 }
 
@@ -261,6 +286,65 @@ setInterval(function() {
   }
 }, 60000);
 
+// ---------- Phase 3a: listing prep state ----------
+
+function setPhase3Idle() {
+  prepBtn.disabled = !payloadEl.value;
+  prepBtn.classList.remove('busy');
+  prepBtn.textContent = 'Generate listing prep';
+  phase3StatusEl.className = 'phase3-status';
+  phase3StatusEl.textContent = payloadEl.value
+    ? ''
+    : 'Load a Cognito entry first.';
+}
+
+function setPhase3Busy() {
+  prepBtn.disabled = true;
+  prepBtn.classList.add('busy');
+  prepBtn.textContent = 'Generating…';
+  phase3StatusEl.className = 'phase3-status';
+  phase3StatusEl.textContent = 'Creating Drive folder, sending prep email…';
+}
+
+function setPhase3Success(result) {
+  var folder_name = result.folder_name;
+  var folder_url = result.folder_url;
+  var folder_reused = result.folder_reused;
+
+  prepBtn.disabled = false;
+  prepBtn.classList.remove('busy');
+  prepBtn.textContent = 'Generate listing prep';
+  phase3StatusEl.className = 'phase3-status success';
+  phase3StatusEl.innerHTML = '';
+
+  var folderRow = document.createElement('div');
+  folderRow.className = 'success-row';
+  folderRow.innerHTML =
+    '<span class="check">✓</span> Drive folder: ' +
+    '<a href="' + folder_url + '" target="_blank" rel="noopener noreferrer">' + folder_name + '</a>';
+  phase3StatusEl.appendChild(folderRow);
+
+  var emailRow = document.createElement('div');
+  emailRow.className = 'success-row';
+  emailRow.innerHTML = '<span class="check">✓</span> Prep email sent to your inbox';
+  phase3StatusEl.appendChild(emailRow);
+
+  if (folder_reused) {
+    var notice = document.createElement('span');
+    notice.className = 'notice';
+    notice.textContent = 'Folder already existed — reused it.';
+    phase3StatusEl.appendChild(notice);
+  }
+}
+
+function setPhase3Error(message) {
+  prepBtn.disabled = !payloadEl.value;
+  prepBtn.classList.remove('busy');
+  prepBtn.textContent = 'Generate listing prep';
+  phase3StatusEl.className = 'phase3-status error';
+  phase3StatusEl.textContent = message;
+}
+
 // ---------- Picker: event wiring ----------
 
 refreshBtn.addEventListener('click', function() {
@@ -275,6 +359,24 @@ loadBtn.addEventListener('click', function() {
   generatePayload(entryId);
 });
 
+prepBtn.addEventListener('click', function() {
+  var entryId = Number(entrySelect.value);
+  if (!entryId) {
+    setPhase3Error('No entry selected.');
+    return;
+  }
+  setPhase3Busy();
+  prepareListingForEntry(entryId)
+    .then(function(result) {
+      setPhase3Success(result);
+    })
+    .catch(function(err) {
+      console.error('Phase 3 prepare-listing failed:', err);
+      var msg = (err && err.message) || 'Network error — see console for details.';
+      setPhase3Error('Prep failed: ' + msg);
+    });
+});
+
 clearBtn.addEventListener('click', function() {
   payloadEl.value = '';
   // Also clear the persisted value so a panel reopen does not resurrect it.
@@ -285,6 +387,7 @@ clearBtn.addEventListener('click', function() {
   TAB_ORDER.forEach(function(t) { tabStatus[t] = 'unvisited'; });
   if (currentDetectedTab) { tabStatus[currentDetectedTab] = 'pending'; }
   renderTabList();
+  setPhase3Idle();
 });
 
 // ---------- Rendering (unchanged) ----------
@@ -381,3 +484,6 @@ renderTabList();
 
 // Kick off the first picker fetch when the panel loads.
 fetchRecentEntries();
+
+// Set the initial Phase 3a disabled/hint state.
+setPhase3Idle();

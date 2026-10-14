@@ -33,7 +33,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
-from generate import generate_payload, fetch_recent_entries, load_env
+from generate import generate_payload, fetch_recent_entries, load_env, _cognito_fetch_entry
+from google_services import drive_service, gmail_service, find_or_create_folder, send_html_email
+from prep_email import build_prep_email
 
 load_dotenv()
 
@@ -141,3 +143,131 @@ def generate(
     except Exception as e:
         logger.exception("generate failed for entry_id=%s", body.entry_id)
         return {"status": "error", "message": str(e)}
+
+
+class PrepareListingRequest(BaseModel):
+    entry_id: int
+
+
+_STREET_SUFFIX_ABBREV = {
+    "Drive": "Dr",
+    "Road": "Rd",
+    "Lane": "Ln",
+    "Street": "St",
+    "Court": "Ct",
+    "Place": "Pl",
+    "Boulevard": "Blvd",
+    "Terrace": "Ter",
+    "Avenue": "Ave",
+    "Circle": "Cir",
+    "Way": "Way",
+    "Trail": "Trl",
+    "Parkway": "Pkwy",
+}
+
+
+def _abbreviate_street_name(street_name: str) -> str:
+    """Abbreviate the last word of a street name if it's a known suffix.
+
+    "Moonstone Drive" -> "Moonstone Dr"
+    "Hull Street Road" -> "Hull Street Rd"
+    "Clemet" (no suffix) -> "Clemet"
+    """
+    parts = street_name.strip().split()
+    if not parts:
+        return street_name
+    last = parts[-1]
+    abbrev = _STREET_SUFFIX_ABBREV.get(last)
+    if abbrev:
+        parts[-1] = abbrev
+    return " ".join(parts)
+
+
+def _build_folder_name(street_number: str, street_name: str) -> str:
+    return f"{street_number.strip()} {_abbreviate_street_name(street_name)}"
+
+
+@app.post("/prepare-listing")
+def prepare_listing(
+    body: PrepareListingRequest,
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+):
+    """
+    Create (or reuse) a Drive listing folder and send a prep email for the
+    given Cognito entry_id.
+
+    Request body: {"entry_id": N}
+
+    Response shape (success):
+      {"status": "ok", "folder_name": str, "folder_url": str,
+       "folder_reused": bool, "email_sent": bool, "warnings": [...]}
+
+    Response shape (error):
+      {"status": "error", "message": str}
+    """
+    _check_api_key(x_api_key)
+    try:
+        form_id = os.environ["COGNITO_FORM_ID"]
+        entry = _cognito_fetch_entry(form_id, body.entry_id)
+        intake = entry.get("Intake", {})
+        property_basics = entry.get("PropertyBasics", {})
+
+        street_number = str(intake.get("StreetNumber", "")).strip()
+        street_name_raw = str(intake.get("StreetName", "")).strip()
+        community = str(intake.get("Community", "")).strip()
+        list_price = property_basics.get("ListPrice") or 0
+
+        if not street_number or not street_name_raw:
+            return {
+                "status": "error",
+                "message": f"Entry {body.entry_id} is missing StreetNumber or StreetName; cannot build folder name.",
+            }
+
+        folder_name = _build_folder_name(street_number, street_name_raw)
+        address = folder_name  # abbreviated form is also what we show throughout
+
+        parent_folder_id = os.environ["LENNAR_PROPERTIES_FOLDER_ID"]
+
+        drive = drive_service()
+        listing_folder_id, listing_folder_url, folder_reused = find_or_create_folder(
+            drive, parent_folder_id, folder_name
+        )
+        # Nest a Photos subfolder; reuse-safe via the same helper.
+        find_or_create_folder(drive, listing_folder_id, "Photos")
+
+        subject, html = build_prep_email(
+            address=address,
+            list_price=list_price,
+            community=community,
+            folder_name=folder_name,
+            folder_url=listing_folder_url,
+            folder_reused=folder_reused,
+            entry_id=body.entry_id,
+        )
+
+        operator_email = "agentandrewrich@gmail.com"
+        gmail = gmail_service()
+        send_html_email(
+            gmail,
+            to_address=operator_email,
+            from_address=operator_email,
+            subject=subject,
+            html_body=html,
+        )
+
+        logger.info("prepare-listing succeeded for entry_id=%s", body.entry_id)
+        return {
+            "status": "ok",
+            "folder_name": folder_name,
+            "folder_url": listing_folder_url,
+            "folder_reused": folder_reused,
+            "email_sent": True,
+            "warnings": [],
+        }
+
+    except Exception as exc:
+        logger.exception("prepare-listing failed for entry_id=%s", body.entry_id)
+        return {
+            "status": "error",
+            "message": f"{type(exc).__name__}: {exc}",
+        }

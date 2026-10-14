@@ -67,6 +67,16 @@ Cursor handoff: `HANDOFF-2026-10-09-phase-2-extension-picker.md`.
 
 ---
 
+## Phase 3a Build Status — October 2026
+
+**Status: live.** Side panel adds a Generate listing prep button between the picker and the Clear row. One click fires `POST /prepare-listing` on the Railway service; Railway creates (or reuses) a Drive folder at `Lennar/Properties/{abbreviated address}` with a `Photos` subfolder nested inside, then sends a prep email to agentandrewrich@gmail.com with the three merge values (Property Address, Price, Community), the Composed Clause string ready to paste into PandaDoc, a link to the Drive folder, and a visually-stubbed "Send signing request" button. The stub becomes functional when Phase 3b lands.
+
+Env vars added for Phase 3a: `GCP_CLIENT_ID`, `GCP_CLIENT_SECRET`, `GCP_REFRESH_TOKEN`, `LENNAR_PROPERTIES_FOLDER_ID`. OAuth scopes: Drive full + Gmail send.
+
+Phase 3b (deferred — PandaDoc create+send automation, magic-link token, /send-signing endpoint) is a small additive handoff when the operator decides to pay for PandaDoc Starter.
+
+---
+
 ## Tab Detection — Confirmed August 17, 2026
 
 Live-tested via Claude in Chrome against a blank new-listing page. Each candidate ID checked for presence/absence across all 11 Lennar-scoped tabs (cross-checked, not just spot-checked) — zero collisions found.
