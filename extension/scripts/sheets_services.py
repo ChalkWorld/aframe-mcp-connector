@@ -5,7 +5,8 @@ Target: "Lennar Listings Sheet - Gary Martin", tab "Lennar Listings" (sheetId 20
 Writes a new row at index 45 (1-based), pushing existing rows down by one.
 
 Column map (confirmed 2026-10-14):
-    A: Address             -> script writes "{StreetNumber} {StreetName}"
+    A: Address             -> script writes abbreviated address from caller
+                              (matches Drive folder name, e.g. "3435 Moonstone Dr")
     B: MLS#                -> blank (operator fills after Matrix accepts)
     C: Current Price       -> script writes list price as currency
     D: New Price           -> blank
@@ -66,13 +67,17 @@ def _photo_cell(url, reuse_ref, label):
     return ""
 
 
-def build_listing_row(entry, community_display_name):
+def build_listing_row(entry, community_display_name, address):
     """
     Build the 20-cell row (A..T) from a Cognito Form 17 single-entry fetch.
 
     Args:
         entry: nested-dict shape as returned by _cognito_fetch_entry
         community_display_name: resolved DB community key (e.g. "Everstone SF")
+        address: pre-abbreviated address string from the caller (e.g.
+            "3435 Moonstone Dr"). The caller owns the abbreviation so the
+            Drive folder name, the prep email body, and the Sheet row A
+            all carry the same display form.
 
     Returns:
         List of 20 cell values, index 0 = column A.
@@ -84,10 +89,6 @@ def build_listing_row(entry, community_display_name):
                 return None
             cur = cur.get(part)
         return cur
-
-    street_number = nested("Intake.StreetNumber") or ""
-    street_name = nested("Intake.StreetName") or ""
-    address = f"{street_number} {street_name}".strip()
 
     list_price = nested("PropertyBasics.ListPrice")
     model = nested("PropertyBasics.BuildModelPlanName") or ""

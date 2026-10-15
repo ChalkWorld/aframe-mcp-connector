@@ -248,12 +248,18 @@ def prepare_listing(
             entry_id=body.entry_id,
         )
 
-        operator_email = "agentandrewrich@gmail.com"
+        from_address = "agentandrewrich@gmail.com"
+        # Plus-alias on the To: so Gmail doesn't flag the message as a
+        # self-send and render its "Be careful with this message" banner.
+        # Gmail silently strips "+listings" for delivery, so mail still
+        # lands at agentandrewrich@gmail.com. The existing Gmail filter
+        # (from: + subject match) continues to work unchanged.
+        to_address = "agentandrewrich+listings@gmail.com"
         gmail = gmail_service()
         send_html_email(
             gmail,
-            to_address=operator_email,
-            from_address=operator_email,
+            to_address=to_address,
+            from_address=from_address,
             subject=subject,
             html_body=html,
         )
@@ -265,7 +271,11 @@ def prepare_listing(
                 raise RuntimeError("GOOGLE_SHEET_ID env var not set")
             community_display_name = _resolve_community_key(entry)
             sheets = sheets_service()
-            row = build_listing_row(entry, community_display_name)
+            # Pass the already-abbreviated address so the Sheet row A
+            # matches the Drive folder name and the email body. The
+            # handler's local `address` is set from _build_folder_name()
+            # above (line ~230).
+            row = build_listing_row(entry, community_display_name, address=address)
             write_listing_row(sheets, sheet_id, row)
             logger.info("Sheet row written for entry_id=%s", body.entry_id)
         except Exception:
