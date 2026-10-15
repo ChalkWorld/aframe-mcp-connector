@@ -135,7 +135,7 @@ def write_listing_row(sheets_service, spreadsheet_id, row_values):
                         "startIndex": TARGET_ROW - 1,
                         "endIndex": TARGET_ROW,
                     },
-                    "inheritFromBefore": False,
+                    "inheritFromBefore": True,
                 }
             }
         ]
