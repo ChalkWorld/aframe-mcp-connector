@@ -33,9 +33,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
 
-from generate import generate_payload, fetch_recent_entries, load_env, _cognito_fetch_entry
-from google_services import drive_service, gmail_service, find_or_create_folder, send_html_email
+from generate import generate_payload, fetch_recent_entries, load_env, _cognito_fetch_entry, _resolve_community_key
+from google_services import drive_service, gmail_service, sheets_service, find_or_create_folder, send_html_email
 from prep_email import build_prep_email
+from sheets_services import build_listing_row, write_listing_row
 
 load_dotenv()
 
@@ -207,6 +208,8 @@ def prepare_listing(
     """
     _check_api_key(x_api_key)
     try:
+        warnings = []
+
         form_id = os.environ["COGNITO_FORM_ID"]
         entry = _cognito_fetch_entry(form_id, body.entry_id)
         intake = entry.get("Intake", {})
@@ -255,6 +258,20 @@ def prepare_listing(
             html_body=html,
         )
 
+        # Phase 3a.1 — Lennar Listings sheet row write
+        try:
+            sheet_id = os.getenv("GOOGLE_SHEET_ID")
+            if not sheet_id:
+                raise RuntimeError("GOOGLE_SHEET_ID env var not set")
+            community_display_name = _resolve_community_key(entry)
+            sheets = sheets_service()
+            row = build_listing_row(entry, community_display_name)
+            write_listing_row(sheets, sheet_id, row)
+            logger.info("Sheet row written for entry_id=%s", body.entry_id)
+        except Exception:
+            logger.exception("Sheet row write failed for entry_id=%s", body.entry_id)
+            warnings.append("Sheet row write failed — see Railway logs")
+
         logger.info("prepare-listing succeeded for entry_id=%s", body.entry_id)
         return {
             "status": "ok",
@@ -262,7 +279,7 @@ def prepare_listing(
             "folder_url": listing_folder_url,
             "folder_reused": folder_reused,
             "email_sent": True,
-            "warnings": [],
+            "warnings": warnings,
         }
 
     except Exception as exc:

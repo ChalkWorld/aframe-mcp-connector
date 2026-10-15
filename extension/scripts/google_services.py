@@ -20,6 +20,7 @@ from googleapiclient.errors import HttpError
 SCOPES = [
     "https://www.googleapis.com/auth/drive",
     "https://www.googleapis.com/auth/gmail.send",
+    "https://www.googleapis.com/auth/spreadsheets",  # Phase 3a.1
 ]
 
 FOLDER_MIME = "application/vnd.google-apps.folder"
@@ -45,6 +46,15 @@ def drive_service():
 
 def gmail_service():
     return build("gmail", "v1", credentials=_credentials(), cache_discovery=False)
+
+
+def sheets_service():
+    """Build the Google Sheets API service using the shared OAuth credentials.
+
+    Phase 3a.1 — mirrors drive_service()/gmail_service() rather than taking a
+    credentials param, since _credentials() is rebuilt fresh per request here.
+    """
+    return build("sheets", "v4", credentials=_credentials(), cache_discovery=False)
 
 
 def find_or_create_folder(service, parent_id: str, name: str) -> Tuple[str, str, bool]:

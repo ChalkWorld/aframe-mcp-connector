@@ -129,3 +129,22 @@ Needs its own design pass — not part of the MVP.
 ---
 
 Internal layout finalized August 17–18, 2026 — see Build Status above for the current file list and architecture.
+
+---
+
+## Phase 3a.1 — Lennar Listings sheet row write
+
+Added 2026-10-14. Expands `/prepare-listing` to also append a row to the "Lennar Listings" Google Sheet at intake time, after the Drive folder and prep email steps.
+
+- Target sheet: "Lennar Listings Sheet - Gary Martin" tab "Lennar Listings" (env var `GOOGLE_SHEET_ID`)
+- Target row: 45 (hardcoded; new row inserts there, pushes everything below down one)
+- Script-written columns: A (Address), C (Current Price), E (Community), F (Status = "Input in progress"), L (Build Model), M (NHC), R (Exterior Photos), S (Interior Photos), T (Virtual Tour)
+- Operator-fill columns: B (MLS#), D (New Price), G (Closing Date), H (Price change date), J (Notes), N (Tax ID), O (Closing Cost), P (Loan Type), Q (Co-op Agent)
+- Photo cells: `=HYPERLINK(url, "Box link")` for Exterior/Interior, `=HYPERLINK(url, "Tour link")` for Virtual Tour when Cognito URL is populated; `"Reused from {ReusePhotosFromAPreviousListing}"` when URL blank and the reuse field is populated (Virtual Tour also uses this fallback — assumption: reused photos imply reused tour); cell blank otherwise.
+- Community cell (E) uses the same `_resolve_community_key()` resolver `/generate` uses (Intake.Community + PropertyBasics.PropertyType → e.g. "Everstone SF"), reused here rather than the unsuffixed raw `Intake.Community` string already used in the prep email.
+- Operator moves the row to its community block manually after the write.
+- Sheet row write failure is non-fatal: logs the exception, appends a warning, lets the Drive + email succeed.
+
+Env var added for Phase 3a.1: `GOOGLE_SHEET_ID`. OAuth scope added: Sheets (`https://www.googleapis.com/auth/spreadsheets`) — requires a re-minted `GCP_REFRESH_TOKEN` after this scope expansion.
+
+Cursor handoff: `HANDOFF-2026-10-14-phase-3a1-sheets-write.md`.
