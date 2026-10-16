@@ -84,6 +84,12 @@ chrome.storage.local.get(['matrixFillerPayload', 'matrixFillerAutoFill', 'matrix
     if (isValid) { builderSelect.value = result.matrixFillerBuilder; }
   }
   updateFillButtonVisibility();
+  // Workstream A — kick off the first picker fetch INSIDE this callback so
+  // the fetch reads the restored builder rather than the dropdown's DOM
+  // default. chrome.storage.local.get is async; firing fetchRecentEntries()
+  // at script bottom (where it used to live) raced the restore and would
+  // pull Lennar entries even when Builder X was last selected.
+  fetchRecentEntries();
 });
 
 payloadEl.addEventListener('input', function() {
@@ -525,8 +531,9 @@ chrome.tabs.query({ active: true, currentWindow: true }, function(tabs) {
 
 renderTabList();
 
-// Kick off the first picker fetch when the panel loads.
-fetchRecentEntries();
+// First picker fetch runs inside the chrome.storage.local.get callback
+// above (Workstream A), so it uses the restored builder rather than the
+// dropdown's DOM default.
 
 // Set the initial Phase 3a disabled/hint state.
 setPhase3Idle();
