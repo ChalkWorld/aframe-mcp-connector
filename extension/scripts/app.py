@@ -280,11 +280,12 @@ def prepare_listing(
             html_body=html,
         )
 
-        # Listings sheet row write (per-builder sheet ID + tab + target row
-        # from the registry).
+        # Listings sheet row write (per-builder sheet ID + tab + tab name +
+        # target row from the registry).
         try:
             sheet_id = config["sheet_id"]
             tab_id = config["sheet_tab_id"]
+            tab_name = config["sheet_tab_name"]
             target_row = config["sheet_target_row"]
             community_display_name = _resolve_community_key(entry, resolved_builder)
             sheets = sheets_service()
@@ -293,7 +294,14 @@ def prepare_listing(
             # handler's local `address` is set from _build_folder_name()
             # above.
             row = build_listing_row(entry, community_display_name, address=address)
-            write_listing_row(sheets, sheet_id, row, tab_id=tab_id, target_row=target_row)
+            write_listing_row(
+                sheets,
+                sheet_id,
+                row,
+                tab_id=tab_id,
+                target_row=target_row,
+                sheet_tab_name=tab_name,
+            )
             logger.info("Sheet row written builder=%s entry_id=%s", resolved_builder, body.entry_id)
         except Exception:
             logger.exception("Sheet row write failed for entry_id=%s", body.entry_id)

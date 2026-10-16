@@ -1,8 +1,10 @@
 """
-Lennar Listings sheet write for /prepare-listing.
+Builder-listings sheet write for /prepare-listing.
 
-Target: "Lennar Listings Sheet - Gary Martin", tab "Lennar Listings" (sheetId 206940732).
-Writes a new row at index 45 (1-based), pushing existing rows down by one.
+Target sheet, tab, and target row are per-builder — resolved from the
+registry (builders.py) and passed into write_listing_row as parameters.
+Writes a new row at the per-builder target_row (1-based), pushing
+existing rows below down by one.
 
 Column map (confirmed 2026-10-14):
     A: Address             -> script writes abbreviated address from caller
@@ -124,19 +126,19 @@ def build_listing_row(entry, community_display_name, address):
     return row
 
 
-def write_listing_row(sheets_service, spreadsheet_id, row_values, *, tab_id, target_row):
+def write_listing_row(sheets_service, spreadsheet_id, row_values, *, tab_id, target_row, sheet_tab_name):
     """
     Insert an empty row at `target_row` (1-based) and populate A..T.
 
-    Workstream A — tab_id and target_row are now per-builder (passed in from
-    builders.py via app.py). Note the keyword-only star: callers must name
-    these args so the two integer parameters can't be swapped silently.
+    Workstream A — tab_id, target_row, and sheet_tab_name are per-builder
+    (passed in from builders.py via app.py). Note the keyword-only star:
+    callers must name these args so the two integer parameters (and the
+    string tab name) can't be swapped silently.
 
-    The sheet-name in the A1 range is kept as 'Lennar Listings' here because
-    builder #2's sheet will have its own tab name (likely the builder's name)
-    and the right fix at that point is to derive the sheet-name from the tab
-    via the Sheets API or pass it alongside tab_id. Not blocking today — one
-    builder, one tab name.
+    `sheet_tab_name` is interpolated into the A1 range (`'{name}'!A..T`);
+    callers are responsible for providing a tab name without literal
+    single quotes. For normal human-readable tab names ("Lennar Listings",
+    "Builder X Listings") this is a non-issue.
     """
     insert_body = {
         "requests": [
@@ -159,7 +161,7 @@ def write_listing_row(sheets_service, spreadsheet_id, row_values, *, tab_id, tar
 
     sheets_service.spreadsheets().values().update(
         spreadsheetId=spreadsheet_id,
-        range=f"'Lennar Listings'!A{target_row}:T{target_row}",
+        range=f"'{sheet_tab_name}'!A{target_row}:T{target_row}",
         valueInputOption="USER_ENTERED",
         body={"values": [row_values]},
     ).execute()

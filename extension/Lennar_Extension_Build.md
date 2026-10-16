@@ -186,3 +186,38 @@ Shared secrets that stay in Railway: `AIRTABLE_PAT`, `AIRTABLE_CVRMLS_BASE_ID`, 
 Railway redeploys automatically on push. The server accepts optional `builder` on all three endpoints and defaults to `"lennar"` when omitted, so the 0.4.0 extension (which doesn't send `builder`) continues working during the brief window between Railway deploy and the operator reloading the 0.5.0 extension. No coordination required.
 
 Cursor handoff: `HANDOFF-2026-10-15-workstream-a-builder-registry.md`.
+
+---
+
+## Workstream A — Multi-builder architecture (session 2)
+
+Added 2026-10-16. Second builder scaffolded end-to-end to prove the registry pattern works beyond one key. Builder X is a hypothetical builder — its Cognito form (Form 18) is a clone of Lennar's Form 17, and its Airtable base (`appv1my0msvAyGpor`, "Builder X Payload Rules") is a schema clone of Lennar's with empty tables (Source Types enum seeded with the 5 standard rows). No real Builder X data; the scaffold's job is proving the wiring works.
+
+### Server (Python)
+
+- **`extension/scripts/builders.py`** — new `"builder-x"` entry with the full per-builder config (Cognito form 18 + Submitted view 5; Airtable base `appv1my0msvAyGpor` with the four table IDs; Drive folder `1xoRuD33NFme2lzmXHu7hHysCj48TIg1Q`; Google Sheet `1_KJ67--gajL-Bh-2ZhcZsLfXFDwYWnqBRacQ8ZuDMB4` with tab `206940732` named "Builder X Listings"; target row 5; display name "Builder X"; MLS tag `cvrmls`; community resolver `lennar_default` reused). Lennar's entry gains a `sheet_tab_name` field (`"Lennar Listings"`) to match the new registry shape.
+- **`extension/scripts/sheets_services.py`** — `write_listing_row` takes a new keyword-only `sheet_tab_name` parameter and interpolates it into the A1 range (`f"'{sheet_tab_name}'!A..T"`), replacing the hardcoded `'Lennar Listings'`. Module docstring generalized to no longer describe a Lennar-specific target. Closes the v0.21 parked "Sheet-name derivation in `write_listing_row`" item.
+- **`extension/scripts/app.py`** — `/prepare-listing` reads `sheet_tab_name` from the registry alongside `sheet_tab_id` and `sheet_target_row`, and passes it into `write_listing_row`.
+
+### Extension
+
+- **`sidepanel.html`** — new `<option value="builder-x">Builder X</option>` added to the builder dropdown after Lennar.
+- **`manifest.json`** — version `0.5.0` → `0.6.0`. Description updated.
+
+### Builder X Airtable base layout
+
+Cloned from Lennar's schema with empty tables. Five tables:
+
+- `Payload Rules` (`tblEm6RNl3EtFaUfM`) — primary field `Rule` (autoNumber), the full 15 columns including links to Source Types / Community / Cognito Field. `Property Type` multi-select is clean (`SF`, `TH` only — no orphans propagated from Lennar's parked v0.8 cleanup item).
+- `Cognito Fields` (`tbl9LWfHDEuYtgFvv` for Lennar; `tblhZRN8ggMt0QS6O` for Builder X) — primary field `Field Path`.
+- `Source Types` (`tblpqZHlIIgzk1UDl`) — primary field `Source Type`, seeded with the 5 enum rows (STATIC, COGNITO, COMMUNITY_DB, DERIVED, MANUAL_ENTRY). Notes column reworded to drop Lennar-specific examples.
+- `Community Reference DB` (`tblTLN4bKIVlid5iO`) — primary field `Community`, same 34 columns as Lennar's including `Path` singleSelect and `Neighborhood` text. Empty.
+- `Personnel Roster` (`tbl8ag9XE1VIES8tW`) — primary field `Name`, same role/status enums as Lennar. Empty. (Not referenced from the registry today; included for operational symmetry with Lennar's base.)
+
+### Session 2 learnings
+
+- **Cloning Form 17 in Cognito reassigns view IDs.** Form 17's Submitted view is `17-3` (OData segment `3`); Form 18's Submitted view is `18-5` (OData segment `5`). The registry can't assume view IDs are consistent across cloned forms — each builder's `submitted_view_id` must be looked up and set explicitly.
+- **Cloning a Google Sheet preserves grid IDs on each tab.** Both Lennar's "Lennar Listings" tab and Builder X's "Builder X Listings" tab (which was cloned from it) share `gid=206940732`. The grid ID alone doesn't disambiguate between sheets — that's what `sheet_id` is for — but it does mean that for a cloned sheet the registry's `sheet_tab_id` can match the source.
+- **Lennar `sheet_tab_name` field closes the v0.21 parked `write_listing_row` item.** The hardcoded `'Lennar Listings'` string in `sheets_services.py` was a known debt; session 2 forced the fix because Builder X's tab has a different name.
+
+Cursor handoff: `HANDOFF-2026-10-16-workstream-a-builder-x.md`.
