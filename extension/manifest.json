@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Lennar CVRMLS Matrix Filler (POC)",
-  "version": "0.4.0",
-  "description": "Side panel that detects the active CVRMLS Matrix tab and fills it from a Cognito-entry payload (via Railway) or a pasted JSON payload. Lennar/CVRMLS scoped POC.",
+  "name": "CVRMLS Matrix Filler",
+  "version": "0.5.0",
+  "description": "Side panel that detects the active CVRMLS Matrix tab and fills it from a Cognito-entry payload (via Railway) or a pasted JSON payload. Multi-builder architecture (Workstream A).",
   "permissions": ["activeTab", "sidePanel", "storage"],
   "host_permissions": ["https://lennar-payload-script-production.up.railway.app/*"],
   "action": {},

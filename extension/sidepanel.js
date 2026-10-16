@@ -54,14 +54,35 @@ var clearBtn = document.getElementById('clearBtn');
 var prepBtn = document.getElementById('prepBtn');
 var phase3StatusEl = document.getElementById('phase3Status');
 
+// DOM refs — builder picker (Workstream A)
+var builderSelect = document.getElementById('builderSelect');
+
+// Builder state (Workstream A) — read via getCurrentBuilder() at every
+// Railway call so state is single-sourced from the <select> element.
+var DEFAULT_BUILDER = 'lennar';
+
+function getCurrentBuilder() {
+  return (builderSelect && builderSelect.value) || DEFAULT_BUILDER;
+}
+
 // Config lives on window.LENNAR_PAYLOAD_CONFIG via extension/config.js.
 var CONFIG = window.LENNAR_PAYLOAD_CONFIG || {};
 
 // ---------- Persistence: payload text + toggle survive panel close/reopen ----------
 
-chrome.storage.local.get(['matrixFillerPayload', 'matrixFillerAutoFill'], function(result) {
+chrome.storage.local.get(['matrixFillerPayload', 'matrixFillerAutoFill', 'matrixFillerBuilder'], function(result) {
   if (result.matrixFillerPayload) { payloadEl.value = result.matrixFillerPayload; }
   toggleEl.checked = !!result.matrixFillerAutoFill;
+  // Workstream A — restore the persisted builder selection. Falls back to
+  // DEFAULT_BUILDER if nothing is stored or the stored value is no longer
+  // a valid option in the dropdown.
+  if (result.matrixFillerBuilder) {
+    var isValid = false;
+    for (var i = 0; i < builderSelect.options.length; i++) {
+      if (builderSelect.options[i].value === result.matrixFillerBuilder) { isValid = true; break; }
+    }
+    if (isValid) { builderSelect.value = result.matrixFillerBuilder; }
+  }
   updateFillButtonVisibility();
 });
 
@@ -131,7 +152,9 @@ function fetchRecentEntries() {
     return;
   }
   setPickerLoading();
-  var url = CONFIG.RAILWAY_BASE_URL + '/recent-entries';
+  // Workstream A — pass selected builder as a query param. Server defaults
+  // to lennar if omitted, so the fallback path stays safe.
+  var url = CONFIG.RAILWAY_BASE_URL + '/recent-entries?builder=' + encodeURIComponent(getCurrentBuilder());
   fetch(url, { headers: railwayHeaders() })
     .then(function(res) {
       if (!res.ok) { throw new Error('HTTP ' + res.status); }
@@ -166,7 +189,7 @@ function generatePayload(entryId) {
   fetch(url, {
     method: 'POST',
     headers: headers,
-    body: JSON.stringify({ entry_id: entryId })
+    body: JSON.stringify({ entry_id: entryId, builder: getCurrentBuilder() })
   })
     .then(function(res) {
       if (!res.ok) { throw new Error('HTTP ' + res.status); }
@@ -206,7 +229,7 @@ function prepareListingForEntry(entryId) {
   return fetch(CONFIG.RAILWAY_BASE_URL + '/prepare-listing', {
     method: 'POST',
     headers: headers,
-    body: JSON.stringify({ entry_id: entryId })
+    body: JSON.stringify({ entry_id: entryId, builder: getCurrentBuilder() })
   })
     .then(function(res) {
       return res.json().then(function(body) {
@@ -388,6 +411,26 @@ clearBtn.addEventListener('click', function() {
   if (currentDetectedTab) { tabStatus[currentDetectedTab] = 'pending'; }
   renderTabList();
   setPhase3Idle();
+});
+
+// Workstream A — builder-change handler. Switching builders mid-session is a
+// context switch: the loaded Lennar payload would fill against the wrong
+// Matrix fields for Builder X, and the picker is showing the wrong form's
+// entries. Treat it as Clear + persist + refresh picker.
+builderSelect.addEventListener('change', function() {
+  chrome.storage.local.set({ matrixFillerBuilder: builderSelect.value });
+  // Same reset flow as the Clear button.
+  payloadEl.value = '';
+  chrome.storage.local.remove('matrixFillerPayload');
+  TAB_ORDER.forEach(function(t) { tabStatus[t] = 'unvisited'; });
+  if (currentDetectedTab) { tabStatus[currentDetectedTab] = 'pending'; }
+  renderTabList();
+  setPhase3Idle();
+  // Re-populate the picker with the newly-selected builder's recent entries.
+  // Clears the current list first — fetchRecentEntries() shows the loading
+  // state immediately, so there's no stale-list window.
+  recentEntries = [];
+  fetchRecentEntries();
 });
 
 // ---------- Rendering (unchanged) ----------

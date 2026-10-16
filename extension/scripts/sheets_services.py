@@ -38,8 +38,10 @@ import logging
 
 logger = logging.getLogger(__name__)
 
-LENNAR_LISTINGS_TAB_ID = 206940732
-TARGET_ROW = 45
+# Workstream A — the listings-tab ID and target-row index now come from the
+# per-builder registry (builders.py) and are passed into write_listing_row
+# as parameters. STATUS_AT_INTAKE is still MLS-wide — a listing is "Input in
+# progress" the moment the Matrix fill starts, regardless of builder.
 STATUS_AT_INTAKE = "Input in progress"
 
 
@@ -122,19 +124,29 @@ def build_listing_row(entry, community_display_name, address):
     return row
 
 
-def write_listing_row(sheets_service, spreadsheet_id, row_values):
+def write_listing_row(sheets_service, spreadsheet_id, row_values, *, tab_id, target_row):
     """
-    Insert an empty row at TARGET_ROW (1-based) and populate A..T.
+    Insert an empty row at `target_row` (1-based) and populate A..T.
+
+    Workstream A — tab_id and target_row are now per-builder (passed in from
+    builders.py via app.py). Note the keyword-only star: callers must name
+    these args so the two integer parameters can't be swapped silently.
+
+    The sheet-name in the A1 range is kept as 'Lennar Listings' here because
+    builder #2's sheet will have its own tab name (likely the builder's name)
+    and the right fix at that point is to derive the sheet-name from the tab
+    via the Sheets API or pass it alongside tab_id. Not blocking today — one
+    builder, one tab name.
     """
     insert_body = {
         "requests": [
             {
                 "insertDimension": {
                     "range": {
-                        "sheetId": LENNAR_LISTINGS_TAB_ID,
+                        "sheetId": tab_id,
                         "dimension": "ROWS",
-                        "startIndex": TARGET_ROW - 1,
-                        "endIndex": TARGET_ROW,
+                        "startIndex": target_row - 1,
+                        "endIndex": target_row,
                     },
                     "inheritFromBefore": True,
                 }
@@ -147,9 +159,9 @@ def write_listing_row(sheets_service, spreadsheet_id, row_values):
 
     sheets_service.spreadsheets().values().update(
         spreadsheetId=spreadsheet_id,
-        range=f"'Lennar Listings'!A{TARGET_ROW}:T{TARGET_ROW}",
+        range=f"'Lennar Listings'!A{target_row}:T{target_row}",
         valueInputOption="USER_ENTERED",
         body={"values": [row_values]},
     ).execute()
 
-    logger.info("Wrote Lennar Listings row at A%d:T%d", TARGET_ROW, TARGET_ROW)
+    logger.info("Wrote listings row at A%d:T%d (tab_id=%s)", target_row, target_row, tab_id)

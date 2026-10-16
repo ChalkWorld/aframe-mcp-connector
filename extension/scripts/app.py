@@ -37,6 +37,7 @@ from generate import generate_payload, fetch_recent_entries, load_env, _cognito_
 from google_services import drive_service, gmail_service, sheets_service, find_or_create_folder, send_html_email
 from prep_email import build_prep_email
 from sheets_services import build_listing_row, write_listing_row
+from builders import DEFAULT_BUILDER, get_builder_config
 
 load_dotenv()
 
@@ -84,6 +85,7 @@ def _check_api_key(x_api_key: Optional[str]) -> None:
 
 class GenerateRequest(BaseModel):
     entry_id: int
+    builder: Optional[str] = None  # defaults to DEFAULT_BUILDER server-side
 
 
 @app.get("/")
@@ -93,9 +95,16 @@ def health_check():
 
 
 @app.get("/recent-entries")
-def recent_entries(x_api_key: Optional[str] = Header(None, alias="X-API-Key")):
+def recent_entries(
+    builder: Optional[str] = None,
+    x_api_key: Optional[str] = Header(None, alias="X-API-Key"),
+):
     """
-    Return the last 5 Form 17 submissions for the extension picker.
+    Return the last 5 form submissions for the extension picker.
+
+    Query params:
+      builder: optional builder slug. Defaults to DEFAULT_BUILDER ("lennar")
+               when omitted so pre-Workstream-A clients keep working.
 
     Response shape:
       {"status": "ok", "entries": [{"entry_id": int, "address": str, "submitted_at": str}, ...]}
@@ -105,8 +114,9 @@ def recent_entries(x_api_key: Optional[str] = Header(None, alias="X-API-Key")):
     """
     _check_api_key(x_api_key)
     try:
-        entries = fetch_recent_entries(limit=5)
-        logger.info("recent-entries returned %d entries", len(entries))
+        resolved_builder = (builder or DEFAULT_BUILDER)
+        entries = fetch_recent_entries(limit=5, builder=resolved_builder)
+        logger.info("recent-entries builder=%s returned %d entries", resolved_builder, len(entries))
         return {"status": "ok", "entries": entries}
     except Exception as e:
         logger.exception("recent-entries failed")
@@ -135,11 +145,12 @@ def generate(
     """
     _check_api_key(x_api_key)
     try:
+        resolved_builder = (body.builder or DEFAULT_BUILDER)
         # generate_payload returns a JSON string (its existing CLI output
         # contract) — parse it back to a dict for the response body.
-        payload_json = generate_payload(body.entry_id, _ENV)
+        payload_json = generate_payload(body.entry_id, _ENV, resolved_builder)
         payload = json.loads(payload_json)
-        logger.info("generate succeeded for entry_id=%s", body.entry_id)
+        logger.info("generate succeeded builder=%s entry_id=%s", resolved_builder, body.entry_id)
         return {"status": "ok", "payload": payload, "warnings": []}
     except Exception as e:
         logger.exception("generate failed for entry_id=%s", body.entry_id)
@@ -148,6 +159,7 @@ def generate(
 
 class PrepareListingRequest(BaseModel):
     entry_id: int
+    builder: Optional[str] = None  # defaults to DEFAULT_BUILDER server-side
 
 
 _STREET_SUFFIX_ABBREV = {
@@ -210,7 +222,10 @@ def prepare_listing(
     try:
         warnings = []
 
-        form_id = os.environ["COGNITO_FORM_ID"]
+        resolved_builder = (body.builder or DEFAULT_BUILDER)
+        config = get_builder_config(resolved_builder)
+
+        form_id = config["cognito_form_id"]
         entry = _cognito_fetch_entry(form_id, body.entry_id)
         intake = entry.get("Intake", {})
         property_basics = entry.get("PropertyBasics", {})
@@ -229,7 +244,7 @@ def prepare_listing(
         folder_name = _build_folder_name(street_number, street_name_raw)
         address = folder_name  # abbreviated form is also what we show throughout
 
-        parent_folder_id = os.environ["LENNAR_PROPERTIES_FOLDER_ID"]
+        parent_folder_id = config["drive_properties_folder_id"]
 
         drive = drive_service()
         listing_folder_id, listing_folder_url, folder_reused = find_or_create_folder(
@@ -246,6 +261,7 @@ def prepare_listing(
             folder_url=listing_folder_url,
             folder_reused=folder_reused,
             entry_id=body.entry_id,
+            builder_display_name=config["display_name"],
         )
 
         from_address = "agentandrewrich@gmail.com"
@@ -264,20 +280,21 @@ def prepare_listing(
             html_body=html,
         )
 
-        # Phase 3a.1 — Lennar Listings sheet row write
+        # Listings sheet row write (per-builder sheet ID + tab + target row
+        # from the registry).
         try:
-            sheet_id = os.getenv("GOOGLE_SHEET_ID")
-            if not sheet_id:
-                raise RuntimeError("GOOGLE_SHEET_ID env var not set")
-            community_display_name = _resolve_community_key(entry)
+            sheet_id = config["sheet_id"]
+            tab_id = config["sheet_tab_id"]
+            target_row = config["sheet_target_row"]
+            community_display_name = _resolve_community_key(entry, resolved_builder)
             sheets = sheets_service()
             # Pass the already-abbreviated address so the Sheet row A
             # matches the Drive folder name and the email body. The
             # handler's local `address` is set from _build_folder_name()
-            # above (line ~230).
+            # above.
             row = build_listing_row(entry, community_display_name, address=address)
-            write_listing_row(sheets, sheet_id, row)
-            logger.info("Sheet row written for entry_id=%s", body.entry_id)
+            write_listing_row(sheets, sheet_id, row, tab_id=tab_id, target_row=target_row)
+            logger.info("Sheet row written builder=%s entry_id=%s", resolved_builder, body.entry_id)
         except Exception:
             logger.exception("Sheet row write failed for entry_id=%s", body.entry_id)
             warnings.append("Sheet row write failed — see Railway logs")

@@ -27,6 +27,8 @@ from pathlib import Path
 import requests
 from dotenv import load_dotenv
 
+from builders import BUILDERS, DEFAULT_BUILDER, get_builder_config
+
 
 # -------- CLI --------
 
@@ -71,17 +73,27 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="PATH",
         help="Write the generated payload to this file.",
     )
+    parser.add_argument(
+        "--builder",
+        type=str,
+        default=DEFAULT_BUILDER,
+        choices=sorted(BUILDERS.keys()),
+        help=f"Builder slug (default: {DEFAULT_BUILDER!r}).",
+    )
     return parser
 
 
 # -------- Env loading & validation --------
 
+# Workstream A — base IDs, form IDs, folder IDs, and sheet IDs all moved to
+# builders.py (plain non-secret data). Only true shared secrets remain here.
+# CVRMLS base ID stays as an env var for now — Cascade Options authoring work
+# still reads it; migrates to a shared MLS registry if a second CVRMLS builder
+# gets added.
 REQUIRED_ENV_VARS = (
     "AIRTABLE_PAT",
-    "AIRTABLE_LENNAR_BASE_ID",
     "AIRTABLE_CVRMLS_BASE_ID",
     "COGNITO_API_KEY",
-    "COGNITO_FORM_ID",
 )
 
 
@@ -125,15 +137,11 @@ def emit(payload: str, args: argparse.Namespace) -> None:
 # Per HANDOFF-2026-10-05-phase-1-pipeline-build.md.
 
 # ---------------------------------------------------------------------------
-# Airtable base + table identifiers (resolved 2026-10-05)
+# Airtable + Cognito API bases
 # ---------------------------------------------------------------------------
-
-LENNAR_BASE_ID = os.getenv("AIRTABLE_LENNAR_BASE_ID", "app78fMUwDNBHUZ6r")
-
-PAYLOAD_RULES_TABLE_ID    = "tbletiuyEdhVwcwGw"
-COGNITO_FIELDS_TABLE_ID   = "tbl9LWfHDEuYtgFvv"
-SOURCE_TYPES_TABLE_ID     = "tblpwaJswUvNpYOyY"
-COMMUNITY_DB_TABLE_ID     = "tbleMbM1WgY8Si2t7"
+# Workstream A — per-builder base IDs and table IDs now live in builders.py.
+# The HTTP helpers below take base_id as a parameter so the dispatcher can
+# resolve the right builder's base at call time.
 
 AIRTABLE_API_BASE = "https://api.airtable.com/v0"
 COGNITO_API_BASE  = "https://www.cognitoforms.com/api"
@@ -154,9 +162,13 @@ def _cognito_headers() -> dict:
     return {"Authorization": f"Bearer {key}"}
 
 
-def _airtable_list_all(table_id: str) -> list:
-    """Fetch every record from an Airtable table, handling pagination."""
-    url = f"{AIRTABLE_API_BASE}/{LENNAR_BASE_ID}/{table_id}"
+def _airtable_list_all(base_id: str, table_id: str) -> list:
+    """Fetch every record from an Airtable table, handling pagination.
+
+    Workstream A — base_id is now a required parameter (previously the Lennar
+    base was hardcoded at module level).
+    """
+    url = f"{AIRTABLE_API_BASE}/{base_id}/{table_id}"
     records = []
     offset = None
     while True:
@@ -262,12 +274,12 @@ PROPERTY_TYPE_SUFFIX = {
 }
 
 
-def _resolve_community_key(entry: dict) -> str:
-    """
-    Build the Community Reference DB lookup key from Form 17's Intake.Community
-    + PropertyBasics.PropertyType per convention #6.
+def _resolve_community_lennar_default(entry: dict) -> str:
+    """Lennar's resolver: Intake.Community + PropertyType suffix.
 
-    'Harpers Mill' + 'Townhouse' → 'Harpers Mill TH'.
+    'Harpers Mill' + 'Townhouse' → 'Harpers Mill TH'. Named 'lennar_default'
+    in the registry; builders whose intake forms match this shape reuse it
+    as-is. Builders whose forms differ get a new named resolver added below.
     """
     community = _cognito_get(entry, "Intake.Community")
     prop_type = _cognito_get(entry, "PropertyBasics.PropertyType")
@@ -282,6 +294,29 @@ def _resolve_community_key(entry: dict) -> str:
             f"Unknown PropertyType {prop_type!r}; expected 'Single Family' or 'Townhouse'."
         )
     return f"{community} {suffix}"
+
+
+COMMUNITY_RESOLVERS = {
+    "lennar_default": _resolve_community_lennar_default,
+}
+
+
+def _resolve_community_key(entry: dict, builder: str = DEFAULT_BUILDER) -> str:
+    """Dispatch to the per-builder community resolver named in builders.py.
+
+    Workstream A — public signature now takes an optional `builder`. Callers
+    that don't pass one get Lennar (DEFAULT_BUILDER), preserving backward compat
+    with app.py's existing import and any CLI callers.
+    """
+    config = get_builder_config(builder)
+    resolver_key = config.get("community_resolver", "lennar_default")
+    resolver = COMMUNITY_RESOLVERS.get(resolver_key)
+    if not resolver:
+        raise RuntimeError(
+            f"Unknown community resolver {resolver_key!r} for builder {builder!r}. "
+            f"Valid resolvers: {', '.join(sorted(COMMUNITY_RESOLVERS.keys()))}."
+        )
+    return resolver(entry)
 
 
 def _find_community_row(community_rows: list, community_key: str) -> dict:
@@ -972,34 +1007,38 @@ def _route_rule_output(payload: dict, input_id: str, value) -> None:
 # Main pipeline
 # ---------------------------------------------------------------------------
 
-def _build_payload(entry_id) -> dict:
+def _build_payload(entry_id, builder: str = DEFAULT_BUILDER) -> dict:
     """
-    Phase 1 pipeline — Harpers Mill TH / Creekside Run TH happy path.
+    Payload-build pipeline (Workstream A — now builder-aware).
 
-    1. Fetch Cognito Form 17 entry.
-    2. Resolve community from Intake.Community + PropertyBasics.PropertyType.
-    3. Fetch Payload Rules, Cognito Fields, Source Types, Community Reference
-       DB rows from Airtable.
-    4. Resolve the community row (hard-fail on miss per convention #6).
-    5. For each rule, honor Property Type + Path scoping, then dispatch by
+    1. Resolve builder config (form ID, Airtable base ID, table IDs).
+    2. Fetch Cognito entry.
+    3. Resolve community via the builder's community resolver.
+    4. Fetch Payload Rules, Cognito Fields, Source Types, Community Reference
+       DB rows from the builder's Airtable base.
+    5. Resolve the community row (hard-fail on miss per convention #6).
+    6. For each rule, honor Property Type + Path scoping, then dispatch by
        Source Type, then route the output into the payload envelope.
-    6. Return the assembled payload matching Lennar_Payload_Examples.md.
+    7. Return the assembled payload with the builder-tagged envelope.
     """
-    form_id = os.environ["COGNITO_FORM_ID"]
+    config = get_builder_config(builder)
+    form_id = config["cognito_form_id"]
+    base_id = config["airtable_base_id"]
+    tables = config["airtable_tables"]
 
     # --- 1. Fetch Cognito entry ---
     entry = _cognito_fetch_entry(form_id, entry_id)
 
     # --- 2. Resolve community key ---
-    community_key = _resolve_community_key(entry)
+    community_key = _resolve_community_key(entry, builder)
     prop_type_cognito = _cognito_get(entry, "PropertyBasics.PropertyType")
     property_type = PROPERTY_TYPE_SUFFIX[prop_type_cognito]  # "SF" or "TH"
 
     # --- 3. Fetch all four Airtable tables ---
-    rules_records       = _airtable_list_all(PAYLOAD_RULES_TABLE_ID)
-    cognito_records     = _airtable_list_all(COGNITO_FIELDS_TABLE_ID)
-    source_type_records = _airtable_list_all(SOURCE_TYPES_TABLE_ID)
-    community_records   = _airtable_list_all(COMMUNITY_DB_TABLE_ID)
+    rules_records       = _airtable_list_all(base_id, tables["payload_rules"])
+    cognito_records     = _airtable_list_all(base_id, tables["cognito_fields"])
+    source_type_records = _airtable_list_all(base_id, tables["source_types"])
+    community_records   = _airtable_list_all(base_id, tables["community_db"])
 
     # --- 4. Resolve community row + derive path ---
     community_row = _find_community_row(community_records, community_key)
@@ -1038,8 +1077,8 @@ def _build_payload(entry_id) -> dict:
 
     # --- 7. Iterate rules, dispatch by Source Type, route output ---
     payload = {
-        "mls":       "cvrmls",
-        "builder":   "lennar",
+        "mls":       config["mls_tag"],
+        "builder":   builder,
         "path":      path,
         "community": community_key,
     }
@@ -1155,7 +1194,8 @@ def _build_payload(entry_id) -> dict:
 # submissions with no extra client-side sort needed.
 # ---------------------------------------------------------------------------
 
-SUBMITTED_VIEW_ID = 3  # Form 17's "Submitted" view — OData Int32 view ID.
+# Workstream A — the Submitted view ID is now per-builder config
+# (builders.py submitted_view_id). Each builder's form has its own view.
 
 
 def _cognito_fetch_view_entries(form_id: str, view_id: int, take: int) -> list:
@@ -1180,9 +1220,12 @@ def _cognito_fetch_view_entries(form_id: str, view_id: int, take: int) -> list:
     return rows[:take]
 
 
-def fetch_recent_entries(limit: int = 5) -> list[dict]:
+def fetch_recent_entries(limit: int = 5, builder: str = DEFAULT_BUILDER) -> list[dict]:
     """
-    Fetch the N most recent Form 17 submissions for the extension picker.
+    Fetch the N most recent form submissions for the extension picker.
+
+    Workstream A — now builder-aware. Reads the builder's Cognito form ID and
+    Submitted view ID from builders.py.
 
     Returns a list of dicts: {"entry_id": int, "address": str, "submitted_at": str}
     sorted by submission time, newest first (inherited from the Submitted
@@ -1192,8 +1235,10 @@ def fetch_recent_entries(limit: int = 5) -> list[dict]:
     "(address unknown — Entry #N)" label so the picker always has something
     to display.
     """
-    form_id = os.environ["COGNITO_FORM_ID"]
-    rows = _cognito_fetch_view_entries(form_id, SUBMITTED_VIEW_ID, limit)
+    config = get_builder_config(builder)
+    form_id = config["cognito_form_id"]
+    view_id = config["submitted_view_id"]
+    rows = _cognito_fetch_view_entries(form_id, view_id, limit)
 
     entries = []
     for row in rows:
@@ -1219,17 +1264,17 @@ def fetch_recent_entries(limit: int = 5) -> list[dict]:
     return entries
 
 
-def generate_payload(entry_id: int, env: dict[str, str]) -> str:
+def generate_payload(entry_id: int, env: dict[str, str], builder: str = DEFAULT_BUILDER) -> str:
     """
     Build the payload for the given Cognito entry and return it as a JSON
     string, per the CLI's existing output contract.
 
-    `env` is unused directly here — the pipeline helpers read credentials
-    from `os.environ`, which `load_env()` has already populated via
-    `load_dotenv()`. It's kept in the signature so callers (and the Phase 2
-    wrap) don't need to change.
+    Workstream A — now builder-aware. `env` remains in the signature for
+    boot-time secret validation; the pipeline helpers still read credentials
+    from `os.environ`. `builder` defaults to DEFAULT_BUILDER so Phase 2
+    callers that haven't been updated still work.
     """
-    payload = _build_payload(entry_id)
+    payload = _build_payload(entry_id, builder)
     return json.dumps(payload, indent=2, ensure_ascii=False)
 
 
@@ -1238,7 +1283,7 @@ def generate_payload(entry_id: int, env: dict[str, str]) -> str:
 def main() -> int:
     args = build_parser().parse_args()
     env = load_env()
-    payload = generate_payload(args.entry_id, env)
+    payload = generate_payload(args.entry_id, env, args.builder)
     emit(payload, args)
     return 0
 

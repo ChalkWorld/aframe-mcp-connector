@@ -48,9 +48,16 @@ def build_prep_email(
     folder_url: str,
     folder_reused: bool,
     entry_id: int,
+    builder_display_name: str = "Lennar",
 ) -> tuple[str, str]:
-    """Return (subject, html_body) for the prep email."""
-    subject = f"Listing prep: {address}"
+    """Return (subject, html_body) for the prep email.
+
+    Workstream A — `builder_display_name` is interpolated into the subject
+    and body so a prep email the operator opens for Builder X reads as a
+    Builder X listing. Defaults to "Lennar" for callers that haven't been
+    updated.
+    """
+    subject = f"Listing prep: {address} ({builder_display_name})"
     price_str = _format_price(list_price)
     composed_clause = build_composed_clause(address, list_price, community)
     reuse_note = (
@@ -61,7 +68,7 @@ def build_prep_email(
 
     html = f"""\
 <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;font-size:14px;color:#212529;max-width:560px;">
-  <p>Listing prep is ready for <strong>{address}</strong>.</p>
+  <p>Listing prep is ready for <strong>{address}</strong> — <strong>{builder_display_name}</strong>.</p>
 
   <p style="margin-top:20px;"><strong>Paste these into PandaDoc when you create the addendum:</strong></p>
   <ul style="line-height:1.6;">

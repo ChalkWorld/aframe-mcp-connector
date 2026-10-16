@@ -7,6 +7,11 @@
   body { font-family: -apple-system, BlinkMacSystemFont, sans-serif; padding: 12px; margin: 0; }
   h1 { font-size: 14px; margin: 0 0 10px; }
 
+  /* Builder picker (Workstream A) — matches entry picker visual language */
+  .builder-picker { padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid #e5e7eb; }
+  .builder-picker-row { display: flex; gap: 6px; align-items: stretch; }
+  .builder-picker-row select { flex: 1; min-width: 0; padding: 6px 8px; font-size: 12px; font-family: inherit; border: 1px solid #d1d5db; border-radius: 4px; background: #fff; color: #111; }
+
   /* Picker (Phase 2) */
   .picker { padding-bottom: 10px; margin-bottom: 10px; border-bottom: 1px solid #e5e7eb; }
   .picker-row { display: flex; gap: 6px; align-items: stretch; }
@@ -53,7 +58,15 @@
 </style>
 </head>
 <body>
-  <h1>Lennar CVRMLS Matrix Filler</h1>
+  <h1>CVRMLS Matrix Filler</h1>
+
+  <div id="builderPicker" class="builder-picker">
+    <div class="builder-picker-row">
+      <select id="builderSelect" aria-label="Select builder">
+        <option value="lennar">Lennar</option>
+      </select>
+    </div>
+  </div>
 
   <div id="picker" class="picker">
     <div class="picker-row">

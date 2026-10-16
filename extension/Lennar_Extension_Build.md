@@ -148,3 +148,41 @@ Added 2026-10-14. Expands `/prepare-listing` to also append a row to the "Lennar
 Env var added for Phase 3a.1: `GOOGLE_SHEET_ID`. OAuth scope added: Sheets (`https://www.googleapis.com/auth/spreadsheets`) — requires a re-minted `GCP_REFRESH_TOKEN` after this scope expansion.
 
 Cursor handoff: `HANDOFF-2026-10-14-phase-3a1-sheets-write.md`.
+
+---
+
+## Workstream A — Multi-builder architecture (session 1)
+
+Added 2026-10-15. Introduces a per-builder registry (`extension/scripts/builders.py`) and a builder dropdown in the extension side panel. Lennar behavior is preserved exactly; registry has `"lennar"` as its only key. Session 1 of 2–3; session 2+ validates against a real or hypothetical second builder.
+
+### Server (Python)
+
+- **New `extension/scripts/builders.py`** — holds per-builder, non-secret config (Airtable base ID, four Airtable table IDs, Cognito form ID + Submitted view ID, Drive folder ID, Google Sheet ID + tab ID + target row, display name, MLS tag, and the key naming which community resolver to use). Lennar's config is populated from values that previously lived as Railway env vars (`AIRTABLE_LENNAR_BASE_ID`, `COGNITO_FORM_ID`, `LENNAR_PROPERTIES_FOLDER_ID`, `GOOGLE_SHEET_ID`) plus module-level constants (table IDs, `SUBMITTED_VIEW_ID`, `LENNAR_LISTINGS_TAB_ID`, `TARGET_ROW`).
+- **`REQUIRED_ENV_VARS`** shrinks to shared secrets only: `AIRTABLE_PAT`, `AIRTABLE_CVRMLS_BASE_ID`, `COGNITO_API_KEY`. Everything else is per-builder data in the registry.
+- **`generate.py`** — `_build_payload`, `_resolve_community_key`, `fetch_recent_entries`, `generate_payload`, and `main()` all accept a `builder` parameter (defaults to `"lennar"`). `_airtable_list_all` now takes `base_id` as a parameter. Payload envelope's `"mls"` and `"builder"` keys are sourced from the registry. A new `COMMUNITY_RESOLVERS` dict maps a resolver key (`"lennar_default"`) to the actual resolver function; new builders either reuse `lennar_default` or register a new named resolver. New `--builder` CLI flag.
+- **`app.py`** — `/generate` and `/prepare-listing` request bodies accept optional `builder`; `/recent-entries` accepts a `builder` query param. All three default to `"lennar"` when omitted, preserving backward compat with the 0.4.0 extension during the deploy window.
+- **`sheets_services.py`** — `write_listing_row` takes `tab_id` and `target_row` as keyword-only parameters (passed in from the registry via `app.py`). Module-level `LENNAR_LISTINGS_TAB_ID` and `TARGET_ROW` constants removed.
+- **`prep_email.py`** — `build_prep_email` accepts `builder_display_name` (defaults to `"Lennar"`) and interpolates it into the subject (`"Listing prep: 3435 Moonstone Dr (Lennar)"`) and opening sentence of the body.
+
+### Extension
+
+- **`sidepanel.html`** — new builder dropdown as the first element in the panel, visually matching the entry picker's `<select>` + section-separator style. `<h1>` text changed from `"Lennar CVRMLS Matrix Filler"` to `"CVRMLS Matrix Filler"` (builder is now shown in the dropdown; MLS stays in the title since the extension's `content_scripts.matches` still assumes CVRMLS).
+- **`sidepanel.js`** — reads selected builder via `getCurrentBuilder()` at every Railway call; sends it as a `?builder=` query param on `/recent-entries` and as a `builder` field in the `/generate` and `/prepare-listing` request bodies. Persists the selection to `chrome.storage.local` under `matrixFillerBuilder`. Restores the persisted selection on panel open (falls back to `"lennar"` if the stored value is no longer a valid option). On builder change: clears the textarea, resets tab status dots, resets Phase 3 state to idle, and auto-refreshes the picker to pull the new builder's recent entries — same reset flow as the Clear button, plus the refresh.
+- **`manifest.json`** — version `0.4.0` → `0.5.0`. Name changes from `"Lennar CVRMLS Matrix Filler (POC)"` to `"CVRMLS Matrix Filler"`. Description updated.
+
+### Env var migration
+
+Four Railway env vars are now unused and can be removed from Railway Variables at the operator's leisure once the Workstream A deploy is confirmed working. They do no harm staying set:
+
+- `AIRTABLE_LENNAR_BASE_ID` → `builders.py["lennar"]["airtable_base_id"]`
+- `COGNITO_FORM_ID` → `builders.py["lennar"]["cognito_form_id"]`
+- `LENNAR_PROPERTIES_FOLDER_ID` → `builders.py["lennar"]["drive_properties_folder_id"]`
+- `GOOGLE_SHEET_ID` → `builders.py["lennar"]["sheet_id"]`
+
+Shared secrets that stay in Railway: `AIRTABLE_PAT`, `AIRTABLE_CVRMLS_BASE_ID`, `COGNITO_API_KEY`, `API_SHARED_SECRET`, `GCP_CLIENT_ID`, `GCP_CLIENT_SECRET`, `GCP_REFRESH_TOKEN`.
+
+### Deploy order
+
+Railway redeploys automatically on push. The server accepts optional `builder` on all three endpoints and defaults to `"lennar"` when omitted, so the 0.4.0 extension (which doesn't send `builder`) continues working during the brief window between Railway deploy and the operator reloading the 0.5.0 extension. No coordination required.
+
+Cursor handoff: `HANDOFF-2026-10-15-workstream-a-builder-registry.md`.
