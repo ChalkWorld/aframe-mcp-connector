@@ -1,7 +1,7 @@
 ---
 title: Builder Listing Operations Overview
 document_id: FOUND-OPERATIONS-OVERVIEW-001
-version: 0.2
+version: 0.3
 version_date: 2026-10-19
 status: Active — Living Document
 author: Andrew Rich, AAR-TC Transaction Services
@@ -323,12 +323,61 @@ Pointer-only. One-liners.
 
 ---
 
+## 8. Known open items
+
+Items that are known but not blocking anything today. Migrated here from the retired Phase Tracker's parked-decisions list as the ops overview's home for standing operational awareness. Grouped by category rather than priority — nothing here is urgent.
+
+### 8.1 Operational quirks (live system, no fix needed today)
+
+- **Payload Rules table description via Airtable API is blocked.** The connector refuses to update the Payload Rules table description with the conventions-file text. Manual paste into the table description is pending. Not blocking — the conventions file at `docs/foundation/Payload_Rules_Conventions.md` (v0.6) is the live reference.
+- **Picker empty-state string is hardcoded to Form 17.** `sidepanel.js` says "No recent Form 17 entries." for any builder with zero submissions. Wrong for Builder X, wrong for any future builder. Surfaces only in demo/initial scenarios. One-line fix when it comes up.
+- **Gmail self-send yellow banner.** Prep emails arrive with Gmail's "Be careful with this message" banner (self-send heuristic — operator sends from and receives at the same Gmail address). Plus-aliasing was tested and failed (Gmail normalizes sub-addressing before the self-send check). Options under consideration: aar-tc.com domain mail via Squarespace (operator exploring), external SMTP (overkill), or just live with the banner (current choice).
+- **Railway Watch Paths set to `/extension/scripts/**`.** Doc-only commits no longer trigger redeploys. If any deployed-service dependency moves out of `extension/scripts/`, the Watch Paths glob needs updating or the deploy will silently skip.
+
+### 8.2 Untested production code paths
+
+Three Payload Rules branches have never fired in production and are not scheduled for pre-emptive testing. Each will catch itself the first time it fires (which may be subtle — see the YesNo bug from v0.15 as precedent). Operator hedge: spot-check the generated payload JSON before the first fill in a known-untested community.
+
+- **Rule 111 Finished / Part Finished / Unfinished crosswalk branches.** Need a SF+Yes-basement listing. Most Lennar SF communities don't have basements; the branches have never fired.
+- **Rule 110 SF+No garage branch.** Needs a SF listing with no garage. Lennar standard is "every garage is attached with direct entry and an opener" — the no-garage case may not exist in the catalog.
+- **Watermark SF new-path rules.** Rules 50/51/52/71/93/94/95. Need a real Watermark SF listing on `new` path. May never materialize if Watermark's parcels get tax records first (flipping `new` → `taxid` in the Community DB).
+
+### 8.3 Known doc drift and simplifications
+
+- **`Lennar_Payload_Examples.md` is stale (v1.1).** Contains example payload keys that are now deliberate omissions (`listing.lot` on taxid path, `fee.allow_onsite`, `bath.level4`, `showing.lockbox_type`). Comparing script output against this doc produces false positives. The doc should be refreshed from current Rules-table state when it next matters.
+- **`Lennar_New_Listing_Protocol.md` uses `"17-3"` as human/MCP shorthand for the Submitted view.** Fine for human reading and MCP tool use (connector resolves internally), silently wrong when passed to Cognito OData directly (OData segment is the bare integer `3`, not `17-3`). Low-priority doc clarification. Context from v0.16 and v0.22.
+- **Flooring and Siding fallback defaults in Payload Schema §5.4.1 are dead code.** Both fields are Required=true on Form 17, so the fallback defaults can never fire. Candidates for Schema simplification. Non-blocking.
+- **Confirmed Lennar-Wide Static Values table in Protocol lists Fee Desc as always `Input_111_01`.** Contradicted by Creekside Run using Condo Association (`Input_111_02`) — the value is community-scoped (COMMUNITY_DB rule), not Lennar-wide. Correction queued for whenever the Protocol doc gets attention.
+
+### 8.4 Future hygiene candidates
+
+- **Rules-table Features-tab authoring could be normalized to full `Input_XX_YY` IDs**, dropping the script-side prefixing step. Would remove convention #10 as a mental overhead. Non-blocking; Option B from the v0.14 Features-tab prefixing decision.
+- **`_cognito_null_default` numeric-TEXT list is hardcoded in the dispatcher.** Could be parameterized as a Rules-table column. Non-blocking; convention #1 handles the semantics today.
+- **Airtable Field Options table (1,080 rows) is over the free-tier record cap.** Flattening Field Options into Residential Input Form, and rewriting Cascade Options' Cascade Condition link to a plain-text column, is the resolution. Tied to Workstream A session 3+ (first real builder) so the new builder's base is Free-tier-compatible from day one. Full proposal in `AAR-TC-CVRMLS-FIELDOPTS-PROPOSAL-001` (Option B).
+- **Property Type multi-select on the Lennar Payload Rules base has orphan options** (`Single Family`, `Townhouse` alongside the live `SF`, `TH`). The Airtable connector can't delete multi-select options; operator removes in-app at convenience. Builder X's base already ships clean.
+- **`CURSOR-HANDOFF-PROTOCOL-001` (currently v1.1) needs a refresh.** Candidate additions: multi-file batched-handoff override pattern (used eight times); `handoffs/incoming/` + `handoffs/applied/` convention; "read every file touched before drafting Find/Replace blocks" extension from the v0.20 protocol-conformance incident, reinforced through v0.21 and v0.22's zero-deviation applies.
+- **Doc-process note:** when a handoff uses the `cp .example → actual` template-copy pattern, put the `cp` step prominently near the top. Cursor's apply summary echoes earlier content more reliably than later. From v0.17.
+- **`SCRIPTS-*` doc_id convention.** The `extension/scripts/README.md` carries `SCRIPTS-README-001` which doesn't follow the `FOUND-*` prefix convention. Decide whether code-local docs get their own prefix family or fold into `FOUND-*`.
+
+### 8.5 Externally-gated workstreams
+
+Named here for awareness; action depends on external events.
+
+- **Phase 3b — PandaDoc addendum create + magic-link send.** Design complete; blocked on a PandaDoc Starter subscription decision (free tier caps at 2 recipients, the template needs 3). Current state is manual signing with the merge values from the prep email.
+- **Workstream A session 3+ — first real builder.** The registry pattern is proven; a real builder exercises it with real data. Depends on business-dev conversations identifying a candidate. See `Builder_Onboarding_Runbook.md` for the intake and scaffold steps.
+- **Workstream C — Housekeeping.** Original Phase 4 scope: retire operational-session docs, archive the Airtable Lennar Listings table, close SOP stubs, maintenance protocol. Lands when something specific forces it.
+- **Copyright Agreement multi-builder promotion decision.** Currently STATIC in the Lennar base. When the second builder authors its first Copyright Agreement rule, decide whether to promote to a shared MLS-layer registry or copy per-builder. Deferred until that moment.
+- **Standard-listing (non-builder) protocol.** `New_Seller_Side_Session_Protocol.md` v0.5 carries pre-restructure assumptions and known dated content. Parked indefinitely — standard-listing TC volume is low and the operator handles these by hand efficiently.
+
+---
+
 ## Version History
 
 | Version | Date | Notes |
 |---|---|---|
 | 0.1 | 2026-10-18 | Initial authoring. Doc created as part of the Phase 4 wrap-up to replace the Phase Tracker as the system's current-state reference. Scope: dual-audience (LLM reading cold + operator running listings), builder-agnostic with Lennar as the primary live example, PandaDoc section as a stub pending Phase 3b, thin troubleshooting. |
 | 0.2 | 2026-10-19 | §4 step 1 corrected to name the Cognito notification email as the operator's trigger event for the whole workflow — previous draft read as if the operator discovered new submissions by opening the extension. Step 2 tightened to acknowledge the operator is looking for a specific known entry, not browsing. No other changes. |
+| 0.3 | 2026-10-19 | Added §8 "Known open items" as the home for standing operational awareness items migrated from the retired Phase Tracker's parked-decisions list. Grouped by category (operational quirks, untested production code paths, known doc drift, future hygiene candidates, externally-gated workstreams) rather than priority. Nothing in §8 is urgent; the section exists so a cold-reading LLM has the full operational picture available alongside the main content. The Phase Tracker retires at the same version — see tracker v0.23 and its retirement note. |
 
 ---
 
